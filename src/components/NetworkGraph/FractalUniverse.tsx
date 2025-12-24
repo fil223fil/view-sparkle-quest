@@ -129,34 +129,27 @@ const DEPTH_PALETTES = [
   { primary: '#D8D4C0', secondary: '#E8E4D4', glow: '#E0DCC8', accent: '#C0C8D8' },  // Cream
 ];
 
-// Mind-map layout - hierarchical tree structure in 3D
+// Compact radial layout - логичная структура вокруг центра
 const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
-  const levels = 3;
-  const nodesPerLevel = Math.ceil(count / levels);
   
   for (let i = 0; i < count; i++) {
-    const level = Math.floor(i / nodesPerLevel);
-    const indexInLevel = i % nodesPerLevel;
-    const totalInLevel = Math.min(nodesPerLevel, count - level * nodesPerLevel);
-    
-    // Spread nodes in a tree-like 3D structure
-    const angle = (indexInLevel / totalInLevel) * Math.PI * 2 + level * 0.3;
-    const radius = 0.2 + level * 0.35;
-    const yOffset = (level - 1) * 0.15;
-    const zVariance = Math.sin(indexInLevel * 1.5) * 0.15;
+    // Компактное радиальное расположение
+    const angle = (i / count) * Math.PI * 2;
+    const radius = 0.18 + (i % 2) * 0.08; // Чередующиеся радиусы для плотности
+    const yOffset = Math.sin(i * 0.8) * 0.04; // Легкая волна по Y
     
     nodes.push({
       id: i,
       position: [
         radius * Math.cos(angle),
-        yOffset + Math.sin(angle + i) * 0.1,
-        radius * Math.sin(angle) + zVariance,
+        yOffset,
+        radius * Math.sin(angle),
       ],
       velocity: [0, 0, 0],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.12,
+      birthTime: time + i * 0.08,
     });
   }
   return nodes;
@@ -170,12 +163,12 @@ const applyForces = (
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.004;       // Stronger repulsion - nodes push apart more
-  const ATTRACTION = 0.015;      // Stronger attraction between connected nodes
-  const DAMPING = 0.88;          // Less damping = more visible movement
-  const CENTER_PULL = 0.001;     // Stronger center pull
-  const MAX_VELOCITY = 0.025;    // Higher max velocity for visible motion
-  const IDEAL_DISTANCE = 0.2;    // Closer ideal distance
+  const REPULSION = 0.002;       // Умеренное отталкивание
+  const ATTRACTION = 0.025;      // Сильное притяжение связанных
+  const DAMPING = 0.85;          // Плавное затухание
+  const CENTER_PULL = 0.003;     // Сильнее к центру для компактности
+  const MAX_VELOCITY = 0.015;    // Умеренная скорость
+  const IDEAL_DISTANCE = 0.12;   // Короткая дистанция = компактнее
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
@@ -783,8 +776,12 @@ export const FractalUniverse = ({
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
-        const widgetWidth = 0.12;
-        const widgetHeight = 0.065;
+        // Компактные размеры
+        const widgetWidth = 0.09;
+        const widgetHeight = 0.045;
+        
+        // Количество связей для информативности
+        const connectionCount = nodeData.connects?.length || 0;
         
         return (
           <group 
@@ -792,10 +789,10 @@ export const FractalUniverse = ({
             position={node.position}
             scale={node.scale * pulse * hoverScale}
           >
-            {/* Widget background - frosted glass */}
+            {/* Компактный виджет */}
             <RoundedBox
-              args={[widgetWidth, widgetHeight, 0.012]}
-              radius={0.015}
+              args={[widgetWidth, widgetHeight, 0.008]}
+              radius={0.01}
               smoothness={4}
               onClick={(e) => {
                 e.stopPropagation();
@@ -813,40 +810,27 @@ export const FractalUniverse = ({
               <meshBasicMaterial 
                 color="#1C1C1E"
                 transparent 
-                opacity={node.opacity * 0.92}
+                opacity={node.opacity * 0.9}
               />
             </RoundedBox>
             
-            {/* Accent border glow */}
+            {/* Тонкая граница */}
             <RoundedBox
-              args={[widgetWidth + 0.004, widgetHeight + 0.004, 0.008]}
-              radius={0.017}
-              smoothness={4}
+              args={[widgetWidth + 0.003, widgetHeight + 0.003, 0.005]}
+              radius={0.011}
+              smoothness={3}
             >
               <meshBasicMaterial 
                 color={isHovered ? palette.accent : palette.primary}
                 transparent 
-                opacity={node.opacity * (isHovered ? 0.7 : 0.35)}
+                opacity={node.opacity * (isHovered ? 0.6 : 0.3)}
               />
             </RoundedBox>
             
-            {/* Outer glow */}
-            <RoundedBox
-              args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.004]}
-              radius={0.02}
-              smoothness={3}
-            >
-              <meshBasicMaterial 
-                color={palette.glow}
-                transparent 
-                opacity={node.opacity * (isHovered ? 0.2 : 0.08)}
-              />
-            </RoundedBox>
-            
-            {/* Icon */}
+            {/* Иконка слева */}
             <Text
-              position={[-0.035, 0.005, 0.008]}
-              fontSize={0.022}
+              position={[-0.028, 0, 0.006]}
+              fontSize={0.018}
               color={palette.accent}
               anchorX="center"
               anchorY="middle"
@@ -855,42 +839,43 @@ export const FractalUniverse = ({
               {nodeData.icon}
             </Text>
             
-            {/* Title */}
+            {/* Название */}
             <Text
-              position={[0.015, 0.01, 0.008]}
-              fontSize={0.016}
-              color={isHovered ? '#FFFFFF' : '#EBEBF5'}
+              position={[0.012, 0.008, 0.006]}
+              fontSize={0.012}
+              color={isHovered ? '#FFFFFF' : '#E8E8ED'}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity * 0.95}
+              fillOpacity={node.opacity}
             >
               {nodeData.title}
             </Text>
             
-            {/* Subtitle */}
+            {/* Субтитл + счётчик связей */}
             <Text
-              position={[0.015, -0.012, 0.008]}
-              fontSize={0.01}
+              position={[0.012, -0.008, 0.006]}
+              fontSize={0.008}
               color={palette.glow}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity * 0.6}
+              fillOpacity={node.opacity * 0.7}
             >
-              {nodeData.subtitle}
+              {nodeData.subtitle} {connectionCount > 0 ? `• ${connectionCount}` : ''}
             </Text>
             
-            {/* Connection hints on hover */}
-            {isHovered && nodeData.connects && (
-              <Text
-                position={[0, -0.055, 0.008]}
-                fontSize={0.009}
-                color={palette.accent}
-                anchorX="center"
-                anchorY="top"
-                fillOpacity={node.opacity * 0.7}
-              >
-                {`→ ${nodeData.connects.join(' · ')}`}
-              </Text>
+            {/* Индикатор связей при наведении */}
+            {isHovered && connectionCount > 0 && (
+              <group position={[0, -0.038, 0.006]}>
+                <Text
+                  fontSize={0.007}
+                  color={palette.secondary}
+                  anchorX="center"
+                  anchorY="middle"
+                  fillOpacity={node.opacity * 0.8}
+                >
+                  {nodeData.connects?.slice(0, 2).join(' → ')}
+                </Text>
+              </group>
             )}
           </group>
         );
