@@ -43,7 +43,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
   }, [resetTrigger, camera]);
 
   const handleDiveIn = useCallback((position: [number, number, number], newDepth: number) => {
-    if (isZooming || newDepth > 4) return;
+    if (isZooming) return;
 
     setIsZooming(true);
     
@@ -57,11 +57,15 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       opacity: 0,
     };
 
-    setUniverses(prev => [...prev, newUniverse]);
+    // Keep only recent universes to prevent memory issues (current + 2 previous)
+    setUniverses(prev => {
+      const filtered = prev.filter(u => u.depth >= newDepth - 2);
+      return [...filtered, newUniverse];
+    });
     
-    // Set camera zoom target
+    // Set camera zoom target - keep consistent scale for infinite exploration
     const targetPos = new THREE.Vector3(...position);
-    const cameraTargetDistance = 1.5 / Math.pow(2, newDepth);
+    const cameraTargetDistance = 0.8; // Fixed distance for consistent feel
     const direction = new THREE.Vector3().subVectors(camera.position, targetPos).normalize();
     const newCameraPos = targetPos.clone().add(direction.multiplyScalar(cameraTargetDistance));
     
