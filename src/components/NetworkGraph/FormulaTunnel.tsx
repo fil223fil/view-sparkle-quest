@@ -15,9 +15,10 @@ const TUNNEL_FORMULAS = [
   '∂ρ/∂t=0', 'H|ψ⟩=E', 'e^iπ+1', '∮B·dl',
   'δS=0', 'dE=TdS', '∇²φ=ρ', 'F=ma',
   'E=mc²', 'ΔxΔp≥ℏ', 'S=klnW', '∂ψ/∂t',
+  '∇·E=ρ', 'Ĥψ=Eψ', 'ds²=c²dt²', 'ω=2πf',
 ];
 
-// Single ring of formulas
+// Single ring of formulas - now more prominent
 const TunnelRing = ({
   radius,
   zPosition,
@@ -35,7 +36,7 @@ const TunnelRing = ({
   time: number;
   ringIndex: number;
 }) => {
-  const formulaCount = 6 + (ringIndex % 3);
+  const formulaCount = 8 + (ringIndex % 4);
   
   return (
     <group position={[0, 0, zPosition]} rotation={[0, 0, rotation]}>
@@ -45,14 +46,14 @@ const TunnelRing = ({
         const y = Math.sin(angle) * radius;
         const formula = TUNNEL_FORMULAS[(ringIndex * formulaCount + i) % TUNNEL_FORMULAS.length];
         
-        // Shimmer effect
-        const shimmer = 0.5 + Math.sin(time * 4 + i + ringIndex * 0.5) * 0.5;
+        // Stronger shimmer effect
+        const shimmer = 0.6 + Math.sin(time * 6 + i * 0.8 + ringIndex * 0.3) * 0.4;
         
         return (
           <Text
             key={i}
             position={[x, y, 0]}
-            fontSize={0.04 + (1 - opacity) * 0.02}
+            fontSize={0.06 + Math.sin(time * 3 + i) * 0.01}
             color={color}
             anchorX="center"
             anchorY="middle"
@@ -63,6 +64,17 @@ const TunnelRing = ({
           </Text>
         );
       })}
+      
+      {/* Ring glow line */}
+      <mesh rotation={[0, 0, 0]}>
+        <ringGeometry args={[radius - 0.01, radius + 0.01, 32]} />
+        <meshBasicMaterial 
+          color={color} 
+          transparent 
+          opacity={opacity * 0.3}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
     </group>
   );
 };
@@ -73,52 +85,51 @@ export const FormulaTunnel = ({ isActive, progress, targetPosition, color }: For
   
   useFrame((_, delta) => {
     if (isActive) {
-      timeRef.current += delta;
+      timeRef.current += delta * 2; // Faster animation
       if (groupRef.current) {
-        // Gentle rotation of the whole tunnel
-        groupRef.current.rotation.z += delta * 0.5;
+        groupRef.current.rotation.z += delta * 1.5; // Faster rotation
       }
     }
   });
   
   const rings = useMemo(() => {
-    const ringCount = 12;
+    const ringCount = 20; // More rings
     return Array.from({ length: ringCount }).map((_, i) => {
       const t = i / ringCount;
       return {
         id: i,
-        baseZ: -t * 3, // Spread along z-axis
-        baseRadius: 0.1 + t * 0.5, // Expand outward
-        rotationOffset: i * 0.3,
+        baseZ: -t * 5, // Longer tunnel
+        baseRadius: 0.15 + t * 0.8, // Bigger expansion
+        rotationOffset: i * 0.4,
       };
     });
   }, []);
   
   if (!isActive) return null;
   
-  // Calculate visibility based on progress
-  const tunnelOpacity = Math.sin(progress * Math.PI); // Fade in and out
+  // Stronger visibility
+  const tunnelOpacity = Math.sin(progress * Math.PI) * 1.5;
   
   return (
     <group ref={groupRef} position={targetPosition}>
       {rings.map((ring) => {
         // Move rings toward camera as progress increases
-        const zOffset = ring.baseZ + progress * 4;
-        // Only show rings in visible range
-        if (zOffset < -3 || zOffset > 0.5) return null;
+        const zOffset = ring.baseZ + progress * 6;
+        // Wider visible range
+        if (zOffset < -4 || zOffset > 1) return null;
         
-        const depthFade = 1 - Math.abs(zOffset) / 3;
-        const ringOpacity = tunnelOpacity * depthFade * 0.8;
+        const depthFade = 1 - Math.abs(zOffset) / 4;
+        const ringOpacity = Math.min(1, tunnelOpacity * depthFade);
         
-        // Radius expands as ring approaches
-        const dynamicRadius = ring.baseRadius * (1 + (zOffset + 3) * 0.3);
+        // Radius expands more dramatically
+        const dynamicRadius = ring.baseRadius * (1 + (zOffset + 4) * 0.4);
         
         return (
           <TunnelRing
             key={ring.id}
             radius={dynamicRadius}
             zPosition={zOffset}
-            rotation={ring.rotationOffset + timeRef.current * 0.3}
+            rotation={ring.rotationOffset + timeRef.current * 0.5}
             opacity={ringOpacity}
             color={color}
             time={timeRef.current}
@@ -127,13 +138,24 @@ export const FormulaTunnel = ({ isActive, progress, targetPosition, color }: For
         );
       })}
       
-      {/* Central vortex glow */}
+      {/* Central vortex glow - bigger */}
       <mesh>
-        <circleGeometry args={[0.05 + progress * 0.1, 16]} />
+        <circleGeometry args={[0.1 + progress * 0.2, 24]} />
         <meshBasicMaterial 
           color={color} 
           transparent 
-          opacity={tunnelOpacity * 0.4}
+          opacity={tunnelOpacity * 0.5}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Outer glow ring */}
+      <mesh>
+        <ringGeometry args={[0.08 + progress * 0.15, 0.15 + progress * 0.25, 32]} />
+        <meshBasicMaterial 
+          color={color} 
+          transparent 
+          opacity={tunnelOpacity * 0.3}
           side={THREE.DoubleSide}
         />
       </mesh>

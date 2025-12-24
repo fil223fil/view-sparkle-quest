@@ -45,7 +45,7 @@ export const NetworkVisualization = () => {
 
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 60 }}
+        camera={{ position: [0, 0, 2], fov: 60 }}
         dpr={[1, 2]}
       >
         <color attach="background" args={['#0b0c2a']} />
