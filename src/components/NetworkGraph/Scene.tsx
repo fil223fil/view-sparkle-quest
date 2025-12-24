@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { Node } from './Node';
-import { Edge } from './Edge';
+import { FormulaEdge } from './FormulaEdge';
 import { useNetworkAnimation } from './useNetworkAnimation';
 
 interface SceneProps {
@@ -59,12 +59,12 @@ export const Scene = ({ isPaused, resetTrigger }: SceneProps) => {
           if (!startNode || !endNode) return null;
           
           return (
-            <Edge
+            <FormulaEdge
               key={`edge-${i}`}
               start={startNode.position}
               end={endNode.position}
               opacity={edge.opacity}
-              flowOffset={i * 0.5}
+              formulaIndex={i}
             />
           );
         })}
