@@ -32,54 +32,78 @@ export const NetworkVisualization = () => {
       ref={containerRef}
       className="relative w-full h-screen overflow-hidden"
       style={{ 
-        background: '#000000'
+        background: 'linear-gradient(180deg, #0A0A0C 0%, #000000 50%, #050508 100%)'
       }}
     >
-      {/* Apple-style ambient gradient orbs */}
+      {/* visionOS ambient gradient layers */}
       <div 
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 50% 35% at 50% 0%, rgba(120, 80, 220, 0.12) 0%, transparent 70%),
-            radial-gradient(ellipse 40% 30% at 80% 90%, rgba(60, 130, 255, 0.08) 0%, transparent 60%),
-            radial-gradient(ellipse 35% 25% at 15% 85%, rgba(200, 100, 180, 0.06) 0%, transparent 50%)
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(88, 86, 214, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 40% at 85% 100%, rgba(10, 132, 255, 0.12) 0%, transparent 45%),
+            radial-gradient(ellipse 50% 35% at 10% 90%, rgba(191, 90, 242, 0.1) 0%, transparent 40%),
+            radial-gradient(ellipse 40% 30% at 30% 20%, rgba(100, 210, 255, 0.06) 0%, transparent 35%)
           `
         }}
       />
+      
+      {/* Subtle noise texture overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.015]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
 
-      {/* Title overlay - Apple style */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
-        <h1 
-          className="text-[28px] font-semibold tracking-[-0.02em] text-white"
-          style={{ 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+      {/* Title overlay - visionOS style with depth */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
+        <div
+          className="px-8 py-4 rounded-3xl"
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '0.5px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
           }}
         >
-          ЯДРО ЛЕНИН
-        </h1>
-        <p 
-          className="text-[13px] text-white/50 mt-1.5 font-normal tracking-[0.01em]"
-          style={{ 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
-          }}
-        >
-          Фрактальная вселенная
-        </p>
+          <h1 
+            className="text-[32px] font-semibold tracking-[-0.025em] bg-clip-text text-transparent"
+            style={{ 
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
+              backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)',
+              WebkitBackgroundClip: 'text',
+            }}
+          >
+            ЯДРО ЛЕНИН
+          </h1>
+          <p 
+            className="text-[14px] mt-2 font-normal tracking-[0.02em]"
+            style={{ 
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
+              color: 'rgba(255,255,255,0.45)'
+            }}
+          >
+            Фрактальная вселенная
+          </p>
+        </div>
       </div>
 
-      {/* 3D Canvas */}
+      {/* 3D Canvas with enhanced settings */}
       <Canvas
-        camera={{ position: [0, 0, 4.5], fov: 45 }}
+        camera={{ position: [0, 0, 4.5], fov: 42 }}
         dpr={[1, 2]}
         gl={{ 
           antialias: true, 
           alpha: true,
           powerPreference: 'high-performance',
-          toneMapping: 3
+          toneMapping: 4,
+          toneMappingExposure: 1.1
         }}
       >
         <color attach="background" args={['#000000']} />
-        <fog attach="fog" args={['#000000', 5, 30]} />
+        <fog attach="fog" args={['#050508', 4, 25]} />
         <FractalScene
           isPaused={isPaused}
           onReset={handleReset}
@@ -87,7 +111,7 @@ export const NetworkVisualization = () => {
         />
       </Canvas>
 
-      {/* Controls - Apple pill style */}
+      {/* Controls - visionOS pill */}
       <Controls
         isPaused={isPaused}
         onTogglePause={handleTogglePause}
@@ -95,15 +119,16 @@ export const NetworkVisualization = () => {
         onFullscreen={handleFullscreen}
       />
 
-      {/* Instructions */}
-      <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
+      {/* Instructions - visionOS subtle */}
+      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
         <p 
-          className="text-[11px] text-white/25 font-normal tracking-[0.02em]"
+          className="text-[12px] font-medium tracking-[0.04em] uppercase"
           style={{ 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
+            color: 'rgba(255,255,255,0.2)'
           }}
         >
-          Нажмите на узел для погружения
+          Нажмите на виджет для погружения
         </p>
       </div>
     </div>
