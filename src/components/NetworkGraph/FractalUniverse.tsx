@@ -162,12 +162,12 @@ const applyForces = (
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.0015;      // Слабое отталкивание - узлы остаются кучно
-  const ATTRACTION = 0.08;       // Очень сильное притяжение связанных
-  const DAMPING = 0.82;          // Быстрое затухание
-  const CENTER_PULL = 0.008;     // Сильное притяжение к ядру
-  const MAX_VELOCITY = 0.012;    // Плавное движение
-  const IDEAL_DISTANCE = 0.06;   // Очень близко друг к другу
+  const REPULSION = 0.0008;      // Мягкое отталкивание
+  const ATTRACTION = 0.012;      // Нежное притяжение
+  const DAMPING = 0.96;          // Плавное затухание - более инертное
+  const CENTER_PULL = 0.002;     // Мягкое притяжение к центру
+  const MAX_VELOCITY = 0.004;    // Медленное, органичное движение
+  const IDEAL_DISTANCE = 0.08;   // Близко, но не слипаются
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
@@ -557,73 +557,47 @@ const MindMapConnection = ({
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [start, end, edgeIndex, isFromCenter]);
 
-  // Subtle breathing animation
-  const breathe = 0.7 + Math.sin(time * 0.5 + edgeIndex * 0.3) * 0.15;
+  // Органичное дыхание линии
+  const breatheSpeed = 0.25 + (edgeIndex % 4) * 0.05;
+  const breathe = 0.6 + Math.sin(time * breatheSpeed + edgeIndex * 0.8) * 0.2;
 
   return (
     <group>
-      {/* Primary elegant line - thin and refined */}
+      {/* Мягкая основная линия */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={isFromCenter ? 1.2 : 0.8}
+        lineWidth={isFromCenter ? 1 : 0.6}
         transparent
-        opacity={opacity * breathe * 0.6}
+        opacity={opacity * breathe * 0.4}
       />
       
-      {/* Soft outer glow for depth */}
+      {/* Нежное свечение */}
       <Line
         points={points}
         color={palette.glow}
-        lineWidth={isFromCenter ? 3 : 2.5}
+        lineWidth={isFromCenter ? 2.5 : 2}
         transparent
-        opacity={opacity * 0.08}
+        opacity={opacity * 0.05}
       />
       
-      {/* Subtle flowing light particle */}
-      {[0.0, 0.5].map((offset, i) => {
-        const t = ((time * 0.04 + offset + edgeIndex * 0.15) % 1);
+      {/* Одна плавная частица */}
+      {(() => {
+        const flowSpeed = 0.02 + (edgeIndex % 3) * 0.005;
+        const t = ((time * flowSpeed + edgeIndex * 0.2) % 1);
         const pos = curve.getPoint(t);
-        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.5;
+        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.4;
         
         return (
-          <group key={`flow-${i}`} position={[pos.x, pos.y, pos.z]}>
-            {/* Inner bright core */}
-            <Sphere args={[0.005, 8, 8]}>
-              <meshBasicMaterial 
-                color={palette.secondary}
-                transparent 
-                opacity={particleOpacity * 0.9}
-              />
-            </Sphere>
-            {/* Soft outer glow */}
-            <Sphere args={[0.012, 6, 6]}>
-              <meshBasicMaterial 
-                color={palette.glow}
-                transparent 
-                opacity={particleOpacity * 0.25}
-              />
-            </Sphere>
-          </group>
+          <Sphere args={[0.004, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+            <meshBasicMaterial 
+              color={palette.secondary}
+              transparent 
+              opacity={particleOpacity}
+            />
+          </Sphere>
         );
-      })}
-      
-      {/* Elegant endpoint markers - minimal */}
-      <Sphere args={[0.006, 12, 12]} position={start}>
-        <meshBasicMaterial 
-          color={palette.primary}
-          transparent 
-          opacity={opacity * 0.5}
-        />
-      </Sphere>
-      
-      <Sphere args={[0.006, 12, 12]} position={end}>
-        <meshBasicMaterial 
-          color={palette.secondary}
-          transparent 
-          opacity={opacity * 0.5}
-        />
-      </Sphere>
+      })()}
     </group>
   );
 };
@@ -768,25 +742,37 @@ export const FractalUniverse = ({
       {/* Mind Map Nodes - Widget style */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        const pulse = 1 + Math.sin(time * 0.4 + node.id * 0.5) * 0.02;
-        const hoverScale = isHovered ? 1.08 : 1;
         
-        // Get concept from current depth's map
+        // Органичное дыхание - каждый узел дышит в своём ритме
+        const breatheSpeed = 0.3 + (node.id % 5) * 0.08;
+        const breathePhase = node.id * 1.2;
+        const breathe = 1 + Math.sin(time * breatheSpeed + breathePhase) * 0.015;
+        
+        // Лёгкое покачивание
+        const swayX = Math.sin(time * 0.2 + node.id * 0.7) * 0.003;
+        const swayY = Math.cos(time * 0.15 + node.id * 0.5) * 0.002;
+        
+        const hoverScale = isHovered ? 1.05 : 1;
+        
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
-        // Ещё компактнее для кучного расположения
         const widgetWidth = 0.065;
         const widgetHeight = 0.035;
-        
-        // Количество связей для информативности
         const connectionCount = nodeData.connects?.length || 0;
+        
+        // Позиция с органичным покачиванием
+        const organicPosition: [number, number, number] = [
+          node.position[0] + swayX,
+          node.position[1] + swayY,
+          node.position[2]
+        ];
         
         return (
           <group 
             key={`node-${node.id}`} 
-            position={node.position}
-            scale={node.scale * pulse * hoverScale}
+            position={organicPosition}
+            scale={node.scale * breathe * hoverScale}
           >
             {/* Компактный виджет */}
             <RoundedBox
