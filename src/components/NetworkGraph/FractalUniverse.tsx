@@ -482,17 +482,20 @@ export const FractalUniverse = ({
 
       {/* Nodes with glow - size and brightness based on priority */}
       {animatedNodes.map((node) => {
+        if (node.scale < 0.01) return null; // Skip nodes not yet visible
+        
         const isHovered = hoveredNode === node.id;
         const pulse = 1 + Math.sin(time * 2 + node.id) * 0.1;
         // Base size affected by priority
         const baseSize = 0.02 + node.priority * 0.02;
+        const finalScale = node.scale * pulse;
         
         return (
           <group key={`node-${node.id}`} position={node.position}>
             {/* Core - size based on priority */}
             <Sphere
               args={[baseSize, 24, 24]}
-              scale={node.scale * pulse * (isHovered ? 1.4 : 1)}
+              scale={finalScale * (isHovered ? 1.4 : 1)}
               onClick={(e) => {
                 e.stopPropagation();
                 handleNodeClick(node.position);
@@ -513,20 +516,20 @@ export const FractalUniverse = ({
               />
             </Sphere>
             {/* Outer glow - bigger for high priority */}
-            <Sphere args={[baseSize, 12, 12]} scale={node.scale * pulse * (2 + node.priority)}>
+            <Sphere args={[baseSize, 12, 12]} scale={finalScale * (2 + node.priority)}>
               <meshBasicMaterial 
                 color={palette.glow} 
                 transparent 
-                opacity={node.opacity * 0.1 * (0.5 + node.priority * 0.5)} 
+                opacity={node.opacity * 0.15 * (0.5 + node.priority * 0.5)} 
               />
             </Sphere>
             {/* Extra glow on hover or high priority */}
             {(isHovered || node.priority > 0.8) && (
-              <Sphere args={[baseSize, 8, 8]} scale={node.scale * (3 + node.priority * 2)}>
+              <Sphere args={[baseSize, 8, 8]} scale={finalScale * (3 + node.priority * 2)}>
                 <meshBasicMaterial 
                   color={node.priority > 0.8 ? palette.accent : palette.glow} 
                   transparent 
-                  opacity={node.opacity * (isHovered ? 0.1 : 0.05)} 
+                  opacity={node.opacity * (isHovered ? 0.15 : 0.08)} 
                 />
               </Sphere>
             )}
