@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -18,8 +18,8 @@ const TUNNEL_FORMULAS = [
   '∇·E=ρ', 'Ĥψ=Eψ', 'ds²=c²dt²', 'ω=2πf',
 ];
 
-// Single ring of formulas - now more prominent
-const TunnelRing = ({
+// Single ring of formulas - inline component to avoid ref issues
+const TunnelRingContent = ({
   radius,
   zPosition,
   rotation,
@@ -39,26 +39,25 @@ const TunnelRing = ({
   const formulaCount = 8 + (ringIndex % 4);
   
   return (
-    <group position={[0, 0, zPosition]} rotation={[0, 0, rotation]}>
+    <>
       {Array.from({ length: formulaCount }).map((_, i) => {
         const angle = (i / formulaCount) * Math.PI * 2;
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         const formula = TUNNEL_FORMULAS[(ringIndex * formulaCount + i) % TUNNEL_FORMULAS.length];
         
-        // Stronger shimmer effect
         const shimmer = 0.6 + Math.sin(time * 6 + i * 0.8 + ringIndex * 0.3) * 0.4;
         
         return (
           <Text
             key={i}
-            position={[x, y, 0]}
+            position={[x, y, zPosition]}
             fontSize={0.06 + Math.sin(time * 3 + i) * 0.01}
             color={color}
             anchorX="center"
             anchorY="middle"
             fillOpacity={opacity * shimmer}
-            rotation={[0, 0, angle + Math.PI / 2]}
+            rotation={[0, 0, angle + Math.PI / 2 + rotation]}
           >
             {formula}
           </Text>
@@ -66,7 +65,7 @@ const TunnelRing = ({
       })}
       
       {/* Ring glow line */}
-      <mesh rotation={[0, 0, 0]}>
+      <mesh position={[0, 0, zPosition]} rotation={[0, 0, rotation]}>
         <ringGeometry args={[radius - 0.01, radius + 0.01, 32]} />
         <meshBasicMaterial 
           color={color} 
@@ -75,31 +74,31 @@ const TunnelRing = ({
           side={THREE.DoubleSide}
         />
       </mesh>
-    </group>
+    </>
   );
 };
 
 export const FormulaTunnel = ({ isActive, progress, targetPosition, color }: FormulaTunnelProps) => {
   const groupRef = useRef<THREE.Group>(null);
-  const timeRef = useRef(0);
+  const [time, setTime] = useState(0);
   
   useFrame((_, delta) => {
     if (isActive) {
-      timeRef.current += delta * 2; // Faster animation
+      setTime(prev => prev + delta * 2);
       if (groupRef.current) {
-        groupRef.current.rotation.z += delta * 1.5; // Faster rotation
+        groupRef.current.rotation.z += delta * 1.5;
       }
     }
   });
   
   const rings = useMemo(() => {
-    const ringCount = 20; // More rings
+    const ringCount = 20;
     return Array.from({ length: ringCount }).map((_, i) => {
       const t = i / ringCount;
       return {
         id: i,
-        baseZ: -t * 5, // Longer tunnel
-        baseRadius: 0.15 + t * 0.8, // Bigger expansion
+        baseZ: -t * 5,
+        baseRadius: 0.15 + t * 0.8,
         rotationOffset: i * 0.4,
       };
     });
@@ -107,38 +106,33 @@ export const FormulaTunnel = ({ isActive, progress, targetPosition, color }: For
   
   if (!isActive) return null;
   
-  // Stronger visibility
   const tunnelOpacity = Math.sin(progress * Math.PI) * 1.5;
   
   return (
     <group ref={groupRef} position={targetPosition}>
       {rings.map((ring) => {
-        // Move rings toward camera as progress increases
         const zOffset = ring.baseZ + progress * 6;
-        // Wider visible range
         if (zOffset < -4 || zOffset > 1) return null;
         
         const depthFade = 1 - Math.abs(zOffset) / 4;
         const ringOpacity = Math.min(1, tunnelOpacity * depthFade);
-        
-        // Radius expands more dramatically
         const dynamicRadius = ring.baseRadius * (1 + (zOffset + 4) * 0.4);
         
         return (
-          <TunnelRing
+          <TunnelRingContent
             key={ring.id}
             radius={dynamicRadius}
             zPosition={zOffset}
-            rotation={ring.rotationOffset + timeRef.current * 0.5}
+            rotation={ring.rotationOffset + time * 0.5}
             opacity={ringOpacity}
             color={color}
-            time={timeRef.current}
+            time={time}
             ringIndex={ring.id}
           />
         );
       })}
       
-      {/* Central vortex glow - bigger */}
+      {/* Central vortex glow */}
       <mesh>
         <circleGeometry args={[0.1 + progress * 0.2, 24]} />
         <meshBasicMaterial 
