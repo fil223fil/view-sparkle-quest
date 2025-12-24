@@ -70,7 +70,7 @@ export const NetworkVisualization = () => {
 
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 0.8], fov: 50 }}
+        camera={{ position: [0, 0, 2.5], fov: 50 }}
         dpr={[1, 2]}
         gl={{ 
           antialias: true, 

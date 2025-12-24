@@ -129,19 +129,19 @@ const DEPTH_PALETTES = [
   { primary: '#D8D4C0', secondary: '#E8E4D4', glow: '#E0DCC8', accent: '#C0C8D8' },  // Cream
 ];
 
-// Очень близко к ядру
+// Генерация узлов вокруг центра - достаточно далеко для видимости
 const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
   
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 + Math.random() * 0.2;
-    const radius = 0.03 + Math.random() * 0.02; // Очень близко к центру
+    const radius = 0.25 + Math.random() * 0.15; // Увеличенный радиус для видимости
     
     nodes.push({
       id: i,
       position: [
         radius * Math.cos(angle),
-        (Math.random() - 0.5) * 0.015,
+        (Math.random() - 0.5) * 0.1,
         radius * Math.sin(angle),
       ],
       velocity: [0, 0, 0],
@@ -161,12 +161,12 @@ const applyForces = (
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.0006;      // Минимальное отталкивание
-  const ATTRACTION = 0.015;      // Притяжение связанных
+  const REPULSION = 0.004;       // Отталкивание
+  const ATTRACTION = 0.012;      // Притяжение связанных
   const DAMPING = 0.95;          // Плавное
-  const CENTER_PULL = 0.006;     // Сильное притяжение к ядру
-  const MAX_VELOCITY = 0.003;    // Медленно
-  const IDEAL_DISTANCE = 0.04;   // Очень близко
+  const CENTER_PULL = 0.004;     // Притяжение к ядру
+  const MAX_VELOCITY = 0.01;     // Скорость
+  const IDEAL_DISTANCE = 0.3;    // Оптимальное расстояние
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
@@ -684,7 +684,7 @@ export const FractalUniverse = ({
       />
 
       {/* Central orb - Apple style soft glow */}
-      <Sphere args={[0.025, 32, 32]}>
+      <Sphere args={[0.08, 32, 32]}>
         <meshBasicMaterial 
           color={palette.primary} 
           transparent 
@@ -692,7 +692,7 @@ export const FractalUniverse = ({
         />
       </Sphere>
       {/* Soft inner glow */}
-      <Sphere args={[0.045, 24, 24]}>
+      <Sphere args={[0.12, 24, 24]}>
         <meshBasicMaterial 
           color={palette.glow} 
           transparent 
@@ -700,7 +700,7 @@ export const FractalUniverse = ({
         />
       </Sphere>
       {/* Outer bloom */}
-      <Sphere args={[0.08, 16, 16]}>
+      <Sphere args={[0.18, 16, 16]}>
         <meshBasicMaterial 
           color={palette.glow} 
           transparent 
@@ -758,10 +758,10 @@ export const FractalUniverse = ({
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
-        // Apple widget размеры - больше для читаемости
-        const widgetWidth = 0.12;
-        const widgetHeight = 0.07;
-        const cornerRadius = 0.018;
+        // Apple widget размеры - увеличенные для читаемости
+        const widgetWidth = 0.35;
+        const widgetHeight = 0.2;
+        const cornerRadius = 0.04;
         const connectionCount = nodeData.connects?.length || 0;
         
         // Позиция с органичным покачиванием
@@ -785,20 +785,20 @@ export const FractalUniverse = ({
             >
               {/* Apple widget - внешнее свечение */}
               <RoundedBox
-                args={[widgetWidth + 0.012, widgetHeight + 0.012, 0.002]}
-                radius={cornerRadius + 0.004}
+                args={[widgetWidth + 0.03, widgetHeight + 0.03, 0.005]}
+                radius={cornerRadius + 0.01}
                 smoothness={4}
               >
                 <meshBasicMaterial 
                   color={palette.glow}
                   transparent 
-                  opacity={node.opacity * 0.08}
+                  opacity={node.opacity * 0.1}
                 />
               </RoundedBox>
               
               {/* Apple widget - основной фон (glassmorphism эффект) */}
               <RoundedBox
-                args={[widgetWidth, widgetHeight, 0.012]}
+                args={[widgetWidth, widgetHeight, 0.025]}
                 radius={cornerRadius}
                 smoothness={4}
                 onClick={(e) => {
@@ -817,28 +817,28 @@ export const FractalUniverse = ({
                 <meshBasicMaterial 
                   color="#2C2C2E"
                   transparent 
-                  opacity={node.opacity * 0.92}
+                  opacity={node.opacity * 0.95}
                 />
               </RoundedBox>
               
               {/* Apple widget - тонкая светлая обводка сверху (highlight) */}
               <RoundedBox
-                args={[widgetWidth - 0.004, 0.003, 0.001]}
-                radius={0.001}
+                args={[widgetWidth - 0.02, 0.008, 0.003]}
+                radius={0.003}
                 smoothness={2}
-                position={[0, widgetHeight / 2 - 0.008, 0.007]}
+                position={[0, widgetHeight / 2 - 0.02, 0.015]}
               >
                 <meshBasicMaterial 
                   color="#FFFFFF"
                   transparent 
-                  opacity={node.opacity * 0.08}
+                  opacity={node.opacity * 0.1}
                 />
               </RoundedBox>
               
               {/* Иконка - крупная, по центру слева */}
               <Text
-                position={[-0.035, 0.005, 0.008]}
-                fontSize={0.024}
+                position={[-0.1, 0.01, 0.02]}
+                fontSize={0.07}
                 color={palette.accent}
                 anchorX="center"
                 anchorY="middle"
@@ -849,21 +849,20 @@ export const FractalUniverse = ({
               
               {/* Название - крупное, SF Pro стиль */}
               <Text
-                position={[0.018, 0.012, 0.008]}
-                fontSize={0.013}
+                position={[0.05, 0.035, 0.02]}
+                fontSize={0.038}
                 color={isHovered ? '#FFFFFF' : '#F5F5F7'}
                 anchorX="center"
                 anchorY="middle"
                 fillOpacity={node.opacity}
-                font="/fonts/sf-pro.woff"
               >
                 {nodeData.title}
               </Text>
               
               {/* Подзаголовок - мелкий, приглушённый */}
               <Text
-                position={[0.018, -0.004, 0.008]}
-                fontSize={0.008}
+                position={[0.05, -0.015, 0.02]}
+                fontSize={0.022}
                 color="#98989D"
                 anchorX="center"
                 anchorY="middle"
@@ -874,12 +873,12 @@ export const FractalUniverse = ({
               
               {/* Индикатор связей - маленькие точки */}
               {connectionCount > 0 && (
-                <group position={[0.018, -0.018, 0.008]}>
+                <group position={[0.05, -0.055, 0.02]}>
                   {Array.from({ length: Math.min(connectionCount, 4) }).map((_, i) => (
                     <Sphere 
                       key={i} 
-                      args={[0.003, 8, 8]} 
-                      position={[(i - (Math.min(connectionCount, 4) - 1) / 2) * 0.009, 0, 0]}
+                      args={[0.008, 8, 8]} 
+                      position={[(i - (Math.min(connectionCount, 4) - 1) / 2) * 0.025, 0, 0]}
                     >
                       <meshBasicMaterial 
                         color={palette.primary}
@@ -894,14 +893,14 @@ export const FractalUniverse = ({
               {/* Hover glow effect */}
               {isHovered && (
                 <RoundedBox
-                  args={[widgetWidth + 0.006, widgetHeight + 0.006, 0.001]}
-                  radius={cornerRadius + 0.002}
+                  args={[widgetWidth + 0.015, widgetHeight + 0.015, 0.003]}
+                  radius={cornerRadius + 0.005}
                   smoothness={3}
                 >
                   <meshBasicMaterial 
                     color={palette.accent}
                     transparent 
-                    opacity={node.opacity * 0.25}
+                    opacity={node.opacity * 0.3}
                   />
                 </RoundedBox>
               )}

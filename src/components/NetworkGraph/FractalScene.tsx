@@ -221,8 +221,8 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       setUniverses([{ id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }]);
       setActiveDepth(0);
       setIsZooming(false);
-      setZoomTarget(new THREE.Vector3(0, 0, 0.8));
-      camera.position.set(0, 0, 0.8);
+      setZoomTarget(new THREE.Vector3(0, 0, 2.5));
+      camera.position.set(0, 0, 2.5);
     }
   }, [resetTrigger, camera]);
 
@@ -246,7 +246,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
     });
     
     const targetPos = new THREE.Vector3(...position);
-    const cameraTargetDistance = 0.25; // Ещё ближе к узлам
+    const cameraTargetDistance = 1.5; // Комфортное расстояние для обзора
     // Фронтальный вид - камера прямо перед целью по оси Z
     const newCameraPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z + cameraTargetDistance);
     
