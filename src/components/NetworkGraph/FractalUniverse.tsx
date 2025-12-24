@@ -758,8 +758,10 @@ export const FractalUniverse = ({
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
-        const widgetWidth = 0.065;
-        const widgetHeight = 0.035;
+        // Apple widget размеры - больше для читаемости
+        const widgetWidth = 0.12;
+        const widgetHeight = 0.07;
+        const cornerRadius = 0.018;
         const connectionCount = nodeData.connects?.length || 0;
         
         // Позиция с органичным покачиванием
@@ -781,10 +783,23 @@ export const FractalUniverse = ({
               position={organicPosition}
               scale={node.scale * breathe * hoverScale}
             >
-              {/* Компактный виджет */}
+              {/* Apple widget - внешнее свечение */}
               <RoundedBox
-                args={[widgetWidth, widgetHeight, 0.008]}
-                radius={0.01}
+                args={[widgetWidth + 0.012, widgetHeight + 0.012, 0.002]}
+                radius={cornerRadius + 0.004}
+                smoothness={4}
+              >
+                <meshBasicMaterial 
+                  color={palette.glow}
+                  transparent 
+                  opacity={node.opacity * 0.08}
+                />
+              </RoundedBox>
+              
+              {/* Apple widget - основной фон (glassmorphism эффект) */}
+              <RoundedBox
+                args={[widgetWidth, widgetHeight, 0.012]}
+                radius={cornerRadius}
                 smoothness={4}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -800,29 +815,30 @@ export const FractalUniverse = ({
                 }}
               >
                 <meshBasicMaterial 
-                  color="#1C1C1E"
+                  color="#2C2C2E"
                   transparent 
-                  opacity={node.opacity * 0.9}
+                  opacity={node.opacity * 0.92}
                 />
               </RoundedBox>
               
-              {/* Тонкая граница */}
+              {/* Apple widget - тонкая светлая обводка сверху (highlight) */}
               <RoundedBox
-                args={[widgetWidth + 0.002, widgetHeight + 0.002, 0.004]}
-                radius={0.008}
-                smoothness={3}
+                args={[widgetWidth - 0.004, 0.003, 0.001]}
+                radius={0.001}
+                smoothness={2}
+                position={[0, widgetHeight / 2 - 0.008, 0.007]}
               >
                 <meshBasicMaterial 
-                  color={isHovered ? palette.accent : palette.primary}
+                  color="#FFFFFF"
                   transparent 
-                  opacity={node.opacity * (isHovered ? 0.6 : 0.3)}
+                  opacity={node.opacity * 0.08}
                 />
               </RoundedBox>
               
-              {/* Иконка слева */}
+              {/* Иконка - крупная, по центру слева */}
               <Text
-                position={[-0.02, 0, 0.005]}
-                fontSize={0.014}
+                position={[-0.035, 0.005, 0.008]}
+                fontSize={0.024}
                 color={palette.accent}
                 anchorX="center"
                 anchorY="middle"
@@ -831,29 +847,64 @@ export const FractalUniverse = ({
                 {nodeData.icon}
               </Text>
               
-              {/* Название */}
+              {/* Название - крупное, SF Pro стиль */}
               <Text
-                position={[0.01, 0.005, 0.005]}
-                fontSize={0.009}
-                color={isHovered ? '#FFFFFF' : '#E8E8ED'}
+                position={[0.018, 0.012, 0.008]}
+                fontSize={0.013}
+                color={isHovered ? '#FFFFFF' : '#F5F5F7'}
                 anchorX="center"
                 anchorY="middle"
                 fillOpacity={node.opacity}
+                font="/fonts/sf-pro.woff"
               >
                 {nodeData.title}
               </Text>
               
-              {/* Счётчик связей */}
+              {/* Подзаголовок - мелкий, приглушённый */}
               <Text
-                position={[0.01, -0.006, 0.005]}
-                fontSize={0.006}
-                color={palette.glow}
+                position={[0.018, -0.004, 0.008]}
+                fontSize={0.008}
+                color="#98989D"
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity * 0.7}
+                fillOpacity={node.opacity * 0.85}
               >
-                {connectionCount > 0 ? `${connectionCount} →` : ''}
+                {nodeData.subtitle || ''}
               </Text>
+              
+              {/* Индикатор связей - маленькие точки */}
+              {connectionCount > 0 && (
+                <group position={[0.018, -0.018, 0.008]}>
+                  {Array.from({ length: Math.min(connectionCount, 4) }).map((_, i) => (
+                    <Sphere 
+                      key={i} 
+                      args={[0.003, 8, 8]} 
+                      position={[(i - (Math.min(connectionCount, 4) - 1) / 2) * 0.009, 0, 0]}
+                    >
+                      <meshBasicMaterial 
+                        color={palette.primary}
+                        transparent 
+                        opacity={node.opacity * 0.7}
+                      />
+                    </Sphere>
+                  ))}
+                </group>
+              )}
+              
+              {/* Hover glow effect */}
+              {isHovered && (
+                <RoundedBox
+                  args={[widgetWidth + 0.006, widgetHeight + 0.006, 0.001]}
+                  radius={cornerRadius + 0.002}
+                  smoothness={3}
+                >
+                  <meshBasicMaterial 
+                    color={palette.accent}
+                    transparent 
+                    opacity={node.opacity * 0.25}
+                  />
+                </RoundedBox>
+              )}
             </group>
           </Billboard>
         );
