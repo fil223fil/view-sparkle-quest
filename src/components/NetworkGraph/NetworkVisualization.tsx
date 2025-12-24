@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { FractalScene } from './FractalScene';
 import { Controls } from './Controls';
@@ -6,7 +6,9 @@ import { Controls } from './Controls';
 export const NetworkVisualization = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(0);
+  const [canGoBack, setCanGoBack] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const goBackRef = useRef<(() => void) | null>(null);
 
   const handleTogglePause = useCallback(() => {
     setIsPaused((prev) => !prev);
@@ -70,7 +72,7 @@ export const NetworkVisualization = () => {
 
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 2.5], fov: 50 }}
+        camera={{ position: [0, 0, 1.2], fov: 50 }}
         dpr={[1, 2]}
         gl={{ 
           antialias: true, 
@@ -83,6 +85,10 @@ export const NetworkVisualization = () => {
           isPaused={isPaused}
           onReset={handleReset}
           resetTrigger={resetTrigger}
+          onDepthChange={(depth, goBack) => {
+            setCanGoBack(depth > 0);
+            goBackRef.current = goBack;
+          }}
         />
       </Canvas>
 
@@ -92,6 +98,8 @@ export const NetworkVisualization = () => {
         onTogglePause={handleTogglePause}
         onReset={handleReset}
         onFullscreen={handleFullscreen}
+        canGoBack={canGoBack}
+        onGoBack={() => goBackRef.current?.()}
       />
 
       {/* Instructions */}

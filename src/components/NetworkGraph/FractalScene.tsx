@@ -17,6 +17,7 @@ interface FractalSceneProps {
   isPaused: boolean;
   onReset: () => void;
   resetTrigger: number;
+  onDepthChange?: (depth: number, goBack: () => void) => void;
 }
 
 // 3B1B style colors
@@ -185,7 +186,7 @@ const OrbitingAccent = ({
   );
 };
 
-export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
+export const FractalScene = ({ isPaused, resetTrigger, onDepthChange }: FractalSceneProps) => {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
   const [universes, setUniverses] = useState<UniverseLevel[]>([
@@ -221,8 +222,8 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       setUniverses([{ id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }]);
       setActiveDepth(0);
       setIsZooming(false);
-      setZoomTarget(new THREE.Vector3(0, 0, 2.5));
-      camera.position.set(0, 0, 2.5);
+      setZoomTarget(new THREE.Vector3(0, 0, 1.2));
+      camera.position.set(0, 0, 1.2);
     }
   }, [resetTrigger, camera]);
 
@@ -246,7 +247,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
     });
     
     const targetPos = new THREE.Vector3(...position);
-    const cameraTargetDistance = 1.5; // Комфортное расстояние для обзора
+    const cameraTargetDistance = 0.8; // Ближе к узлам
     // Фронтальный вид - камера прямо перед целью по оси Z
     const newCameraPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z + cameraTargetDistance);
     
@@ -295,16 +296,22 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
   const handleGoBack = useCallback(() => {
     if (activeDepth > 0 && !isZooming) {
       setIsZooming(true);
-      setActiveDepth(prev => prev - 1);
+      const newDepth = activeDepth - 1;
+      setActiveDepth(newDepth);
       
-      const parentUniverse = universes.find(u => u.depth === activeDepth - 1);
+      const parentUniverse = universes.find(u => u.depth === newDepth);
       if (parentUniverse) {
         const targetPos = new THREE.Vector3(...parentUniverse.position);
-        const cameraDistance = 2 / Math.pow(2, activeDepth - 1);
+        const cameraDistance = 1.2;
         setZoomTarget(targetPos.clone().add(new THREE.Vector3(0, 0, cameraDistance)));
       }
     }
   }, [activeDepth, isZooming, universes]);
+
+  // Уведомляем родителя об изменении глубины
+  useEffect(() => {
+    onDepthChange?.(activeDepth, handleGoBack);
+  }, [activeDepth, handleGoBack, onDepthChange]);
 
   return (
     <>
@@ -359,23 +366,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
         />
       ))}
 
-      {/* 3B1B style back button */}
-      {activeDepth > 0 && (
-        <group position={[0, 1.5, 0]}>
-          <Text
-            fontSize={0.05}
-            color={COLORS.blue}
-            anchorX="center"
-            anchorY="middle"
-            onClick={handleGoBack}
-            onPointerOver={(e) => (document.body.style.cursor = 'pointer')}
-            onPointerOut={(e) => (document.body.style.cursor = 'default')}
-            fillOpacity={0.9}
-          >
-            ← назад
-          </Text>
-        </group>
-      )}
 
       {/* Instructions - 3B1B style */}
       {activeDepth === 0 && !isZooming && (
