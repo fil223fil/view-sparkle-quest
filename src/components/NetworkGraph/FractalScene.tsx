@@ -167,7 +167,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
             onPointerOver={(e) => (document.body.style.cursor = 'pointer')}
             onPointerOut={(e) => (document.body.style.cursor = 'default')}
             fillOpacity={0.8}
-            font="/fonts/SF-Pro-Display-Regular.otf"
           >
             ← Назад
           </Text>
