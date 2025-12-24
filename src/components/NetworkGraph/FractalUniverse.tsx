@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Sphere, Stars, Text, Line, RoundedBox } from '@react-three/drei';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Sphere, Stars, Text, Line, RoundedBox, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface UniverseNode {
@@ -770,85 +770,92 @@ export const FractalUniverse = ({
         ];
         
         return (
-          <group 
-            key={`node-${node.id}`} 
-            position={organicPosition}
-            scale={node.scale * breathe * hoverScale}
+          <Billboard
+            key={`node-${node.id}`}
+            follow={true}
+            lockX={false}
+            lockY={false}
+            lockZ={false}
           >
-            {/* Компактный виджет */}
-            <RoundedBox
-              args={[widgetWidth, widgetHeight, 0.008]}
-              radius={0.01}
-              smoothness={4}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNodeClick(node.position);
-              }}
-              onPointerOver={() => {
-                setHoveredNode(node.id);
-                document.body.style.cursor = 'pointer';
-              }}
-              onPointerOut={() => {
-                setHoveredNode(null);
-                document.body.style.cursor = 'default';
-              }}
+            <group 
+              position={organicPosition}
+              scale={node.scale * breathe * hoverScale}
             >
-              <meshBasicMaterial 
-                color="#1C1C1E"
-                transparent 
-                opacity={node.opacity * 0.9}
-              />
-            </RoundedBox>
-            
-            {/* Тонкая граница */}
-            <RoundedBox
-              args={[widgetWidth + 0.002, widgetHeight + 0.002, 0.004]}
-              radius={0.008}
-              smoothness={3}
-            >
-              <meshBasicMaterial 
-                color={isHovered ? palette.accent : palette.primary}
-                transparent 
-                opacity={node.opacity * (isHovered ? 0.6 : 0.3)}
-              />
-            </RoundedBox>
-            
-            {/* Иконка слева */}
-            <Text
-              position={[-0.02, 0, 0.005]}
-              fontSize={0.014}
-              color={palette.accent}
-              anchorX="center"
-              anchorY="middle"
-              fillOpacity={node.opacity}
-            >
-              {nodeData.icon}
-            </Text>
-            
-            {/* Название */}
-            <Text
-              position={[0.01, 0.005, 0.005]}
-              fontSize={0.009}
-              color={isHovered ? '#FFFFFF' : '#E8E8ED'}
-              anchorX="center"
-              anchorY="middle"
-              fillOpacity={node.opacity}
-            >
-              {nodeData.title}
-            </Text>
-            
-            {/* Счётчик связей */}
-            <Text
-              position={[0.01, -0.006, 0.005]}
-              fontSize={0.006}
-              color={palette.glow}
-              anchorX="center"
-              anchorY="middle"
-              fillOpacity={node.opacity * 0.7}
-            >
-              {connectionCount > 0 ? `${connectionCount} →` : ''}
-            </Text>
-          </group>
+              {/* Компактный виджет */}
+              <RoundedBox
+                args={[widgetWidth, widgetHeight, 0.008]}
+                radius={0.01}
+                smoothness={4}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNodeClick(node.position);
+                }}
+                onPointerOver={() => {
+                  setHoveredNode(node.id);
+                  document.body.style.cursor = 'pointer';
+                }}
+                onPointerOut={() => {
+                  setHoveredNode(null);
+                  document.body.style.cursor = 'default';
+                }}
+              >
+                <meshBasicMaterial 
+                  color="#1C1C1E"
+                  transparent 
+                  opacity={node.opacity * 0.9}
+                />
+              </RoundedBox>
+              
+              {/* Тонкая граница */}
+              <RoundedBox
+                args={[widgetWidth + 0.002, widgetHeight + 0.002, 0.004]}
+                radius={0.008}
+                smoothness={3}
+              >
+                <meshBasicMaterial 
+                  color={isHovered ? palette.accent : palette.primary}
+                  transparent 
+                  opacity={node.opacity * (isHovered ? 0.6 : 0.3)}
+                />
+              </RoundedBox>
+              
+              {/* Иконка слева */}
+              <Text
+                position={[-0.02, 0, 0.005]}
+                fontSize={0.014}
+                color={palette.accent}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity}
+              >
+                {nodeData.icon}
+              </Text>
+              
+              {/* Название */}
+              <Text
+                position={[0.01, 0.005, 0.005]}
+                fontSize={0.009}
+                color={isHovered ? '#FFFFFF' : '#E8E8ED'}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity}
+              >
+                {nodeData.title}
+              </Text>
+              
+              {/* Счётчик связей */}
+              <Text
+                position={[0.01, -0.006, 0.005]}
+                fontSize={0.006}
+                color={palette.glow}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity * 0.7}
+              >
+                {connectionCount > 0 ? `${connectionCount} →` : ''}
+              </Text>
+            </group>
+          </Billboard>
         );
       })}
 
