@@ -15,23 +15,46 @@ const generateNodePosition = (index: number, total: number): [number, number, nu
   ];
 };
 
+const generateFractalPositions = (
+  parentPosition: [number, number, number],
+  depth: number,
+  count: number = 3
+): [number, number, number][] => {
+  const positions: [number, number, number][] = [];
+  const radius = 0.4 / (depth + 1); // Smaller radius for deeper levels
+  
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+    const verticalAngle = Math.random() * Math.PI - Math.PI / 2;
+    
+    positions.push([
+      parentPosition[0] + radius * Math.cos(angle) * Math.cos(verticalAngle),
+      parentPosition[1] + radius * Math.sin(verticalAngle),
+      parentPosition[2] + radius * Math.sin(angle) * Math.cos(verticalAngle),
+    ]);
+  }
+  
+  return positions;
+};
+
 export const useNetworkAnimation = (isPaused: boolean) => {
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
   const [edges, setEdges] = useState<NetworkEdge[]>([]);
   const [time, setTime] = useState(0);
 
-  const addNode = useCallback((currentTime: number) => {
+  const addNode = useCallback((currentTime: number, position?: [number, number, number], depth: number = 0) => {
     setNodes((prev) => {
       const newId = prev.length;
-      const position = generateNodePosition(newId, 20);
+      const nodePosition = position || generateNodePosition(newId, 20);
       return [
         ...prev,
         {
           id: newId,
-          position,
+          position: nodePosition,
           scale: 0,
           opacity: 0,
           birthTime: currentTime,
+          depth,
         },
       ];
     });
@@ -42,6 +65,59 @@ export const useNetworkAnimation = (isPaused: boolean) => {
       ...prev,
       { from, to, opacity: 0, birthTime: currentTime },
     ]);
+  }, []);
+
+  const spawnFractal = useCallback((parentPosition: [number, number, number], parentDepth: number, currentTime: number) => {
+    const newDepth = parentDepth + 1;
+    const childCount = Math.max(2, 4 - newDepth); // Fewer children at deeper levels
+    const childPositions = generateFractalPositions(parentPosition, newDepth, childCount);
+    
+    setNodes((prev) => {
+      const parentId = prev.findIndex(n => 
+        n.position[0] === parentPosition[0] && 
+        n.position[1] === parentPosition[1] && 
+        n.position[2] === parentPosition[2]
+      );
+      
+      const newNodes = childPositions.map((pos, i) => ({
+        id: prev.length + i,
+        position: pos,
+        scale: 0,
+        opacity: 0,
+        birthTime: currentTime + i * 0.1,
+        depth: newDepth,
+      }));
+      
+      return [...prev, ...newNodes];
+    });
+
+    // Add edges from parent to new children
+    setTimeout(() => {
+      setNodes((currentNodes) => {
+        const parentId = currentNodes.findIndex(n => 
+          n.position[0] === parentPosition[0] && 
+          n.position[1] === parentPosition[1] && 
+          n.position[2] === parentPosition[2]
+        );
+        
+        if (parentId !== -1) {
+          const newChildIds = currentNodes
+            .slice(-childCount)
+            .map(n => n.id);
+          
+          setEdges((prev) => [
+            ...prev,
+            ...newChildIds.map(childId => ({
+              from: parentId,
+              to: childId,
+              opacity: 0,
+              birthTime: currentTime,
+            })),
+          ]);
+        }
+        return currentNodes;
+      });
+    }, 50);
   }, []);
 
   // Main animation loop
@@ -124,5 +200,6 @@ export const useNetworkAnimation = (isPaused: boolean) => {
     edges: animatedEdges,
     time,
     reset,
+    spawnFractal,
   };
 };
