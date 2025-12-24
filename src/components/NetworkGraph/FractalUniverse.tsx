@@ -168,6 +168,8 @@ const applyForces = (
   edges: UniverseEdge[], 
   deltaTime: number
 ): UniverseNode[] => {
+  if (!nodes || nodes.length === 0) return nodes;
+  
   const REPULSION = 0.0008;      // Force pushing nodes apart
   const ATTRACTION = 0.003;      // Force pulling connected nodes together
   const DAMPING = 0.92;          // Velocity damping for smooth movement
@@ -176,11 +178,16 @@ const applyForces = (
   const IDEAL_DISTANCE = 0.25;   // Ideal distance between connected nodes
   
   return nodes.map((node, i) => {
+    if (!node || !node.position) return node;
+    
+    // Ensure velocity exists
+    const nodeVelocity = node.velocity || [0, 0, 0];
+    
     let fx = 0, fy = 0, fz = 0;
     
     // Repulsion from all other nodes (magnetic field effect)
     nodes.forEach((other, j) => {
-      if (i === j) return;
+      if (i === j || !other || !other.position) return;
       
       const dx = node.position[0] - other.position[0];
       const dy = node.position[1] - other.position[1];
@@ -196,13 +203,14 @@ const applyForces = (
     
     // Attraction along edges (connected nodes pull each other)
     edges.forEach(edge => {
+      if (!edge) return;
       let otherIndex = -1;
       if (edge.from === node.id) otherIndex = edge.to;
       else if (edge.to === node.id) otherIndex = edge.from;
       
       if (otherIndex !== -1) {
-        const other = nodes.find(n => n.id === otherIndex);
-        if (other) {
+        const other = nodes.find(n => n && n.id === otherIndex);
+        if (other && other.position) {
           const dx = other.position[0] - node.position[0];
           const dy = other.position[1] - node.position[1];
           const dz = other.position[2] - node.position[2];
@@ -224,9 +232,9 @@ const applyForces = (
     fz -= node.position[2] * CENTER_PULL;
     
     // Update velocity with forces
-    let vx = (node.velocity[0] + fx) * DAMPING;
-    let vy = (node.velocity[1] + fy) * DAMPING;
-    let vz = (node.velocity[2] + fz) * DAMPING;
+    let vx = (nodeVelocity[0] + fx) * DAMPING;
+    let vy = (nodeVelocity[1] + fy) * DAMPING;
+    let vz = (nodeVelocity[2] + fz) * DAMPING;
     
     // Clamp velocity
     const speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
