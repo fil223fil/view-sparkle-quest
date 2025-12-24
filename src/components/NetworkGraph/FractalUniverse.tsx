@@ -128,42 +128,78 @@ const DEPTH_PALETTES = [
   { primary: '#AC8E68', secondary: '#917554', glow: '#C9B08E', accent: '#64D2FF' },  // System Brown/Gold
 ];
 
-const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
+// Mind-map layout - hierarchical tree structure in 3D
+const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
+  const levels = 3;
+  const nodesPerLevel = Math.ceil(count / levels);
+  
   for (let i = 0; i < count; i++) {
-    const phi = Math.acos(-1 + (2 * i) / count);
-    const theta = Math.sqrt(count * Math.PI) * phi;
-    const radius = 0.5 + Math.random() * 0.25; // Larger spread for bigger widgets
+    const level = Math.floor(i / nodesPerLevel);
+    const indexInLevel = i % nodesPerLevel;
+    const totalInLevel = Math.min(nodesPerLevel, count - level * nodesPerLevel);
+    
+    // Spread nodes in a tree-like 3D structure
+    const angle = (indexInLevel / totalInLevel) * Math.PI * 2 + level * 0.3;
+    const radius = 0.2 + level * 0.35;
+    const yOffset = (level - 1) * 0.15;
+    const zVariance = Math.sin(indexInLevel * 1.5) * 0.15;
     
     nodes.push({
       id: i,
       position: [
-        radius * Math.cos(theta) * Math.sin(phi),
-        radius * Math.sin(theta) * Math.sin(phi),
-        radius * Math.cos(phi),
+        radius * Math.cos(angle),
+        yOffset + Math.sin(angle + i) * 0.1,
+        radius * Math.sin(angle) + zVariance,
       ],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.15,
+      birthTime: time + i * 0.12,
     });
   }
   return nodes;
 };
 
-const generateUniverseEdges = (nodeCount: number, time: number): UniverseEdge[] => {
+// Generate mind-map connections based on concept relationships
+const generateMindMapEdges = (nodeCount: number, time: number, depth: number): UniverseEdge[] => {
   const edges: UniverseEdge[] = [];
-  for (let i = 1; i < nodeCount; i++) {
-    const connections = Math.min(2, i);
-    for (let j = 0; j < connections; j++) {
-      const target = Math.floor(Math.random() * i);
-      edges.push({
-        from: i,
-        to: target,
-        opacity: 0,
-        birthTime: time + i * 0.15 + 0.1,
+  const conceptMap = getConceptMap(depth);
+  
+  // Connect each node to central (node 0 connects to all)
+  for (let i = 1; i < Math.min(4, nodeCount); i++) {
+    edges.push({
+      from: 0,
+      to: i,
+      opacity: 0,
+      birthTime: time + i * 0.1,
+    });
+  }
+  
+  // Create semantic connections based on concept map
+  for (let i = 0; i < nodeCount; i++) {
+    const nodeData = conceptMap.nodes[i % conceptMap.nodes.length];
+    if (nodeData.connects) {
+      nodeData.connects.forEach((targetName, idx) => {
+        const targetIndex = conceptMap.nodes.findIndex(n => n.title === targetName);
+        if (targetIndex !== -1 && targetIndex < nodeCount && targetIndex !== i) {
+          // Avoid duplicate edges
+          const exists = edges.some(e => 
+            (e.from === i && e.to === targetIndex) || 
+            (e.from === targetIndex && e.to === i)
+          );
+          if (!exists) {
+            edges.push({
+              from: i,
+              to: targetIndex,
+              opacity: 0,
+              birthTime: time + i * 0.1 + idx * 0.05 + 0.2,
+            });
+          }
+        }
       });
     }
   }
+  
   return edges;
 };
 
@@ -281,86 +317,135 @@ const FormulaStream = ({
   );
 };
 
-// Minimalist dynamic edge - thin line made of flowing formula characters
-const DynamicEdge = ({ 
+// Mind-map 3D connection line with label
+const MindMapConnection = ({ 
   start, 
   end, 
   opacity, 
   palette, 
   edgeIndex,
-  depth,
-  time 
+  connectionLabel,
+  time,
+  isFromCenter
 }: { 
   start: [number, number, number]; 
   end: [number, number, number]; 
   opacity: number; 
   palette: typeof DEPTH_PALETTES[0];
   edgeIndex: number;
-  depth: number;
+  connectionLabel?: string;
   time: number;
+  isFromCenter: boolean;
 }) => {
-  const formulas = getFormulasForDepth(depth);
-  
-  // Create subtle curved path
-  const { curve, points } = useMemo(() => {
+  // Create curved 3D bezier path for mind-map style
+  const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...start);
     const endVec = new THREE.Vector3(...end);
     const mid = startVec.clone().add(endVec).multiplyScalar(0.5);
     
-    // Minimal curve offset for elegance
+    // Add 3D curvature for mind-map feel
     const direction = endVec.clone().sub(startVec).normalize();
     const perpendicular = new THREE.Vector3()
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
-      .normalize()
-      .multiplyScalar(startVec.distanceTo(endVec) * 0.08);
+      .normalize();
     
-    if (edgeIndex % 2 === 0) perpendicular.negate();
-    mid.add(perpendicular);
+    // Curve outward in 3D space
+    const curveAmount = startVec.distanceTo(endVec) * (isFromCenter ? 0.15 : 0.25);
+    const yLift = isFromCenter ? 0.05 : 0.08;
+    
+    mid.add(perpendicular.multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 1 : -1)));
+    mid.y += yLift;
     
     const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
-    const curvePoints = bezierCurve.getPoints(30);
+    const curvePoints = bezierCurve.getPoints(40);
     
-    return { curve: bezierCurve, points: curvePoints };
-  }, [start, end, edgeIndex]);
+    return { curve: bezierCurve, points: curvePoints, midPoint: mid };
+  }, [start, end, edgeIndex, isFromCenter]);
 
-  // Multiple formula streams with staggered timing
-  const streams = useMemo(() => {
-    return [
-      { formula: formulas[edgeIndex % formulas.length], offset: 0, speed: 0.08 },
-      { formula: formulas[(edgeIndex + 1) % formulas.length], offset: 0.4, speed: 0.1 },
-      { formula: formulas[(edgeIndex + 2) % formulas.length], offset: 0.8, speed: 0.06 },
-    ];
-  }, [formulas, edgeIndex]);
-
-  // Very subtle base line - almost invisible
-  const basePulse = 0.02 + Math.sin(time * 2 + edgeIndex) * 0.01;
+  // Animated flow effect
+  const flowOffset = (time * 0.5 + edgeIndex * 0.2) % 1;
+  const pulseIntensity = 0.4 + Math.sin(time * 1.5 + edgeIndex) * 0.15;
 
   return (
     <group>
-      {/* Ultra-thin ghost line - barely visible guide */}
+      {/* Main connection line - glowing tube effect */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={0.5}
+        lineWidth={isFromCenter ? 2.5 : 1.8}
         transparent
-        opacity={opacity * basePulse}
+        opacity={opacity * pulseIntensity * 0.8}
       />
-
-      {/* Formula character streams - the main visual */}
-      {streams.map((stream, i) => (
-        <FormulaStream
-          key={i}
-          curve={curve}
-          formula={stream.formula}
-          baseOffset={stream.offset}
-          speed={stream.speed}
-          opacity={opacity}
-          primaryColor={palette.primary}
-          accentColor={palette.accent}
-          time={time}
-          streamIndex={edgeIndex * 3 + i}
+      
+      {/* Outer glow line */}
+      <Line
+        points={points}
+        color={palette.glow}
+        lineWidth={isFromCenter ? 5 : 3.5}
+        transparent
+        opacity={opacity * 0.15}
+      />
+      
+      {/* Flow particles along the line */}
+      {[0, 0.33, 0.66].map((offset, i) => {
+        const t = (flowOffset + offset) % 1;
+        const pos = curve.getPoint(t);
+        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.9;
+        
+        return (
+          <Sphere key={i} args={[0.008, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+            <meshBasicMaterial 
+              color={palette.accent}
+              transparent 
+              opacity={particleOpacity}
+            />
+          </Sphere>
+        );
+      })}
+      
+      {/* Connection label at midpoint */}
+      {connectionLabel && (
+        <group position={[midPoint.x, midPoint.y + 0.025, midPoint.z]}>
+          {/* Label background */}
+          <RoundedBox args={[0.06, 0.018, 0.004]} radius={0.004} smoothness={2}>
+            <meshBasicMaterial 
+              color="#1C1C1E"
+              transparent 
+              opacity={opacity * 0.85}
+            />
+          </RoundedBox>
+          
+          {/* Label text */}
+          <Text
+            position={[0, 0, 0.003]}
+            fontSize={0.008}
+            color={palette.glow}
+            anchorX="center"
+            anchorY="middle"
+            fillOpacity={opacity * 0.7}
+          >
+            {connectionLabel}
+          </Text>
+        </group>
+      )}
+      
+      {/* Start point connector dot */}
+      <Sphere args={[0.012, 12, 12]} position={start}>
+        <meshBasicMaterial 
+          color={palette.primary}
+          transparent 
+          opacity={opacity * 0.6}
         />
-      ))}
+      </Sphere>
+      
+      {/* End point connector dot */}
+      <Sphere args={[0.012, 12, 12]} position={end}>
+        <meshBasicMaterial 
+          color={palette.accent}
+          transparent 
+          opacity={opacity * 0.6}
+        />
+      </Sphere>
     </group>
   );
 };
@@ -386,9 +471,9 @@ export const FractalUniverse = ({
   useFrame(({ clock }) => {
     if (isActive && !initialized.current) {
       initialized.current = true;
-      const nodeCount = Math.max(5, 8 - depth);
-      setNodes(generateUniverseNodes(nodeCount, clock.elapsedTime));
-      setEdges(generateUniverseEdges(nodeCount, clock.elapsedTime));
+      const nodeCount = Math.max(6, 8);
+      setNodes(generateMindMapNodes(nodeCount, clock.elapsedTime));
+      setEdges(generateMindMapEdges(nodeCount, clock.elapsedTime, depth));
     }
     
     if (isActive) {
@@ -466,22 +551,34 @@ export const FractalUniverse = ({
         />
       </Sphere>
 
-      {/* Dynamic edges */}
+      {/* Mind-map 3D connections */}
       {animatedEdges.map((edge, i) => {
         const startNode = animatedNodes.find(n => n.id === edge.from);
         const endNode = animatedNodes.find(n => n.id === edge.to);
         if (!startNode || !endNode) return null;
 
+        const conceptMap = getConceptMap(depth);
+        const startData = conceptMap.nodes[edge.from % conceptMap.nodes.length];
+        const endData = conceptMap.nodes[edge.to % conceptMap.nodes.length];
+        
+        // Get connection label if it's a semantic connection
+        const connectionLabel = startData.connects?.includes(endData.title) 
+          ? '→' 
+          : endData.connects?.includes(startData.title) 
+            ? '←' 
+            : undefined;
+
         return (
-          <DynamicEdge
+          <MindMapConnection
             key={`edge-${i}`}
             start={startNode.position}
             end={endNode.position}
             opacity={edge.opacity}
             palette={palette}
             edgeIndex={i}
-            depth={depth}
+            connectionLabel={connectionLabel}
             time={time}
+            isFromCenter={edge.from === 0}
           />
         );
       })}
