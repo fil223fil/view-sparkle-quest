@@ -66,13 +66,16 @@ const PROCESS_FORMULAS = {
   ],
 };
 
-// Harmonious color palette - deeper, more cosmic
+// Extended cosmic color palette - vibrant and diverse
 const DEPTH_PALETTES = [
-  { primary: '#58C4DD', secondary: '#3A8FA8', glow: '#7FD4E8' },  // Cyan
-  { primary: '#E056A0', secondary: '#A03870', glow: '#FF7AC0' },  // Magenta
-  { primary: '#9B59B6', secondary: '#6C3483', glow: '#BB79D6' },  // Purple
-  { primary: '#F39C12', secondary: '#B57A0D', glow: '#FFBC42' },  // Gold
-  { primary: '#2ECC71', secondary: '#1E8449', glow: '#5EFC91' },  // Emerald
+  { primary: '#00D9FF', secondary: '#0099B8', glow: '#80ECFF', accent: '#FF6B9D' },  // Electric Cyan
+  { primary: '#FF2D7B', secondary: '#B81F56', glow: '#FF7AAF', accent: '#00FFD1' },  // Hot Pink
+  { primary: '#A855F7', secondary: '#7C3AED', glow: '#C084FC', accent: '#FACC15' },  // Vivid Purple
+  { primary: '#FFB800', secondary: '#CC9300', glow: '#FFD54F', accent: '#00E5FF' },  // Solar Gold
+  { primary: '#00FF87', secondary: '#00B85C', glow: '#7AFFB8', accent: '#FF4D6D' },  // Neon Green
+  { primary: '#FF6B35', secondary: '#CC5529', glow: '#FF9A70', accent: '#4ECDC4' },  // Sunset Orange
+  { primary: '#667EEA', secondary: '#5A67D8', glow: '#A3BFFA', accent: '#F687B3' },  // Indigo Dream
+  { primary: '#38B2AC', secondary: '#2C9A94', glow: '#81E6D9', accent: '#FC8181' },  // Teal Wave
 ];
 
 const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
@@ -121,49 +124,111 @@ const getFormulasForDepth = (depth: number): string[] => {
   return PROCESS_FORMULAS[category];
 };
 
-// Flowing formula component - travels along the edge
-const FlowingFormula = ({
+// Single formula character component - moves along the edge
+const FormulaChar = ({
   curve,
-  formula,
-  offset,
-  speed,
+  char,
+  t,
   opacity,
   color,
-  time,
+  scale = 1,
 }: {
   curve: THREE.QuadraticBezierCurve3;
-  formula: string;
-  offset: number;
-  speed: number;
+  char: string;
+  t: number;
   opacity: number;
   color: string;
-  time: number;
+  scale?: number;
 }) => {
-  // Calculate position along curve with smooth looping
-  const t = ((time * speed + offset) % 1 + 1) % 1;
   const point = curve.getPoint(t);
-  
-  // Fade in/out at edges
-  const fadeZone = 0.15;
-  let fadeOpacity = 1;
-  if (t < fadeZone) fadeOpacity = t / fadeZone;
-  else if (t > 1 - fadeZone) fadeOpacity = (1 - t) / fadeZone;
   
   return (
     <Text
       position={[point.x, point.y, point.z]}
-      fontSize={0.022}
+      fontSize={0.016 * scale}
       color={color}
       anchorX="center"
       anchorY="middle"
-      fillOpacity={opacity * fadeOpacity * 0.9}
+      fillOpacity={opacity}
     >
-      {formula}
+      {char}
     </Text>
   );
 };
 
-// Dynamic edge component with flowing formulas
+// Formula stream - characters building up and flowing along the edge
+const FormulaStream = ({
+  curve,
+  formula,
+  baseOffset,
+  speed,
+  opacity,
+  primaryColor,
+  accentColor,
+  time,
+  streamIndex,
+}: {
+  curve: THREE.QuadraticBezierCurve3;
+  formula: string;
+  baseOffset: number;
+  speed: number;
+  opacity: number;
+  primaryColor: string;
+  accentColor: string;
+  time: number;
+  streamIndex: number;
+}) => {
+  const chars = formula.split('');
+  const charSpacing = 0.04;
+  
+  // Building animation - characters appear one by one
+  const buildProgress = ((time * 0.3 + baseOffset * 2) % 3) / 3;
+  const visibleChars = Math.floor(buildProgress * chars.length * 1.5);
+  
+  // Flow position
+  const flowT = ((time * speed + baseOffset) % 1.2);
+  
+  return (
+    <group>
+      {chars.map((char, i) => {
+        // Character visibility based on build progress
+        const charBuildDelay = i / chars.length;
+        const isVisible = buildProgress > charBuildDelay * 0.6;
+        if (!isVisible) return null;
+        
+        // Position along curve
+        const t = Math.max(0, Math.min(1, flowT - i * charSpacing));
+        if (t <= 0 || t >= 1) return null;
+        
+        // Fade edges
+        const fadeIn = Math.min(1, t / 0.1);
+        const fadeOut = Math.min(1, (1 - t) / 0.1);
+        const charOpacity = opacity * fadeIn * fadeOut * 0.85;
+        
+        // Alternate colors for visual interest
+        const useAccent = (i + streamIndex) % 5 === 0;
+        const color = useAccent ? accentColor : primaryColor;
+        
+        // Slight scale variation for depth
+        const scale = 0.9 + Math.sin(time * 3 + i) * 0.1;
+        
+        return (
+          <FormulaChar
+            key={`${streamIndex}-${i}`}
+            curve={curve}
+            char={char}
+            t={t}
+            opacity={charOpacity}
+            color={color}
+            scale={scale}
+          />
+        );
+      })}
+    </group>
+  );
+};
+
+// Minimalist dynamic edge - thin line made of flowing formula characters
 const DynamicEdge = ({ 
   start, 
   end, 
@@ -181,113 +246,66 @@ const DynamicEdge = ({
   depth: number;
   time: number;
 }) => {
-  const particlesRef = useRef<THREE.Points>(null);
-  
   const formulas = getFormulasForDepth(depth);
   
-  // Create curved path
+  // Create subtle curved path
   const { curve, points } = useMemo(() => {
     const startVec = new THREE.Vector3(...start);
     const endVec = new THREE.Vector3(...end);
     const mid = startVec.clone().add(endVec).multiplyScalar(0.5);
     
-    // Add curve offset based on edge index for variety
+    // Minimal curve offset for elegance
     const direction = endVec.clone().sub(startVec).normalize();
     const perpendicular = new THREE.Vector3()
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
       .normalize()
-      .multiplyScalar(startVec.distanceTo(endVec) * (0.1 + (edgeIndex % 3) * 0.05));
+      .multiplyScalar(startVec.distanceTo(endVec) * 0.08);
     
     if (edgeIndex % 2 === 0) perpendicular.negate();
     mid.add(perpendicular);
     
     const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
-    const curvePoints = bezierCurve.getPoints(40);
+    const curvePoints = bezierCurve.getPoints(30);
     
     return { curve: bezierCurve, points: curvePoints };
   }, [start, end, edgeIndex]);
 
-  // Particle positions - energy flowing along curve
-  const particleCount = 20;
-  const particlePositions = useMemo(() => {
-    return new Float32Array(particleCount * 3);
-  }, []);
-
-  // Animate particles flowing along the curve
-  useFrame(() => {
-    if (particlesRef.current) {
-      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        const baseT = i / particleCount;
-        const flowSpeed = 0.15 + (edgeIndex % 3) * 0.05;
-        const t = ((baseT + time * flowSpeed) % 1 + 1) % 1;
-        const point = curve.getPoint(t);
-        positions[i * 3] = point.x;
-        positions[i * 3 + 1] = point.y;
-        positions[i * 3 + 2] = point.z;
-      }
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
-    }
-  });
-
-  // Multiple formulas flowing at different speeds
-  const flowingFormulas = useMemo(() => {
+  // Multiple formula streams with staggered timing
+  const streams = useMemo(() => {
     return [
-      { formula: formulas[edgeIndex % formulas.length], offset: 0, speed: 0.12 },
-      { formula: formulas[(edgeIndex + 1) % formulas.length], offset: 0.5, speed: 0.15 },
+      { formula: formulas[edgeIndex % formulas.length], offset: 0, speed: 0.08 },
+      { formula: formulas[(edgeIndex + 1) % formulas.length], offset: 0.4, speed: 0.1 },
+      { formula: formulas[(edgeIndex + 2) % formulas.length], offset: 0.8, speed: 0.06 },
     ];
   }, [formulas, edgeIndex]);
 
+  // Very subtle base line - almost invisible
+  const basePulse = 0.02 + Math.sin(time * 2 + edgeIndex) * 0.01;
+
   return (
     <group>
-      {/* Main curved line */}
+      {/* Ultra-thin ghost line - barely visible guide */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={1.2}
+        lineWidth={0.5}
         transparent
-        opacity={opacity * 0.5}
-      />
-      
-      {/* Glow line */}
-      <Line
-        points={points}
-        color={palette.glow}
-        lineWidth={4}
-        transparent
-        opacity={opacity * 0.1}
+        opacity={opacity * basePulse}
       />
 
-      {/* Energy particles flowing */}
-      <points ref={particlesRef}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={particleCount}
-            array={particlePositions}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <pointsMaterial
-          color={palette.glow}
-          size={0.012}
-          transparent
-          opacity={opacity * 0.7}
-          sizeAttenuation
-        />
-      </points>
-
-      {/* Flowing formulas along the edge */}
-      {flowingFormulas.map((f, i) => (
-        <FlowingFormula
+      {/* Formula character streams - the main visual */}
+      {streams.map((stream, i) => (
+        <FormulaStream
           key={i}
           curve={curve}
-          formula={f.formula}
-          offset={f.offset}
-          speed={f.speed}
+          formula={stream.formula}
+          baseOffset={stream.offset}
+          speed={stream.speed}
           opacity={opacity}
-          color={palette.primary}
+          primaryColor={palette.primary}
+          accentColor={palette.accent}
           time={time}
+          streamIndex={edgeIndex * 3 + i}
         />
       ))}
     </group>
