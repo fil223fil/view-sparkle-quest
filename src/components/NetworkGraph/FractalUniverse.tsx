@@ -116,16 +116,16 @@ const PROCESS_FORMULAS = {
   evolution: ['dN/dt = rN(1-N/K)', 'Δp = sp(1-p)', 'H² = 8πGρ/3', '∂ρ/∂t + ∇·J = 0'],
 };
 
-// 3Blue1Brown signature color palette
+// iOS 26 style color palette - soft, refined, elegant
 const DEPTH_PALETTES = [
-  { primary: '#58C4DD', secondary: '#9CDCEB', glow: '#58C4DD', accent: '#FC6255' },  // Classic 3B1B blue
-  { primary: '#83C167', secondary: '#A8D88E', glow: '#83C167', accent: '#F9F871' },  // Green
-  { primary: '#9A72AC', secondary: '#B794C4', glow: '#9A72AC', accent: '#58C4DD' },  // Purple
-  { primary: '#E8B923', secondary: '#F5D75A', glow: '#E8B923', accent: '#FC6255' },  // Gold
-  { primary: '#5CD0B3', secondary: '#8DE0CA', glow: '#5CD0B3', accent: '#D147BD' },  // Teal
-  { primary: '#FC6255', secondary: '#FD8A80', glow: '#FC6255', accent: '#58C4DD' },  // Red
-  { primary: '#D147BD', secondary: '#E07DD2', glow: '#D147BD', accent: '#F9F871' },  // Pink
-  { primary: '#F9F871', secondary: '#FBFBA0', glow: '#F9F871', accent: '#9A72AC' },  // Yellow
+  { primary: '#A8C5DA', secondary: '#C8DCE8', glow: '#B8D4E8', accent: '#E8A8B8' },  // Soft sky blue
+  { primary: '#B8D4C8', secondary: '#D0E8DC', glow: '#C8E0D4', accent: '#D4C8B8' },  // Sage green
+  { primary: '#C8B8D8', secondary: '#DCD0E8', glow: '#D4C8E0', accent: '#B8D4D8' },  // Lavender
+  { primary: '#E0D4C0', secondary: '#EDE8DC', glow: '#E8E0D0', accent: '#C8B8D0' },  // Warm sand
+  { primary: '#B8D8D8', secondary: '#D0E8E8', glow: '#C8E0E0', accent: '#D8C0C8' },  // Soft teal
+  { primary: '#D8C0C8', secondary: '#E8D8DC', glow: '#E0D0D4', accent: '#B8D0D8' },  // Blush pink
+  { primary: '#C8D0D8', secondary: '#DCE4E8', glow: '#D4DCE4', accent: '#D8D0C0' },  // Cool gray
+  { primary: '#D8D4C0', secondary: '#E8E4D4', glow: '#E0DCC8', accent: '#C0C8D8' },  // Cream
 ];
 
 // Mind-map layout - hierarchical tree structure in 3D
@@ -414,7 +414,7 @@ const FLOW_WIDGETS = [
   { icon: '📈', label: 'Рост' },
 ];
 
-// Mind-map 3D connection line with flowing mini-widgets
+// Elegant iOS-style connection line
 const MindMapConnection = ({ 
   start, 
   end, 
@@ -434,141 +434,104 @@ const MindMapConnection = ({
   time: number;
   isFromCenter: boolean;
 }) => {
-  // Create curved 3D bezier path for mind-map style
+  // Create smooth cubic bezier path for elegant curves
   const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...start);
     const endVec = new THREE.Vector3(...end);
-    const mid = startVec.clone().add(endVec).multiplyScalar(0.5);
+    const distance = startVec.distanceTo(endVec);
     
-    // Add 3D curvature for mind-map feel
+    // Smoother, more organic curves
     const direction = endVec.clone().sub(startVec).normalize();
     const perpendicular = new THREE.Vector3()
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
       .normalize();
     
-    // Curve outward in 3D space
-    const curveAmount = startVec.distanceTo(endVec) * (isFromCenter ? 0.15 : 0.25);
-    const yLift = isFromCenter ? 0.05 : 0.08;
+    // Gentler curve for elegance
+    const curveAmount = distance * (isFromCenter ? 0.12 : 0.18);
+    const yLift = isFromCenter ? 0.03 : 0.05;
     
-    mid.add(perpendicular.multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 1 : -1)));
-    mid.y += yLift;
+    // Calculate control points for cubic bezier (smoother than quadratic)
+    const ctrl1 = startVec.clone().lerp(endVec, 0.33);
+    ctrl1.add(perpendicular.clone().multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 1 : -1)));
+    ctrl1.y += yLift;
     
-    const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
-    const curvePoints = bezierCurve.getPoints(40);
+    const ctrl2 = startVec.clone().lerp(endVec, 0.66);
+    ctrl2.add(perpendicular.clone().multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 0.5 : -0.5)));
+    ctrl2.y += yLift * 0.8;
+    
+    const bezierCurve = new THREE.CubicBezierCurve3(startVec, ctrl1, ctrl2, endVec);
+    const curvePoints = bezierCurve.getPoints(60); // More points for smoother line
+    
+    const mid = bezierCurve.getPoint(0.5);
     
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [start, end, edgeIndex, isFromCenter]);
 
-  // Animated flow effect - slower, more elegant
-  const flowSpeed = 0.08;
-  const pulseIntensity = 0.4 + Math.sin(time * 0.8 + edgeIndex) * 0.1;
-
-  // Get widgets for this connection
-  const flowWidgetData = useMemo(() => {
-    return [
-      { ...FLOW_WIDGETS[edgeIndex % FLOW_WIDGETS.length], offset: 0 },
-      { ...FLOW_WIDGETS[(edgeIndex + 3) % FLOW_WIDGETS.length], offset: 0.5 },
-    ];
-  }, [edgeIndex]);
+  // Subtle breathing animation
+  const breathe = 0.7 + Math.sin(time * 0.5 + edgeIndex * 0.3) * 0.15;
 
   return (
     <group>
-      {/* Main connection line - subtle glowing path */}
+      {/* Primary elegant line - thin and refined */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={isFromCenter ? 2 : 1.5}
+        lineWidth={isFromCenter ? 1.2 : 0.8}
         transparent
-        opacity={opacity * pulseIntensity * 0.5}
+        opacity={opacity * breathe * 0.6}
       />
       
-      {/* Outer glow line */}
+      {/* Soft outer glow for depth */}
       <Line
         points={points}
         color={palette.glow}
-        lineWidth={isFromCenter ? 4 : 3}
+        lineWidth={isFromCenter ? 3 : 2.5}
         transparent
-        opacity={opacity * 0.1}
+        opacity={opacity * 0.08}
       />
       
-      {/* Flowing mini-widgets along the connection */}
-      {flowWidgetData.map((widget, i) => {
-        const t = ((time * flowSpeed + widget.offset + edgeIndex * 0.2) % 2.0);
-        // Only show when in valid range
-        if (t < 0.15 || t > 1.15) return null;
-        const clampedT = Math.max(0.05, Math.min(0.95, t - 0.15));
-        
-        return (
-          <FlowingMiniWidget
-            key={i}
-            curve={curve}
-            t={clampedT}
-            opacity={opacity * 0.95}
-            palette={palette}
-            icon={widget.icon}
-            label={widget.label}
-          />
-        );
-      })}
-      
-      {/* Small particle trail behind widgets */}
-      {[0.2, 0.45, 0.7].map((offset, i) => {
-        const t = ((time * flowSpeed * 0.8 + offset + edgeIndex * 0.15) % 1);
+      {/* Subtle flowing light particle */}
+      {[0.0, 0.5].map((offset, i) => {
+        const t = ((time * 0.04 + offset + edgeIndex * 0.15) % 1);
         const pos = curve.getPoint(t);
-        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.4;
+        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.5;
         
         return (
-          <Sphere key={`particle-${i}`} args={[0.004, 6, 6]} position={[pos.x, pos.y, pos.z]}>
-            <meshBasicMaterial 
-              color={palette.accent}
-              transparent 
-              opacity={particleOpacity}
-            />
-          </Sphere>
+          <group key={`flow-${i}`} position={[pos.x, pos.y, pos.z]}>
+            {/* Inner bright core */}
+            <Sphere args={[0.005, 8, 8]}>
+              <meshBasicMaterial 
+                color={palette.secondary}
+                transparent 
+                opacity={particleOpacity * 0.9}
+              />
+            </Sphere>
+            {/* Soft outer glow */}
+            <Sphere args={[0.012, 6, 6]}>
+              <meshBasicMaterial 
+                color={palette.glow}
+                transparent 
+                opacity={particleOpacity * 0.25}
+              />
+            </Sphere>
+          </group>
         );
       })}
       
-      {/* Connection label at midpoint */}
-      {connectionLabel && (
-        <group position={[midPoint.x, midPoint.y + 0.035, midPoint.z]}>
-          {/* Label background */}
-          <RoundedBox args={[0.04, 0.016, 0.004]} radius={0.004} smoothness={2}>
-            <meshBasicMaterial 
-              color="#1C1C1E"
-              transparent 
-              opacity={opacity * 0.9}
-            />
-          </RoundedBox>
-          
-          {/* Label text */}
-          <Text
-            position={[0, 0, 0.003]}
-            fontSize={0.008}
-            color={palette.glow}
-            anchorX="center"
-            anchorY="middle"
-            fillOpacity={opacity * 0.8}
-          >
-            {connectionLabel}
-          </Text>
-        </group>
-      )}
-      
-      {/* Start point connector */}
-      <Sphere args={[0.01, 10, 10]} position={start}>
+      {/* Elegant endpoint markers - minimal */}
+      <Sphere args={[0.006, 12, 12]} position={start}>
         <meshBasicMaterial 
           color={palette.primary}
           transparent 
-          opacity={opacity * 0.7}
+          opacity={opacity * 0.5}
         />
       </Sphere>
       
-      {/* End point connector */}
-      <Sphere args={[0.01, 10, 10]} position={end}>
+      <Sphere args={[0.006, 12, 12]} position={end}>
         <meshBasicMaterial 
-          color={palette.accent}
+          color={palette.secondary}
           transparent 
-          opacity={opacity * 0.7}
+          opacity={opacity * 0.5}
         />
       </Sphere>
     </group>
