@@ -27,10 +27,44 @@ interface FractalUniverseProps {
   isActive: boolean;
 }
 
-const FORMULAS = [
-  'E = mc²', 'ψ(x,t)', '∇ × B', 'Σ aₙ', '∫ f dx', 'λ = h/p',
-  'e^iπ', 'Δx·Δp', '∂²u/∂t²', 'det(A)', 'lim→∞', '∮ E·dl',
-];
+// Process-describing formulas grouped by category
+const PROCESS_FORMULAS = {
+  // Network dynamics & information flow
+  network: [
+    'dI/dt = αS·I',      // Information spread
+    'C = Σᵢⱼ Aᵢⱼ',       // Connectivity
+    'k̄ = 2E/N',          // Average degree
+    'L = Σᵢⱼ dᵢⱼ/N²',    // Path length
+  ],
+  // Emergence & self-organization
+  emergence: [
+    'S = -Σ pᵢ ln pᵢ',   // Entropy
+    'Φ = Σ φ(Mᵢ)',       // Integrated info
+    'ΔG < 0',            // Spontaneous order
+    'dS/dt ≥ 0',         // Second law
+  ],
+  // Complexity & fractals
+  complexity: [
+    'D = lim ln N/ln ε', // Fractal dimension
+    'λ = lim ln|δₙ|/n',  // Lyapunov exp
+    'f(x) = xⁿ + c',     // Iteration
+    'z → z² + c',        // Mandelbrot
+  ],
+  // Quantum & wave
+  quantum: [
+    'ψ = Σ cₙ|n⟩',       // Superposition
+    'Ĥψ = Eψ',           // Schrödinger
+    'ΔxΔp ≥ ℏ/2',        // Uncertainty
+    '⟨A⟩ = ⟨ψ|Â|ψ⟩',     // Expectation
+  ],
+  // Growth & evolution
+  evolution: [
+    'dN/dt = rN(1-N/K)', // Logistic growth
+    'Δp = sp(1-p)',      // Selection
+    'H² = 8πGρ/3',       // Expansion
+    '∂ρ/∂t + ∇·J = 0',   // Conservation
+  ],
+};
 
 // Harmonious color palette - deeper, more cosmic
 const DEPTH_PALETTES = [
@@ -80,24 +114,76 @@ const generateUniverseEdges = (nodeCount: number, time: number): UniverseEdge[] 
   return edges;
 };
 
-// Dynamic edge component with flowing energy
+// Get formulas based on depth level
+const getFormulasForDepth = (depth: number): string[] => {
+  const categories = Object.keys(PROCESS_FORMULAS) as (keyof typeof PROCESS_FORMULAS)[];
+  const category = categories[depth % categories.length];
+  return PROCESS_FORMULAS[category];
+};
+
+// Flowing formula component - travels along the edge
+const FlowingFormula = ({
+  curve,
+  formula,
+  offset,
+  speed,
+  opacity,
+  color,
+  time,
+}: {
+  curve: THREE.QuadraticBezierCurve3;
+  formula: string;
+  offset: number;
+  speed: number;
+  opacity: number;
+  color: string;
+  time: number;
+}) => {
+  // Calculate position along curve with smooth looping
+  const t = ((time * speed + offset) % 1 + 1) % 1;
+  const point = curve.getPoint(t);
+  
+  // Fade in/out at edges
+  const fadeZone = 0.15;
+  let fadeOpacity = 1;
+  if (t < fadeZone) fadeOpacity = t / fadeZone;
+  else if (t > 1 - fadeZone) fadeOpacity = (1 - t) / fadeZone;
+  
+  return (
+    <Text
+      position={[point.x, point.y, point.z]}
+      fontSize={0.022}
+      color={color}
+      anchorX="center"
+      anchorY="middle"
+      fillOpacity={opacity * fadeOpacity * 0.9}
+    >
+      {formula}
+    </Text>
+  );
+};
+
+// Dynamic edge component with flowing formulas
 const DynamicEdge = ({ 
   start, 
   end, 
   opacity, 
   palette, 
-  formulaIndex, 
+  edgeIndex,
+  depth,
   time 
 }: { 
   start: [number, number, number]; 
   end: [number, number, number]; 
   opacity: number; 
   palette: typeof DEPTH_PALETTES[0];
-  formulaIndex: number;
+  edgeIndex: number;
+  depth: number;
   time: number;
 }) => {
-  const lineRef = useRef<THREE.Line>(null);
   const particlesRef = useRef<THREE.Points>(null);
+  
+  const formulas = getFormulasForDepth(depth);
   
   // Create curved path
   const { curve, points } = useMemo(() => {
@@ -105,39 +191,36 @@ const DynamicEdge = ({
     const endVec = new THREE.Vector3(...end);
     const mid = startVec.clone().add(endVec).multiplyScalar(0.5);
     
-    // Add curve offset
+    // Add curve offset based on edge index for variety
     const direction = endVec.clone().sub(startVec).normalize();
     const perpendicular = new THREE.Vector3()
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
       .normalize()
-      .multiplyScalar(startVec.distanceTo(endVec) * 0.15);
+      .multiplyScalar(startVec.distanceTo(endVec) * (0.1 + (edgeIndex % 3) * 0.05));
     
+    if (edgeIndex % 2 === 0) perpendicular.negate();
     mid.add(perpendicular);
     
     const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
-    const curvePoints = bezierCurve.getPoints(30);
+    const curvePoints = bezierCurve.getPoints(40);
     
     return { curve: bezierCurve, points: curvePoints };
-  }, [start, end]);
+  }, [start, end, edgeIndex]);
 
-  // Particle positions along curve
+  // Particle positions - energy flowing along curve
+  const particleCount = 20;
   const particlePositions = useMemo(() => {
-    const positions = new Float32Array(15 * 3);
-    for (let i = 0; i < 15; i++) {
-      const point = curve.getPoint(i / 15);
-      positions[i * 3] = point.x;
-      positions[i * 3 + 1] = point.y;
-      positions[i * 3 + 2] = point.z;
-    }
-    return positions;
-  }, [curve]);
+    return new Float32Array(particleCount * 3);
+  }, []);
 
   // Animate particles flowing along the curve
   useFrame(() => {
     if (particlesRef.current) {
       const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < 15; i++) {
-        const t = ((i / 15) + time * 0.3 + formulaIndex * 0.1) % 1;
+      for (let i = 0; i < particleCount; i++) {
+        const baseT = i / particleCount;
+        const flowSpeed = 0.15 + (edgeIndex % 3) * 0.05;
+        const t = ((baseT + time * flowSpeed) % 1 + 1) % 1;
         const point = curve.getPoint(t);
         positions[i * 3] = point.x;
         positions[i * 3 + 1] = point.y;
@@ -147,63 +230,66 @@ const DynamicEdge = ({
     }
   });
 
-  const formula = FORMULAS[formulaIndex % FORMULAS.length];
-  const midPoint = curve.getPoint(0.5);
-  
-  // Formula position oscillates along curve
-  const formulaT = 0.3 + Math.sin(time * 0.5 + formulaIndex) * 0.2;
-  const formulaPoint = curve.getPoint(formulaT);
+  // Multiple formulas flowing at different speeds
+  const flowingFormulas = useMemo(() => {
+    return [
+      { formula: formulas[edgeIndex % formulas.length], offset: 0, speed: 0.12 },
+      { formula: formulas[(edgeIndex + 1) % formulas.length], offset: 0.5, speed: 0.15 },
+    ];
+  }, [formulas, edgeIndex]);
 
   return (
     <group>
-      {/* Main curved line with gradient effect */}
+      {/* Main curved line */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={1.5}
+        lineWidth={1.2}
         transparent
-        opacity={opacity * 0.6}
+        opacity={opacity * 0.5}
       />
       
       {/* Glow line */}
       <Line
         points={points}
         color={palette.glow}
-        lineWidth={3}
+        lineWidth={4}
         transparent
-        opacity={opacity * 0.15}
+        opacity={opacity * 0.1}
       />
 
-      {/* Flowing particles */}
+      {/* Energy particles flowing */}
       <points ref={particlesRef}>
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={15}
+            count={particleCount}
             array={particlePositions}
             itemSize={3}
           />
         </bufferGeometry>
         <pointsMaterial
           color={palette.glow}
-          size={0.015}
+          size={0.012}
           transparent
-          opacity={opacity * 0.8}
+          opacity={opacity * 0.7}
           sizeAttenuation
         />
       </points>
 
-      {/* Animated formula */}
-      <Text
-        position={[formulaPoint.x, formulaPoint.y, formulaPoint.z]}
-        fontSize={0.025}
-        color={palette.primary}
-        anchorX="center"
-        anchorY="middle"
-        fillOpacity={opacity * (0.5 + Math.sin(time * 2 + formulaIndex) * 0.3)}
-      >
-        {formula}
-      </Text>
+      {/* Flowing formulas along the edge */}
+      {flowingFormulas.map((f, i) => (
+        <FlowingFormula
+          key={i}
+          curve={curve}
+          formula={f.formula}
+          offset={f.offset}
+          speed={f.speed}
+          opacity={opacity}
+          color={palette.primary}
+          time={time}
+        />
+      ))}
     </group>
   );
 };
@@ -314,7 +400,8 @@ export const FractalUniverse = ({
             end={endNode.position}
             opacity={edge.opacity}
             palette={palette}
-            formulaIndex={i + depth * 5}
+            edgeIndex={i}
+            depth={depth}
             time={time}
           />
         );
