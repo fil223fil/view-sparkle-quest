@@ -325,15 +325,15 @@ export const FractalUniverse = ({
   const [edges, setEdges] = useState<UniverseEdge[]>([]);
   const [time, setTime] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
-  const initialized = useRef(false);
+  const initializedForDepth = useRef<number | null>(null);
 
   const palette = DEPTH_PALETTES[depth % DEPTH_PALETTES.length];
 
-  // Initialize universe when becoming active
+  // Initialize universe when becoming active - reset on depth change
   useFrame(({ clock }) => {
-    if (isActive && !initialized.current) {
-      initialized.current = true;
-      const nodeCount = Math.max(5, 8 - depth);
+    if (isActive && initializedForDepth.current !== depth) {
+      initializedForDepth.current = depth;
+      const nodeCount = Math.max(5, 8 - (depth % 5)); // Cycle node count
       setNodes(generateUniverseNodes(nodeCount, clock.elapsedTime));
       setEdges(generateUniverseEdges(nodeCount, clock.elapsedTime));
     }
