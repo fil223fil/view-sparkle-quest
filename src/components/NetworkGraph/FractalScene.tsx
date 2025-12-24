@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars, Text } from '@react-three/drei';
+import { OrbitControls, Stars, Text, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { FractalUniverse } from './FractalUniverse';
 
@@ -26,186 +26,103 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
     { id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }
   ]);
   const [activeDepth, setActiveDepth] = useState(0);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomTarget, setZoomTarget] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 5));
   const lastResetRef = useRef(resetTrigger);
 
-  // Set camera closer on start and handle reset
-  useEffect(() => {
-    // Initial camera position - closer to the scene
-    camera.position.set(0, 0, 2);
-  }, [camera]);
-
+  // Handle reset
   useEffect(() => {
     if (resetTrigger !== lastResetRef.current) {
       lastResetRef.current = resetTrigger;
       setUniverses([{ id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }]);
       setActiveDepth(0);
-      setDivePhase('idle');
-      camera.position.set(0, 0, 2);
+      setIsZooming(false);
+      setZoomTarget(new THREE.Vector3(0, 0, 5));
+      camera.position.set(0, 0, 5);
     }
   }, [resetTrigger, camera]);
 
-  const [divePhase, setDivePhase] = useState<'idle' | 'approaching' | 'entering' | 'expanding'>('idle');
-  const diveTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
-  const diveProgressRef = useRef(0);
-  const universeIdCounter = useRef(1);
-
   const handleDiveIn = useCallback((position: [number, number, number], newDepth: number) => {
-    if (divePhase !== 'idle') return;
+    if (isZooming) return;
 
-    const targetPos = new THREE.Vector3(...position);
-    diveTargetRef.current = targetPos;
-    diveProgressRef.current = 0;
+    setIsZooming(true);
     
-    setDivePhase('approaching');
-    setActiveDepth(newDepth);
-    
-    // Create new universe with unique ID
+    // Create new universe at clicked position
     const newUniverse: UniverseLevel = {
-      id: universeIdCounter.current++,
+      id: Date.now(),
       depth: newDepth,
       position,
-      targetScale: 0.01,
-      currentScale: 0.001,
+      targetScale: 0.3,
+      currentScale: 0,
       opacity: 0,
     };
 
-    // Remove old universes aggressively to prevent memory issues
+    // Keep only recent universes to prevent memory issues (current + 2 previous)
     setUniverses(prev => {
-      const filtered = prev.filter(u => u.depth >= newDepth - 1);
+      const filtered = prev.filter(u => u.depth >= newDepth - 2);
       return [...filtered, newUniverse];
     });
-  }, [divePhase]);
+    
+    // Set camera zoom target - keep consistent scale for infinite exploration
+    const targetPos = new THREE.Vector3(...position);
+    const cameraTargetDistance = 0.8; // Fixed distance for consistent feel
+    const direction = new THREE.Vector3().subVectors(camera.position, targetPos).normalize();
+    const newCameraPos = targetPos.clone().add(direction.multiplyScalar(cameraTargetDistance));
+    
+    setZoomTarget(newCameraPos);
+    setActiveDepth(newDepth);
+  }, [isZooming, camera]);
 
-  useFrame((_, delta) => {
-    const target = diveTargetRef.current;
-    
-    if (divePhase === 'approaching') {
-      diveProgressRef.current += delta * 1.5;
-      const eased = 1 - Math.pow(1 - Math.min(diveProgressRef.current, 1), 3);
+  useFrame(() => {
+    if (isZooming) {
+      // Smooth camera zoom
+      camera.position.lerp(zoomTarget, 0.03);
       
-      // Smooth camera approach to target
-      const direction = new THREE.Vector3().subVectors(target, camera.position).normalize();
-      const distanceToTarget = camera.position.distanceTo(target);
-      const moveSpeed = distanceToTarget * 0.1 * (1 + eased * 0.5);
-      camera.position.add(direction.multiplyScalar(moveSpeed));
-      
-      // Start showing new universe as we approach
-      setUniverses(prev => prev.map(u => {
-        if (u.depth === activeDepth) {
-          return {
-            ...u,
-            targetScale: 0.1 + eased * 0.3,
-            opacity: Math.min(u.opacity + delta * 1.5, 0.8),
-          };
-        }
-        // Fade out previous level slowly
-        if (u.depth < activeDepth) {
-          return { ...u, opacity: Math.max(u.opacity - delta * 0.8, 0.2) };
-        }
-        return u;
-      }));
-      
-      if (distanceToTarget < 0.15) {
-        setDivePhase('entering');
-        diveProgressRef.current = 0;
+      if (camera.position.distanceTo(zoomTarget) < 0.05) {
+        setIsZooming(false);
       }
     }
-    
-    if (divePhase === 'entering') {
-      diveProgressRef.current += delta * 2;
-      const t = Math.min(diveProgressRef.current, 1);
+
+    // Update universe scales and opacities
+    setUniverses(prev => prev.map(u => {
+      const isCurrentLevel = u.depth === activeDepth;
+      const isPreviousLevel = u.depth === activeDepth - 1;
       
-      // Camera passes through smoothly
-      const direction = new THREE.Vector3().subVectors(target, camera.position).normalize();
-      camera.position.add(direction.multiplyScalar(delta * 1.5));
+      let targetOpacity = 0;
+      if (isCurrentLevel) targetOpacity = 1;
+      else if (isPreviousLevel) targetOpacity = 0.3;
       
-      setUniverses(prev => prev.map(u => {
-        if (u.depth === activeDepth) {
-          return {
-            ...u,
-            targetScale: 0.4 + t * 0.4,
-            opacity: Math.min(u.opacity + delta * 2, 1),
-          };
-        }
-        if (u.depth < activeDepth) {
-          return { ...u, opacity: Math.max(u.opacity - delta * 2, 0) };
-        }
-        return u;
-      }));
-      
-      if (t >= 1) {
-        setDivePhase('expanding');
-        diveProgressRef.current = 0;
-      }
-    }
-    
-    if (divePhase === 'expanding') {
-      diveProgressRef.current += delta * 2;
-      
-      setUniverses(prev => prev.map(u => {
-        if (u.depth === activeDepth) {
-          return {
-            ...u,
-            targetScale: 0.8,
-            currentScale: THREE.MathUtils.lerp(u.currentScale, 0.8, 0.1),
-            opacity: 1,
-          };
-        }
-        // Remove old universes from rendering
-        if (u.depth < activeDepth) {
-          return { ...u, opacity: 0 };
-        }
-        return u;
-      }));
-      
-      const activeUniverse = universes.find(u => u.depth === activeDepth);
-      if (activeUniverse) {
-        const idealPos = new THREE.Vector3(...activeUniverse.position).add(new THREE.Vector3(0, 0, 1.5));
-        camera.position.lerp(idealPos, 0.08);
-      }
-      
-      if (diveProgressRef.current >= 1) {
-        setDivePhase('idle');
-        // Clean up invisible universes
-        setUniverses(prev => prev.filter(u => u.opacity > 0));
-      }
-    }
-    
-    if (divePhase === 'idle') {
-      setUniverses(prev => prev.map(u => ({
+      return {
         ...u,
         currentScale: THREE.MathUtils.lerp(u.currentScale, u.targetScale, 0.05),
-      })));
-    }
+        opacity: THREE.MathUtils.lerp(u.opacity, targetOpacity, 0.05),
+      };
+    }));
 
+    // Update orbit controls target
     if (controlsRef.current && universes.length > 0) {
       const activeUniverse = universes.find(u => u.depth === activeDepth);
       if (activeUniverse) {
-        const targetVec = new THREE.Vector3(...activeUniverse.position);
-        controlsRef.current.target.lerp(targetVec, 0.08);
+        const target = new THREE.Vector3(...activeUniverse.position);
+        controlsRef.current.target.lerp(target, 0.05);
       }
     }
   });
 
   // Handle going back
   const handleGoBack = useCallback(() => {
-    if (activeDepth > 0 && divePhase === 'idle') {
+    if (activeDepth > 0 && !isZooming) {
+      setIsZooming(true);
       setActiveDepth(prev => prev - 1);
-      setDivePhase('expanding');
-      diveProgressRef.current = 0;
       
-      // Update universes for going back
-      setUniverses(prev => prev.map(u => {
-        if (u.depth === activeDepth - 1) {
-          return { ...u, targetScale: 0.8, opacity: 1 };
-        }
-        if (u.depth === activeDepth) {
-          return { ...u, targetScale: 0.3, opacity: 0.3 };
-        }
-        return u;
-      }));
+      const parentUniverse = universes.find(u => u.depth === activeDepth - 1);
+      if (parentUniverse) {
+        const targetPos = new THREE.Vector3(...parentUniverse.position);
+        const cameraDistance = 2 / Math.pow(2, activeDepth - 1);
+        setZoomTarget(targetPos.clone().add(new THREE.Vector3(0, 0, cameraDistance)));
+      }
     }
-  }, [activeDepth, divePhase]);
+  }, [activeDepth, isZooming, universes]);
 
   return (
     <>
@@ -233,7 +150,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
           scale={universe.currentScale}
           opacity={universe.opacity}
           onDiveIn={handleDiveIn}
-          isActive={universe.opacity > 0.05}
+          isActive={universe.opacity > 0.1}
         />
       ))}
 
@@ -254,7 +171,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       )}
 
       {/* Instructions */}
-      {activeDepth === 0 && divePhase === 'idle' && (
+      {activeDepth === 0 && !isZooming && (
         <Text
           position={[0, -1.2, 0]}
           fontSize={0.08}
@@ -273,7 +190,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
         enableZoom={true}
         minDistance={0.5}
         maxDistance={15}
-        autoRotate={!isPaused && divePhase === 'idle'}
+        autoRotate={!isPaused && !isZooming}
         autoRotateSpeed={0.3}
         enableDamping
         dampingFactor={0.05}
