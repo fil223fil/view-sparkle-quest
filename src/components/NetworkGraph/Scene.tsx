@@ -13,7 +13,7 @@ interface SceneProps {
 }
 
 export const Scene = ({ isPaused, resetTrigger }: SceneProps) => {
-  const { nodes, edges, reset } = useNetworkAnimation(isPaused);
+  const { nodes, edges, reset, spawnFractal, time } = useNetworkAnimation(isPaused);
   const groupRef = useRef<THREE.Group>(null);
   const lastResetRef = useRef(resetTrigger);
 
@@ -22,6 +22,10 @@ export const Scene = ({ isPaused, resetTrigger }: SceneProps) => {
     lastResetRef.current = resetTrigger;
     reset();
   }
+
+  const handleFractalClick = (position: [number, number, number], depth: number) => {
+    spawnFractal(position, depth, time);
+  };
 
   // Auto-rotation when not paused
   useFrame(({ clock }) => {
@@ -77,6 +81,8 @@ export const Scene = ({ isPaused, resetTrigger }: SceneProps) => {
             scale={node.scale}
             opacity={node.opacity}
             pulseOffset={node.id * 0.7}
+            depth={node.depth || 0}
+            onFractalClick={handleFractalClick}
           />
         ))}
       </group>

@@ -4,6 +4,7 @@ export interface NetworkNode {
   scale: number;
   opacity: number;
   birthTime: number;
+  depth?: number;
 }
 
 export interface NetworkEdge {
