@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere, Stars, Text, Line } from '@react-three/drei';
+import { Sphere, Stars, Text, Line, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface UniverseNode {
@@ -83,7 +83,7 @@ const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
   for (let i = 0; i < count; i++) {
     const phi = Math.acos(-1 + (2 * i) / count);
     const theta = Math.sqrt(count * Math.PI) * phi;
-    const radius = 0.3 + Math.random() * 0.2;
+    const radius = 0.5 + Math.random() * 0.25; // Larger spread for bigger widgets
     
     nodes.push({
       id: i,
@@ -436,17 +436,38 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Nodes - clean Apple aesthetic */}
+      {/* Apple Widget-style nodes */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        const pulse = 1 + Math.sin(time * 1.2 + node.id * 0.7) * 0.05;
+        const pulse = 1 + Math.sin(time * 0.8 + node.id * 0.5) * 0.03;
+        const hoverScale = isHovered ? 1.12 : 1;
+        const widgetWidth = 0.12;
+        const widgetHeight = 0.09;
+        
+        // Widget icons/labels
+        const widgetData = [
+          { icon: '⚡', label: 'Energy' },
+          { icon: '◉', label: 'Core' },
+          { icon: '⬡', label: 'Node' },
+          { icon: '✦', label: 'Star' },
+          { icon: '◈', label: 'Data' },
+          { icon: '⬢', label: 'Hub' },
+          { icon: '◇', label: 'Flow' },
+          { icon: '○', label: 'Link' },
+        ];
+        const widget = widgetData[node.id % widgetData.length];
         
         return (
-          <group key={`node-${node.id}`} position={node.position}>
-            {/* Core - crisp center */}
-            <Sphere
-              args={[0.015, 32, 32]}
-              scale={node.scale * pulse * (isHovered ? 1.6 : 1)}
+          <group 
+            key={`node-${node.id}`} 
+            position={node.position}
+            scale={node.scale * pulse * hoverScale}
+          >
+            {/* Widget glass background */}
+            <RoundedBox
+              args={[widgetWidth, widgetHeight, 0.012]}
+              radius={0.018}
+              smoothness={4}
               onClick={(e) => {
                 e.stopPropagation();
                 handleNodeClick(node.position);
@@ -461,37 +482,81 @@ export const FractalUniverse = ({
               }}
             >
               <meshBasicMaterial 
-                color={isHovered ? '#FFFFFF' : palette.primary} 
+                color={isHovered ? '#2C2C2E' : '#1C1C1E'}
                 transparent 
-                opacity={node.opacity} 
+                opacity={node.opacity * 0.85}
               />
-            </Sphere>
-            {/* Soft glow */}
-            <Sphere args={[0.015, 20, 20]} scale={node.scale * pulse * 2.2}>
+            </RoundedBox>
+            
+            {/* Widget border/glow frame */}
+            <RoundedBox
+              args={[widgetWidth + 0.004, widgetHeight + 0.004, 0.008]}
+              radius={0.02}
+              smoothness={4}
+            >
               <meshBasicMaterial 
-                color={palette.glow} 
+                color={palette.primary}
                 transparent 
-                opacity={node.opacity * 0.25} 
+                opacity={node.opacity * (isHovered ? 0.6 : 0.2)}
               />
-            </Sphere>
-            {/* Outer aura */}
-            <Sphere args={[0.015, 12, 12]} scale={node.scale * pulse * 4}>
-              <meshBasicMaterial 
-                color={palette.glow} 
-                transparent 
-                opacity={node.opacity * 0.08} 
-              />
-            </Sphere>
-            {/* Hover expansion */}
+            </RoundedBox>
+            
+            {/* Widget icon */}
+            <Text
+              position={[0, 0.012, 0.008]}
+              fontSize={0.028}
+              color={isHovered ? '#FFFFFF' : palette.primary}
+              anchorX="center"
+              anchorY="middle"
+              fillOpacity={node.opacity}
+            >
+              {widget.icon}
+            </Text>
+            
+            {/* Widget label */}
+            <Text
+              position={[0, -0.022, 0.008]}
+              fontSize={0.012}
+              color={isHovered ? '#FFFFFF' : palette.glow}
+              anchorX="center"
+              anchorY="middle"
+              fillOpacity={node.opacity * 0.7}
+            >
+              {widget.label}
+            </Text>
+            
+            {/* Hover glow expansion */}
             {isHovered && (
-              <Sphere args={[0.015, 8, 8]} scale={node.scale * 6}>
-                <meshBasicMaterial 
-                  color={palette.primary} 
-                  transparent 
-                  opacity={node.opacity * 0.1} 
-                />
-              </Sphere>
+              <>
+                <RoundedBox
+                  args={[widgetWidth + 0.03, widgetHeight + 0.03, 0.004]}
+                  radius={0.024}
+                  smoothness={4}
+                >
+                  <meshBasicMaterial 
+                    color={palette.glow}
+                    transparent 
+                    opacity={node.opacity * 0.2}
+                  />
+                </RoundedBox>
+                <Sphere args={[0.1, 12, 12]} position={[0, 0, -0.03]}>
+                  <meshBasicMaterial 
+                    color={palette.glow}
+                    transparent 
+                    opacity={node.opacity * 0.12}
+                  />
+                </Sphere>
+              </>
             )}
+            
+            {/* Subtle ambient glow */}
+            <Sphere args={[0.06, 8, 8]} position={[0, 0, -0.015]}>
+              <meshBasicMaterial 
+                color={palette.primary}
+                transparent 
+                opacity={node.opacity * 0.08}
+              />
+            </Sphere>
           </group>
         );
       })}
