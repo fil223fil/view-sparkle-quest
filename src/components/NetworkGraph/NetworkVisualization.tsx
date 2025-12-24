@@ -32,55 +32,54 @@ export const NetworkVisualization = () => {
       ref={containerRef}
       className="relative w-full h-screen overflow-hidden"
       style={{ 
-        background: 'linear-gradient(145deg, #000000 0%, #0a0a1a 30%, #0f0f2a 60%, #050510 100%)'
+        background: '#000000'
       }}
     >
-      {/* Apple-style ambient glow effects */}
+      {/* Apple-style ambient gradient orbs */}
       <div 
-        className="absolute inset-0 pointer-events-none opacity-40"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-            radial-gradient(ellipse 60% 40% at 70% 100%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
-            radial-gradient(ellipse 50% 30% at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)
+            radial-gradient(ellipse 50% 35% at 50% 0%, rgba(120, 80, 220, 0.12) 0%, transparent 70%),
+            radial-gradient(ellipse 40% 30% at 80% 90%, rgba(60, 130, 255, 0.08) 0%, transparent 60%),
+            radial-gradient(ellipse 35% 25% at 15% 85%, rgba(200, 100, 180, 0.06) 0%, transparent 50%)
           `
         }}
       />
 
-      {/* Title overlay - Apple SF Pro style */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
+      {/* Title overlay - Apple style */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
         <h1 
-          className="text-3xl font-semibold tracking-tight text-white/90"
+          className="text-[28px] font-semibold tracking-[-0.02em] text-white"
           style={{ 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            letterSpacing: '-0.02em'
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
           }}
         >
           ЯДРО ЛЕНИН
         </h1>
         <p 
-          className="text-sm text-white/40 mt-2 font-light"
+          className="text-[13px] text-white/50 mt-1.5 font-normal tracking-[0.01em]"
           style={{ 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-            letterSpacing: '0.02em'
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
           }}
         >
           Фрактальная вселенная
         </p>
       </div>
 
-      {/* 3D Canvas with Apple Vision Pro depth */}
+      {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
+        camera={{ position: [0, 0, 4.5], fov: 45 }}
         dpr={[1, 2]}
         gl={{ 
           antialias: true, 
           alpha: true,
-          powerPreference: 'high-performance'
+          powerPreference: 'high-performance',
+          toneMapping: 3
         }}
       >
         <color attach="background" args={['#000000']} />
-        <fog attach="fog" args={['#000000', 4, 25]} />
+        <fog attach="fog" args={['#000000', 5, 30]} />
         <FractalScene
           isPaused={isPaused}
           onReset={handleReset}
@@ -88,7 +87,7 @@ export const NetworkVisualization = () => {
         />
       </Canvas>
 
-      {/* Controls - Apple glassmorphism style */}
+      {/* Controls - Apple pill style */}
       <Controls
         isPaused={isPaused}
         onTogglePause={handleTogglePause}
@@ -96,26 +95,17 @@ export const NetworkVisualization = () => {
         onFullscreen={handleFullscreen}
       />
 
-      {/* Instructions - subtle Apple style */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
+      {/* Instructions */}
+      <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
         <p 
-          className="text-xs text-white/30 font-light"
+          className="text-[11px] text-white/25 font-normal tracking-[0.02em]"
           style={{ 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-            letterSpacing: '0.03em'
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
           }}
         >
-          Кликните на узел чтобы погрузиться во внутреннюю вселенную
+          Нажмите на узел для погружения
         </p>
       </div>
-
-      {/* Vision Pro style vignette */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.4) 100%)'
-        }}
-      />
     </div>
   );
 };
