@@ -129,27 +129,26 @@ const DEPTH_PALETTES = [
   { primary: '#D8D4C0', secondary: '#E8E4D4', glow: '#E0DCC8', accent: '#C0C8D8' },  // Cream
 ];
 
-// Compact radial layout - логичная структура вокруг центра
+// Кучное расположение вокруг ядра
 const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
   
   for (let i = 0; i < count; i++) {
-    // Компактное радиальное расположение
-    const angle = (i / count) * Math.PI * 2;
-    const radius = 0.18 + (i % 2) * 0.08; // Чередующиеся радиусы для плотности
-    const yOffset = Math.sin(i * 0.8) * 0.04; // Легкая волна по Y
+    // Очень близко к центру, почти в одной точке
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+    const radius = 0.06 + Math.random() * 0.04; // Очень маленький радиус
     
     nodes.push({
       id: i,
       position: [
         radius * Math.cos(angle),
-        yOffset,
+        (Math.random() - 0.5) * 0.03, // Минимальный разброс по Y
         radius * Math.sin(angle),
       ],
       velocity: [0, 0, 0],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.08,
+      birthTime: time + i * 0.06,
     });
   }
   return nodes;
@@ -163,12 +162,12 @@ const applyForces = (
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.002;       // Умеренное отталкивание
-  const ATTRACTION = 0.025;      // Сильное притяжение связанных
-  const DAMPING = 0.85;          // Плавное затухание
-  const CENTER_PULL = 0.003;     // Сильнее к центру для компактности
-  const MAX_VELOCITY = 0.015;    // Умеренная скорость
-  const IDEAL_DISTANCE = 0.12;   // Короткая дистанция = компактнее
+  const REPULSION = 0.0015;      // Слабое отталкивание - узлы остаются кучно
+  const ATTRACTION = 0.08;       // Очень сильное притяжение связанных
+  const DAMPING = 0.82;          // Быстрое затухание
+  const CENTER_PULL = 0.008;     // Сильное притяжение к ядру
+  const MAX_VELOCITY = 0.012;    // Плавное движение
+  const IDEAL_DISTANCE = 0.06;   // Очень близко друг к другу
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
@@ -776,9 +775,9 @@ export const FractalUniverse = ({
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
-        // Компактные размеры
-        const widgetWidth = 0.09;
-        const widgetHeight = 0.045;
+        // Ещё компактнее для кучного расположения
+        const widgetWidth = 0.065;
+        const widgetHeight = 0.035;
         
         // Количество связей для информативности
         const connectionCount = nodeData.connects?.length || 0;
@@ -816,8 +815,8 @@ export const FractalUniverse = ({
             
             {/* Тонкая граница */}
             <RoundedBox
-              args={[widgetWidth + 0.003, widgetHeight + 0.003, 0.005]}
-              radius={0.011}
+              args={[widgetWidth + 0.002, widgetHeight + 0.002, 0.004]}
+              radius={0.008}
               smoothness={3}
             >
               <meshBasicMaterial 
@@ -829,8 +828,8 @@ export const FractalUniverse = ({
             
             {/* Иконка слева */}
             <Text
-              position={[-0.028, 0, 0.006]}
-              fontSize={0.018}
+              position={[-0.02, 0, 0.005]}
+              fontSize={0.014}
               color={palette.accent}
               anchorX="center"
               anchorY="middle"
@@ -841,8 +840,8 @@ export const FractalUniverse = ({
             
             {/* Название */}
             <Text
-              position={[0.012, 0.008, 0.006]}
-              fontSize={0.012}
+              position={[0.01, 0.005, 0.005]}
+              fontSize={0.009}
               color={isHovered ? '#FFFFFF' : '#E8E8ED'}
               anchorX="center"
               anchorY="middle"
@@ -851,32 +850,17 @@ export const FractalUniverse = ({
               {nodeData.title}
             </Text>
             
-            {/* Субтитл + счётчик связей */}
+            {/* Счётчик связей */}
             <Text
-              position={[0.012, -0.008, 0.006]}
-              fontSize={0.008}
+              position={[0.01, -0.006, 0.005]}
+              fontSize={0.006}
               color={palette.glow}
               anchorX="center"
               anchorY="middle"
               fillOpacity={node.opacity * 0.7}
             >
-              {nodeData.subtitle} {connectionCount > 0 ? `• ${connectionCount}` : ''}
+              {connectionCount > 0 ? `${connectionCount} →` : ''}
             </Text>
-            
-            {/* Индикатор связей при наведении */}
-            {isHovered && connectionCount > 0 && (
-              <group position={[0, -0.038, 0.006]}>
-                <Text
-                  fontSize={0.007}
-                  color={palette.secondary}
-                  anchorX="center"
-                  anchorY="middle"
-                  fillOpacity={node.opacity * 0.8}
-                >
-                  {nodeData.connects?.slice(0, 2).join(' → ')}
-                </Text>
-              </group>
-            )}
           </group>
         );
       })}
