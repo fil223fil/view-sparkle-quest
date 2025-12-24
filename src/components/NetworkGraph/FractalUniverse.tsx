@@ -1,6 +1,6 @@
-import { useRef, useState, useCallback } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { Sphere, Stars, Text } from '@react-three/drei';
+import { useRef, useState, useCallback, useMemo } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { Sphere, Stars, Text, Line } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface UniverseNode {
@@ -32,7 +32,14 @@ const FORMULAS = [
   'e^iπ', 'Δx·Δp', '∂²u/∂t²', 'det(A)', 'lim→∞', '∮ E·dl',
 ];
 
-const DEPTH_COLORS = ['#58C4DD', '#FF6B9D', '#9B59B6', '#F39C12', '#2ECC71'];
+// Harmonious color palette - deeper, more cosmic
+const DEPTH_PALETTES = [
+  { primary: '#58C4DD', secondary: '#3A8FA8', glow: '#7FD4E8' },  // Cyan
+  { primary: '#E056A0', secondary: '#A03870', glow: '#FF7AC0' },  // Magenta
+  { primary: '#9B59B6', secondary: '#6C3483', glow: '#BB79D6' },  // Purple
+  { primary: '#F39C12', secondary: '#B57A0D', glow: '#FFBC42' },  // Gold
+  { primary: '#2ECC71', secondary: '#1E8449', glow: '#5EFC91' },  // Emerald
+];
 
 const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
@@ -50,7 +57,7 @@ const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
       ],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.2,
+      birthTime: time + i * 0.15,
     });
   }
   return nodes;
@@ -66,11 +73,139 @@ const generateUniverseEdges = (nodeCount: number, time: number): UniverseEdge[] 
         from: i,
         to: target,
         opacity: 0,
-        birthTime: time + i * 0.2 + 0.1,
+        birthTime: time + i * 0.15 + 0.1,
       });
     }
   }
   return edges;
+};
+
+// Dynamic edge component with flowing energy
+const DynamicEdge = ({ 
+  start, 
+  end, 
+  opacity, 
+  palette, 
+  formulaIndex, 
+  time 
+}: { 
+  start: [number, number, number]; 
+  end: [number, number, number]; 
+  opacity: number; 
+  palette: typeof DEPTH_PALETTES[0];
+  formulaIndex: number;
+  time: number;
+}) => {
+  const lineRef = useRef<THREE.Line>(null);
+  const particlesRef = useRef<THREE.Points>(null);
+  
+  // Create curved path
+  const { curve, points } = useMemo(() => {
+    const startVec = new THREE.Vector3(...start);
+    const endVec = new THREE.Vector3(...end);
+    const mid = startVec.clone().add(endVec).multiplyScalar(0.5);
+    
+    // Add curve offset
+    const direction = endVec.clone().sub(startVec).normalize();
+    const perpendicular = new THREE.Vector3()
+      .crossVectors(direction, new THREE.Vector3(0, 1, 0))
+      .normalize()
+      .multiplyScalar(startVec.distanceTo(endVec) * 0.15);
+    
+    mid.add(perpendicular);
+    
+    const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
+    const curvePoints = bezierCurve.getPoints(30);
+    
+    return { curve: bezierCurve, points: curvePoints };
+  }, [start, end]);
+
+  // Particle positions along curve
+  const particlePositions = useMemo(() => {
+    const positions = new Float32Array(15 * 3);
+    for (let i = 0; i < 15; i++) {
+      const point = curve.getPoint(i / 15);
+      positions[i * 3] = point.x;
+      positions[i * 3 + 1] = point.y;
+      positions[i * 3 + 2] = point.z;
+    }
+    return positions;
+  }, [curve]);
+
+  // Animate particles flowing along the curve
+  useFrame(() => {
+    if (particlesRef.current) {
+      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < 15; i++) {
+        const t = ((i / 15) + time * 0.3 + formulaIndex * 0.1) % 1;
+        const point = curve.getPoint(t);
+        positions[i * 3] = point.x;
+        positions[i * 3 + 1] = point.y;
+        positions[i * 3 + 2] = point.z;
+      }
+      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
+  const formula = FORMULAS[formulaIndex % FORMULAS.length];
+  const midPoint = curve.getPoint(0.5);
+  
+  // Formula position oscillates along curve
+  const formulaT = 0.3 + Math.sin(time * 0.5 + formulaIndex) * 0.2;
+  const formulaPoint = curve.getPoint(formulaT);
+
+  return (
+    <group>
+      {/* Main curved line with gradient effect */}
+      <Line
+        points={points}
+        color={palette.primary}
+        lineWidth={1.5}
+        transparent
+        opacity={opacity * 0.6}
+      />
+      
+      {/* Glow line */}
+      <Line
+        points={points}
+        color={palette.glow}
+        lineWidth={3}
+        transparent
+        opacity={opacity * 0.15}
+      />
+
+      {/* Flowing particles */}
+      <points ref={particlesRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            count={15}
+            array={particlePositions}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color={palette.glow}
+          size={0.015}
+          transparent
+          opacity={opacity * 0.8}
+          sizeAttenuation
+        />
+      </points>
+
+      {/* Animated formula */}
+      <Text
+        position={[formulaPoint.x, formulaPoint.y, formulaPoint.z]}
+        fontSize={0.025}
+        color={palette.primary}
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={opacity * (0.5 + Math.sin(time * 2 + formulaIndex) * 0.3)}
+      >
+        {formula}
+      </Text>
+    </group>
+  );
 };
 
 export const FractalUniverse = ({ 
@@ -88,7 +223,7 @@ export const FractalUniverse = ({
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
   const initialized = useRef(false);
 
-  const color = DEPTH_COLORS[depth % DEPTH_COLORS.length];
+  const palette = DEPTH_PALETTES[depth % DEPTH_PALETTES.length];
 
   // Initialize universe when becoming active
   useFrame(({ clock }) => {
@@ -104,7 +239,8 @@ export const FractalUniverse = ({
     }
 
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.002;
+      groupRef.current.rotation.y += 0.001;
+      groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.05;
     }
   });
 
@@ -125,7 +261,6 @@ export const FractalUniverse = ({
 
   const handleNodeClick = useCallback((nodePosition: [number, number, number]) => {
     if (depth < 4) {
-      // Transform local position to world position
       const worldPos: [number, number, number] = [
         position[0] + nodePosition[0] * universeScale,
         position[1] + nodePosition[1] * universeScale,
@@ -139,91 +274,113 @@ export const FractalUniverse = ({
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
-      {/* Inner stars */}
+      {/* Inner stars with depth color */}
       <Stars
         radius={2}
         depth={1}
-        count={100}
-        factor={0.5}
-        saturation={0}
+        count={80}
+        factor={0.4}
+        saturation={0.5}
         fade
-        speed={0.3}
+        speed={0.2}
       />
 
-      {/* Center glow */}
-      <Sphere args={[0.05, 16, 16]}>
-        <meshBasicMaterial color={color} transparent opacity={0.3 * universeOpacity} />
+      {/* Center core with pulsing glow */}
+      <Sphere args={[0.04, 16, 16]}>
+        <meshBasicMaterial 
+          color={palette.primary} 
+          transparent 
+          opacity={(0.4 + Math.sin(time * 3) * 0.2) * universeOpacity} 
+        />
+      </Sphere>
+      <Sphere args={[0.08, 12, 12]}>
+        <meshBasicMaterial 
+          color={palette.glow} 
+          transparent 
+          opacity={(0.1 + Math.sin(time * 2) * 0.05) * universeOpacity} 
+        />
       </Sphere>
 
-      {/* Edges with formulas */}
+      {/* Dynamic edges */}
       {animatedEdges.map((edge, i) => {
         const startNode = animatedNodes.find(n => n.id === edge.from);
         const endNode = animatedNodes.find(n => n.id === edge.to);
         if (!startNode || !endNode) return null;
 
-        const midPoint: [number, number, number] = [
-          (startNode.position[0] + endNode.position[0]) / 2,
-          (startNode.position[1] + endNode.position[1]) / 2,
-          (startNode.position[2] + endNode.position[2]) / 2,
-        ];
-
         return (
-          <group key={`edge-${i}`}>
-            <line>
-              <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([...startNode.position, ...endNode.position])}
-                  itemSize={3}
-                />
-              </bufferGeometry>
-              <lineBasicMaterial color={color} transparent opacity={edge.opacity * 0.3} />
-            </line>
-            <Text
-              position={midPoint}
-              fontSize={0.03}
-              color={color}
-              anchorX="center"
-              anchorY="middle"
-              fillOpacity={edge.opacity * 0.7}
+          <DynamicEdge
+            key={`edge-${i}`}
+            start={startNode.position}
+            end={endNode.position}
+            opacity={edge.opacity}
+            palette={palette}
+            formulaIndex={i + depth * 5}
+            time={time}
+          />
+        );
+      })}
+
+      {/* Nodes with glow */}
+      {animatedNodes.map((node) => {
+        const isHovered = hoveredNode === node.id;
+        const pulse = 1 + Math.sin(time * 2 + node.id) * 0.1;
+        
+        return (
+          <group key={`node-${node.id}`} position={node.position}>
+            {/* Core */}
+            <Sphere
+              args={[0.025, 24, 24]}
+              scale={node.scale * pulse * (isHovered ? 1.4 : 1)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNodeClick(node.position);
+              }}
+              onPointerOver={() => {
+                setHoveredNode(node.id);
+                document.body.style.cursor = 'pointer';
+              }}
+              onPointerOut={() => {
+                setHoveredNode(null);
+                document.body.style.cursor = 'default';
+              }}
             >
-              {FORMULAS[(i + depth * 3) % FORMULAS.length]}
-            </Text>
+              <meshBasicMaterial 
+                color={isHovered ? palette.glow : palette.primary} 
+                transparent 
+                opacity={node.opacity} 
+              />
+            </Sphere>
+            {/* Outer glow */}
+            <Sphere args={[0.025, 12, 12]} scale={node.scale * pulse * 2.5}>
+              <meshBasicMaterial 
+                color={palette.glow} 
+                transparent 
+                opacity={node.opacity * 0.12} 
+              />
+            </Sphere>
+            {/* Extra glow on hover */}
+            {isHovered && (
+              <Sphere args={[0.025, 8, 8]} scale={node.scale * 4}>
+                <meshBasicMaterial 
+                  color={palette.glow} 
+                  transparent 
+                  opacity={node.opacity * 0.08} 
+                />
+              </Sphere>
+            )}
           </group>
         );
       })}
 
-      {/* Nodes */}
-      {animatedNodes.map((node) => (
-        <group key={`node-${node.id}`} position={node.position}>
-          <Sphere
-            args={[0.03, 24, 24]}
-            scale={node.scale * (hoveredNode === node.id ? 1.5 : 1)}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNodeClick(node.position);
-            }}
-            onPointerOver={() => setHoveredNode(node.id)}
-            onPointerOut={() => setHoveredNode(null)}
-          >
-            <meshBasicMaterial color={color} transparent opacity={node.opacity} />
-          </Sphere>
-          <Sphere args={[0.03, 12, 12]} scale={node.scale * 2}>
-            <meshBasicMaterial color={color} transparent opacity={node.opacity * 0.15} />
-          </Sphere>
-        </group>
-      ))}
-
       {/* Depth indicator */}
       <Text
-        position={[0, -0.5, 0]}
-        fontSize={0.04}
-        color={color}
+        position={[0, -0.55, 0]}
+        fontSize={0.035}
+        color={palette.primary}
         anchorX="center"
-        fillOpacity={universeOpacity * 0.5}
+        fillOpacity={universeOpacity * 0.4}
       >
-        {`Глубина ${depth + 1}`}
+        {`Уровень ${depth + 1}`}
       </Text>
     </group>
   );
