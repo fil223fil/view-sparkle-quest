@@ -6,6 +6,7 @@ import * as THREE from 'three';
 interface UniverseNode {
   id: number;
   position: [number, number, number];
+  velocity: [number, number, number];
   scale: number;
   opacity: number;
   birthTime: number;
@@ -152,12 +153,101 @@ const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
         yOffset + Math.sin(angle + i) * 0.1,
         radius * Math.sin(angle) + zVariance,
       ],
+      velocity: [0, 0, 0],
       scale: 0,
       opacity: 0,
       birthTime: time + i * 0.12,
     });
   }
   return nodes;
+};
+
+// Force-directed physics simulation
+const applyForces = (
+  nodes: UniverseNode[], 
+  edges: UniverseEdge[], 
+  deltaTime: number
+): UniverseNode[] => {
+  const REPULSION = 0.0008;      // Force pushing nodes apart
+  const ATTRACTION = 0.003;      // Force pulling connected nodes together
+  const DAMPING = 0.92;          // Velocity damping for smooth movement
+  const CENTER_PULL = 0.0005;    // Gentle pull toward center
+  const MAX_VELOCITY = 0.01;     // Maximum velocity cap
+  const IDEAL_DISTANCE = 0.25;   // Ideal distance between connected nodes
+  
+  return nodes.map((node, i) => {
+    let fx = 0, fy = 0, fz = 0;
+    
+    // Repulsion from all other nodes (magnetic field effect)
+    nodes.forEach((other, j) => {
+      if (i === j) return;
+      
+      const dx = node.position[0] - other.position[0];
+      const dy = node.position[1] - other.position[1];
+      const dz = node.position[2] - other.position[2];
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
+      
+      // Inverse square repulsion
+      const force = REPULSION / (dist * dist);
+      fx += (dx / dist) * force;
+      fy += (dy / dist) * force;
+      fz += (dz / dist) * force;
+    });
+    
+    // Attraction along edges (connected nodes pull each other)
+    edges.forEach(edge => {
+      let otherIndex = -1;
+      if (edge.from === node.id) otherIndex = edge.to;
+      else if (edge.to === node.id) otherIndex = edge.from;
+      
+      if (otherIndex !== -1) {
+        const other = nodes.find(n => n.id === otherIndex);
+        if (other) {
+          const dx = other.position[0] - node.position[0];
+          const dy = other.position[1] - node.position[1];
+          const dz = other.position[2] - node.position[2];
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
+          
+          // Spring-like attraction (stronger when far from ideal distance)
+          const displacement = dist - IDEAL_DISTANCE;
+          const force = displacement * ATTRACTION;
+          fx += (dx / dist) * force;
+          fy += (dy / dist) * force;
+          fz += (dz / dist) * force;
+        }
+      }
+    });
+    
+    // Gentle center pull to keep graph compact
+    fx -= node.position[0] * CENTER_PULL;
+    fy -= node.position[1] * CENTER_PULL;
+    fz -= node.position[2] * CENTER_PULL;
+    
+    // Update velocity with forces
+    let vx = (node.velocity[0] + fx) * DAMPING;
+    let vy = (node.velocity[1] + fy) * DAMPING;
+    let vz = (node.velocity[2] + fz) * DAMPING;
+    
+    // Clamp velocity
+    const speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
+    if (speed > MAX_VELOCITY) {
+      const scale = MAX_VELOCITY / speed;
+      vx *= scale;
+      vy *= scale;
+      vz *= scale;
+    }
+    
+    // Update position
+    return {
+      ...node,
+      position: [
+        node.position[0] + vx,
+        node.position[1] + vy,
+        node.position[2] + vz,
+      ] as [number, number, number],
+      velocity: [vx, vy, vz] as [number, number, number],
+    };
+  });
 };
 
 // Generate mind-map connections based on concept relationships
@@ -566,11 +656,16 @@ export const FractalUniverse = ({
     
     if (isActive) {
       setTime(clock.elapsedTime);
+      
+      // Apply force-directed physics
+      if (nodes.length > 0 && edges.length > 0) {
+        setNodes(prevNodes => applyForces(prevNodes, edges, 0.016));
+      }
     }
 
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.001;
-      groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.05;
+      groupRef.current.rotation.y += 0.0005;
+      groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.15) * 0.03;
     }
   });
 
