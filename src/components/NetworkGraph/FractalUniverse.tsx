@@ -9,6 +9,8 @@ interface UniverseNode {
   scale: number;
   opacity: number;
   birthTime: number;
+  priority: number; // 0-1, affects size and brightness
+  connections: number; // number of connections
 }
 
 interface UniverseEdge {
@@ -16,6 +18,7 @@ interface UniverseEdge {
   to: number;
   opacity: number;
   birthTime: number;
+  strength: number; // 0-1, affects line brightness
 }
 
 interface FractalUniverseProps {
@@ -78,12 +81,32 @@ const DEPTH_PALETTES = [
   { primary: '#38B2AC', secondary: '#2C9A94', glow: '#81E6D9', accent: '#FC8181' },  // Teal Wave
 ];
 
-const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
+const generateUniverseNodes = (count: number, time: number, depth: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
+  
+  // Generate priorities - some nodes are more important
+  const priorities: number[] = [];
+  for (let i = 0; i < count; i++) {
+    // Use seeded randomness based on depth for variety
+    const seed = (depth * 17 + i * 31) % 100;
+    // Create hierarchy: 1-2 high priority, rest varies
+    if (i === 0) {
+      priorities.push(1); // First node always high priority
+    } else if (seed < 15) {
+      priorities.push(0.85 + Math.random() * 0.15); // High priority
+    } else if (seed < 40) {
+      priorities.push(0.5 + Math.random() * 0.3); // Medium priority
+    } else {
+      priorities.push(0.2 + Math.random() * 0.3); // Low priority
+    }
+  }
+  
   for (let i = 0; i < count; i++) {
     const phi = Math.acos(-1 + (2 * i) / count);
     const theta = Math.sqrt(count * Math.PI) * phi;
-    const radius = 0.3 + Math.random() * 0.2;
+    // Higher priority nodes closer to center
+    const baseRadius = 0.25 + (1 - priorities[i]) * 0.25;
+    const radius = baseRadius + Math.random() * 0.1;
     
     nodes.push({
       id: i,
@@ -94,26 +117,68 @@ const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
       ],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.15,
+      birthTime: time + i * 0.12,
+      priority: priorities[i],
+      connections: 0,
     });
   }
   return nodes;
 };
 
-const generateUniverseEdges = (nodeCount: number, time: number): UniverseEdge[] => {
+const generateUniverseEdges = (nodes: UniverseNode[], time: number, depth: number): UniverseEdge[] => {
   const edges: UniverseEdge[] = [];
+  const nodeCount = nodes.length;
+  
+  // Track connections per node
+  const connectionCounts = new Array(nodeCount).fill(0);
+  
   for (let i = 1; i < nodeCount; i++) {
-    const connections = Math.min(2, i);
+    // High priority nodes get more connections
+    const maxConnections = Math.ceil(nodes[i].priority * 3) + 1;
+    const connections = Math.min(maxConnections, i);
+    
     for (let j = 0; j < connections; j++) {
-      const target = Math.floor(Math.random() * i);
+      // Prefer connecting to high priority nodes
+      let target = 0;
+      if (j === 0) {
+        // First connection to a high priority node
+        const highPriorityNodes = nodes.slice(0, i).filter(n => n.priority > 0.6);
+        if (highPriorityNodes.length > 0) {
+          target = highPriorityNodes[Math.floor(Math.random() * highPriorityNodes.length)].id;
+        } else {
+          target = Math.floor(Math.random() * i);
+        }
+      } else {
+        target = Math.floor(Math.random() * i);
+      }
+      
+      // Avoid duplicate edges
+      const exists = edges.some(e => 
+        (e.from === i && e.to === target) || (e.from === target && e.to === i)
+      );
+      if (exists) continue;
+      
+      // Edge strength based on node priorities
+      const strength = (nodes[i].priority + nodes[target].priority) / 2;
+      
       edges.push({
         from: i,
         to: target,
         opacity: 0,
-        birthTime: time + i * 0.15 + 0.1,
+        birthTime: time + i * 0.12 + 0.08,
+        strength,
       });
+      
+      connectionCounts[i]++;
+      connectionCounts[target]++;
     }
   }
+  
+  // Update node connection counts
+  nodes.forEach((node, i) => {
+    node.connections = connectionCounts[i];
+  });
+  
   return edges;
 };
 
@@ -236,7 +301,8 @@ const DynamicEdge = ({
   palette, 
   edgeIndex,
   depth,
-  time 
+  time,
+  strength,
 }: { 
   start: [number, number, number]; 
   end: [number, number, number]; 
@@ -245,6 +311,7 @@ const DynamicEdge = ({
   edgeIndex: number;
   depth: number;
   time: number;
+  strength: number;
 }) => {
   const formulas = getFormulasForDepth(depth);
   
@@ -270,27 +337,33 @@ const DynamicEdge = ({
     return { curve: bezierCurve, points: curvePoints };
   }, [start, end, edgeIndex]);
 
-  // Multiple formula streams with staggered timing
+  // Streams count based on strength
+  const streamCount = strength > 0.7 ? 3 : strength > 0.4 ? 2 : 1;
+  
   const streams = useMemo(() => {
-    return [
-      { formula: formulas[edgeIndex % formulas.length], offset: 0, speed: 0.08 },
-      { formula: formulas[(edgeIndex + 1) % formulas.length], offset: 0.4, speed: 0.1 },
-      { formula: formulas[(edgeIndex + 2) % formulas.length], offset: 0.8, speed: 0.06 },
-    ];
-  }, [formulas, edgeIndex]);
+    const result = [];
+    for (let i = 0; i < streamCount; i++) {
+      result.push({
+        formula: formulas[(edgeIndex + i) % formulas.length],
+        offset: i * 0.35,
+        speed: 0.06 + strength * 0.06,
+      });
+    }
+    return result;
+  }, [formulas, edgeIndex, streamCount, strength]);
 
-  // Very subtle base line - almost invisible
-  const basePulse = 0.02 + Math.sin(time * 2 + edgeIndex) * 0.01;
+  // Base line visibility based on strength
+  const basePulse = (0.02 + strength * 0.03) + Math.sin(time * 2 + edgeIndex) * 0.01;
 
   return (
     <group>
-      {/* Ultra-thin ghost line - barely visible guide */}
+      {/* Ultra-thin ghost line - visibility based on strength */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={0.5}
+        lineWidth={0.3 + strength * 0.5}
         transparent
-        opacity={opacity * basePulse}
+        opacity={opacity * basePulse * (0.5 + strength * 0.5)}
       />
 
       {/* Formula character streams - the main visual */}
@@ -301,7 +374,7 @@ const DynamicEdge = ({
           formula={stream.formula}
           baseOffset={stream.offset}
           speed={stream.speed}
-          opacity={opacity}
+          opacity={opacity * (0.6 + strength * 0.4)}
           primaryColor={palette.primary}
           accentColor={palette.accent}
           time={time}
@@ -333,9 +406,11 @@ export const FractalUniverse = ({
   useFrame(({ clock }) => {
     if (isActive && initializedForDepth.current !== depth) {
       initializedForDepth.current = depth;
-      const nodeCount = Math.max(5, 8 - (depth % 5)); // Cycle node count
-      setNodes(generateUniverseNodes(nodeCount, clock.elapsedTime));
-      setEdges(generateUniverseEdges(nodeCount, clock.elapsedTime));
+      const nodeCount = Math.max(6, 10 - (depth % 4)); // More nodes, cycling
+      const newNodes = generateUniverseNodes(nodeCount, clock.elapsedTime, depth);
+      const newEdges = generateUniverseEdges(newNodes, clock.elapsedTime, depth);
+      setNodes(newNodes);
+      setEdges(newEdges);
     }
     
     if (isActive) {
@@ -348,19 +423,28 @@ export const FractalUniverse = ({
     }
   });
 
-  // Animate nodes
+  // Animate nodes with priority affecting appearance
   const animatedNodes = nodes.map((node) => {
     const age = time - node.birthTime;
     const progress = Math.min(1, Math.max(0, age / 0.8));
     const eased = 1 - Math.pow(1 - progress, 3);
-    return { ...node, scale: eased, opacity: eased * universeOpacity };
+    // Priority affects final opacity and scale
+    const priorityScale = 0.6 + node.priority * 0.6;
+    const priorityOpacity = 0.5 + node.priority * 0.5;
+    return { 
+      ...node, 
+      scale: eased * priorityScale, 
+      opacity: eased * universeOpacity * priorityOpacity 
+    };
   });
 
   const animatedEdges = edges.map((edge) => {
     const age = time - edge.birthTime;
     const progress = Math.min(1, Math.max(0, age / 0.6));
     const eased = 1 - Math.pow(1 - progress, 3);
-    return { ...edge, opacity: eased * universeOpacity };
+    // Strength affects opacity
+    const strengthOpacity = 0.5 + edge.strength * 0.5;
+    return { ...edge, opacity: eased * universeOpacity * strengthOpacity };
   });
 
   const handleNodeClick = useCallback((nodePosition: [number, number, number]) => {
@@ -420,20 +504,23 @@ export const FractalUniverse = ({
             edgeIndex={i}
             depth={depth}
             time={time}
+            strength={edge.strength}
           />
         );
       })}
 
-      {/* Nodes with glow */}
+      {/* Nodes with glow - size and brightness based on priority */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
         const pulse = 1 + Math.sin(time * 2 + node.id) * 0.1;
+        // Base size affected by priority
+        const baseSize = 0.02 + node.priority * 0.02;
         
         return (
           <group key={`node-${node.id}`} position={node.position}>
-            {/* Core */}
+            {/* Core - size based on priority */}
             <Sphere
-              args={[0.025, 24, 24]}
+              args={[baseSize, 24, 24]}
               scale={node.scale * pulse * (isHovered ? 1.4 : 1)}
               onClick={(e) => {
                 e.stopPropagation();
@@ -449,26 +536,26 @@ export const FractalUniverse = ({
               }}
             >
               <meshBasicMaterial 
-                color={isHovered ? palette.glow : palette.primary} 
+                color={isHovered ? palette.glow : (node.priority > 0.7 ? palette.accent : palette.primary)} 
                 transparent 
                 opacity={node.opacity} 
               />
             </Sphere>
-            {/* Outer glow */}
-            <Sphere args={[0.025, 12, 12]} scale={node.scale * pulse * 2.5}>
+            {/* Outer glow - bigger for high priority */}
+            <Sphere args={[baseSize, 12, 12]} scale={node.scale * pulse * (2 + node.priority)}>
               <meshBasicMaterial 
                 color={palette.glow} 
                 transparent 
-                opacity={node.opacity * 0.12} 
+                opacity={node.opacity * 0.1 * (0.5 + node.priority * 0.5)} 
               />
             </Sphere>
-            {/* Extra glow on hover */}
-            {isHovered && (
-              <Sphere args={[0.025, 8, 8]} scale={node.scale * 4}>
+            {/* Extra glow on hover or high priority */}
+            {(isHovered || node.priority > 0.8) && (
+              <Sphere args={[baseSize, 8, 8]} scale={node.scale * (3 + node.priority * 2)}>
                 <meshBasicMaterial 
-                  color={palette.glow} 
+                  color={node.priority > 0.8 ? palette.accent : palette.glow} 
                   transparent 
-                  opacity={node.opacity * 0.08} 
+                  opacity={node.opacity * (isHovered ? 0.1 : 0.05)} 
                 />
               </Sphere>
             )}
