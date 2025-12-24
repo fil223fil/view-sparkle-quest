@@ -588,12 +588,17 @@ export const FractalUniverse = ({
   const [edges, setEdges] = useState<UniverseEdge[]>([]);
   const [time, setTime] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
+  const [zoomedNode, setZoomedNode] = useState<number | null>(null);
+  const [zoomProgress, setZoomProgress] = useState(0);
   const initialized = useRef(false);
 
   const palette = DEPTH_PALETTES[depth % DEPTH_PALETTES.length];
 
+  // Nodes that zoom in instead of dive (every 2nd and 3rd node)
+  const isZoomableNode = (nodeId: number) => nodeId % 3 !== 0;
+
   // Initialize universe when becoming active
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }) => {
     if (isActive && !initialized.current) {
       initialized.current = true;
       const nodeCount = Math.max(6, 8);
@@ -605,8 +610,17 @@ export const FractalUniverse = ({
       setTime(clock.elapsedTime);
     }
 
+    // Animate zoom progress
+    if (zoomedNode !== null) {
+      setZoomProgress(prev => Math.min(1, prev + 0.04));
+    } else {
+      setZoomProgress(prev => Math.max(0, prev - 0.06));
+    }
+
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.001;
+      // Slow down rotation when zoomed
+      const rotationSpeed = zoomedNode !== null ? 0.0002 : 0.001;
+      groupRef.current.rotation.y += rotationSpeed;
       groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.05;
     }
   });
@@ -626,15 +640,24 @@ export const FractalUniverse = ({
     return { ...edge, opacity: eased * universeOpacity };
   });
 
-  const handleNodeClick = useCallback((nodePosition: [number, number, number]) => {
-    // No depth limit - infinite exploration
-    const worldPos: [number, number, number] = [
-      position[0] + nodePosition[0] * universeScale,
-      position[1] + nodePosition[1] * universeScale,
-      position[2] + nodePosition[2] * universeScale,
-    ];
-    onDiveIn(worldPos, depth + 1);
-  }, [depth, position, universeScale, onDiveIn]);
+  const handleNodeClick = useCallback((nodeId: number, nodePosition: [number, number, number]) => {
+    if (isZoomableNode(nodeId)) {
+      // Zoom in effect - toggle
+      if (zoomedNode === nodeId) {
+        setZoomedNode(null);
+      } else {
+        setZoomedNode(nodeId);
+      }
+    } else {
+      // Original dive in behavior
+      const worldPos: [number, number, number] = [
+        position[0] + nodePosition[0] * universeScale,
+        position[1] + nodePosition[1] * universeScale,
+        position[2] + nodePosition[2] * universeScale,
+      ];
+      onDiveIn(worldPos, depth + 1);
+    }
+  }, [depth, position, universeScale, onDiveIn, zoomedNode]);
 
   if (!isActive) return null;
 
@@ -718,14 +741,34 @@ export const FractalUniverse = ({
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
+        // Calculate zoom effect
+        const isZoomed = zoomedNode === node.id;
+        const isOtherZoomed = zoomedNode !== null && zoomedNode !== node.id;
+        
+        // Smooth easing for zoom
+        const zoomEase = 1 - Math.pow(1 - zoomProgress, 3);
+        
+        // When zoomed: scale up and move to center
+        const zoomScale = isZoomed ? 1 + zoomEase * 2.5 : 1;
+        const fadeOut = isOtherZoomed ? 1 - zoomEase * 0.85 : 1;
+        
+        // Position interpolation toward center when zoomed
+        const zoomedPosition: [number, number, number] = isZoomed 
+          ? [
+              node.position[0] * (1 - zoomEase * 0.9),
+              node.position[1] * (1 - zoomEase * 0.9),
+              node.position[2] * (1 - zoomEase * 0.9) + zoomEase * 0.15
+            ]
+          : node.position;
+        
         const widgetWidth = 0.12;
-        const widgetHeight = 0.065;
+        const widgetHeight = isZoomed ? 0.065 + zoomEase * 0.04 : 0.065;
         
         return (
           <group 
             key={`node-${node.id}`} 
-            position={node.position}
-            scale={node.scale * pulse * hoverScale}
+            position={zoomedPosition}
+            scale={node.scale * pulse * hoverScale * zoomScale * fadeOut}
           >
             {/* Widget background - frosted glass */}
             <RoundedBox
@@ -734,7 +777,7 @@ export const FractalUniverse = ({
               smoothness={4}
               onClick={(e) => {
                 e.stopPropagation();
-                handleNodeClick(node.position);
+                handleNodeClick(node.id, node.position);
               }}
               onPointerOver={() => {
                 setHoveredNode(node.id);
@@ -748,7 +791,7 @@ export const FractalUniverse = ({
               <meshBasicMaterial 
                 color="#1C1C1E"
                 transparent 
-                opacity={node.opacity * 0.92}
+                opacity={node.opacity * 0.92 * fadeOut}
               />
             </RoundedBox>
             
@@ -759,85 +802,113 @@ export const FractalUniverse = ({
               smoothness={4}
             >
               <meshBasicMaterial 
-                color={isHovered ? palette.accent : palette.primary}
+                color={isZoomed ? palette.accent : (isHovered ? palette.accent : palette.primary)}
                 transparent 
-                opacity={node.opacity * (isHovered ? 0.7 : 0.35)}
+                opacity={node.opacity * (isZoomed ? 0.9 : (isHovered ? 0.7 : 0.35)) * fadeOut}
               />
             </RoundedBox>
             
-            {/* Outer glow */}
+            {/* Outer glow - enhanced when zoomed */}
             <RoundedBox
-              args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.004]}
+              args={[widgetWidth + 0.02 + (isZoomed ? zoomEase * 0.03 : 0), widgetHeight + 0.02 + (isZoomed ? zoomEase * 0.02 : 0), 0.004]}
               radius={0.02}
               smoothness={3}
             >
               <meshBasicMaterial 
                 color={palette.glow}
                 transparent 
-                opacity={node.opacity * (isHovered ? 0.2 : 0.08)}
+                opacity={node.opacity * (isZoomed ? 0.35 : (isHovered ? 0.2 : 0.08)) * fadeOut}
               />
             </RoundedBox>
             
             {/* Icon */}
             <Text
               position={[-0.035, 0.005, 0.008]}
-              fontSize={0.022}
+              fontSize={0.022 + (isZoomed ? zoomEase * 0.008 : 0)}
               color={palette.accent}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity}
+              fillOpacity={node.opacity * fadeOut}
             >
               {nodeData.icon}
             </Text>
             
             {/* Title */}
             <Text
-              position={[0.015, 0.01, 0.008]}
-              fontSize={0.016}
-              color={isHovered ? '#FFFFFF' : '#EBEBF5'}
+              position={[0.015, 0.01 + (isZoomed ? zoomEase * 0.01 : 0), 0.008]}
+              fontSize={0.016 + (isZoomed ? zoomEase * 0.006 : 0)}
+              color={isZoomed ? '#FFFFFF' : (isHovered ? '#FFFFFF' : '#EBEBF5')}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity * 0.95}
+              fillOpacity={node.opacity * 0.95 * fadeOut}
             >
               {nodeData.title}
             </Text>
             
             {/* Subtitle */}
             <Text
-              position={[0.015, -0.012, 0.008]}
-              fontSize={0.01}
+              position={[0.015, -0.012 - (isZoomed ? zoomEase * 0.008 : 0), 0.008]}
+              fontSize={0.01 + (isZoomed ? zoomEase * 0.004 : 0)}
               color={palette.glow}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity * 0.6}
+              fillOpacity={node.opacity * 0.6 * fadeOut}
             >
               {nodeData.subtitle}
             </Text>
             
-            {/* Connection hints on hover */}
-            {isHovered && nodeData.connects && (
+            {/* Connection hints - show when zoomed or hovered */}
+            {(isZoomed || isHovered) && nodeData.connects && (
               <Text
-                position={[0, -0.055, 0.008]}
-                fontSize={0.009}
+                position={[0, -0.055 - (isZoomed ? zoomEase * 0.02 : 0), 0.008]}
+                fontSize={0.009 + (isZoomed ? zoomEase * 0.005 : 0)}
                 color={palette.accent}
                 anchorX="center"
                 anchorY="top"
-                fillOpacity={node.opacity * 0.7}
+                fillOpacity={node.opacity * (isZoomed ? 0.9 : 0.7) * fadeOut}
               >
                 {`→ ${nodeData.connects.join(' · ')}`}
+              </Text>
+            )}
+            
+            {/* Zoom indicator - shows it's zoomable */}
+            {isZoomableNode(node.id) && !isZoomed && isHovered && (
+              <Text
+                position={[widgetWidth / 2 - 0.01, widgetHeight / 2 - 0.008, 0.01]}
+                fontSize={0.008}
+                color={palette.primary}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity * 0.7}
+              >
+                🔍
+              </Text>
+            )}
+            
+            {/* Close indicator when zoomed */}
+            {isZoomed && (
+              <Text
+                position={[widgetWidth / 2 - 0.01, widgetHeight / 2 + zoomEase * 0.015, 0.01]}
+                fontSize={0.012}
+                color={palette.accent}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity * zoomEase}
+              >
+                ✕
               </Text>
             )}
           </group>
         );
       })}
 
-      {/* Depth label - minimal */}
+      {/* Depth label - minimal, fade when zoomed */}
       <Text
         position={[0, -0.5, 0]}
         fontSize={0.022}
         color={palette.glow}
         anchorX="center"
-        fillOpacity={universeOpacity * 0.25}
+        fillOpacity={universeOpacity * 0.25 * (1 - zoomProgress * 0.8)}
       >
         {depth + 1}
       </Text>
