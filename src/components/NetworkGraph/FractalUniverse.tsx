@@ -129,26 +129,25 @@ const DEPTH_PALETTES = [
   { primary: '#D8D4C0', secondary: '#E8E4D4', glow: '#E0DCC8', accent: '#C0C8D8' },  // Cream
 ];
 
-// Кучное расположение вокруг ядра
+// Очень близко к ядру
 const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
   
   for (let i = 0; i < count; i++) {
-    // Очень близко к центру, почти в одной точке
-    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
-    const radius = 0.06 + Math.random() * 0.04; // Очень маленький радиус
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.2;
+    const radius = 0.03 + Math.random() * 0.02; // Очень близко к центру
     
     nodes.push({
       id: i,
       position: [
         radius * Math.cos(angle),
-        (Math.random() - 0.5) * 0.03, // Минимальный разброс по Y
+        (Math.random() - 0.5) * 0.015,
         radius * Math.sin(angle),
       ],
       velocity: [0, 0, 0],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.06,
+      birthTime: time + i * 0.05,
     });
   }
   return nodes;
@@ -162,12 +161,12 @@ const applyForces = (
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.0008;      // Мягкое отталкивание
-  const ATTRACTION = 0.012;      // Нежное притяжение
-  const DAMPING = 0.96;          // Плавное затухание - более инертное
-  const CENTER_PULL = 0.002;     // Мягкое притяжение к центру
-  const MAX_VELOCITY = 0.004;    // Медленное, органичное движение
-  const IDEAL_DISTANCE = 0.08;   // Близко, но не слипаются
+  const REPULSION = 0.0006;      // Минимальное отталкивание
+  const ATTRACTION = 0.015;      // Притяжение связанных
+  const DAMPING = 0.95;          // Плавное
+  const CENTER_PULL = 0.006;     // Сильное притяжение к ядру
+  const MAX_VELOCITY = 0.003;    // Медленно
+  const IDEAL_DISTANCE = 0.04;   // Очень близко
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
