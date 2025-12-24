@@ -126,22 +126,23 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
 
   return (
     <>
-      {/* Minimal starfield - Apple style subtle */}
+      {/* visionOS ambient particle field */}
       <Stars
-        radius={200}
-        depth={100}
-        count={500}
-        factor={1.5}
-        saturation={0}
+        radius={250}
+        depth={150}
+        count={800}
+        factor={1.2}
+        saturation={0.1}
         fade
-        speed={0.1}
+        speed={0.08}
       />
 
-      {/* Soft ambient lighting */}
-      <ambientLight intensity={0.05} />
-      <pointLight position={[0, 0, 0]} intensity={0.3} color="#5E5CE6" decay={2} />
-      <pointLight position={[8, 4, 4]} intensity={0.15} color="#0A84FF" decay={2} />
-      <pointLight position={[-6, -4, -4]} intensity={0.1} color="#BF5AF2" decay={2} />
+      {/* Volumetric lighting - visionOS spatial */}
+      <ambientLight intensity={0.03} color="#E8E8ED" />
+      <pointLight position={[0, 0, 0]} intensity={0.25} color="#5E5CE6" decay={2} distance={20} />
+      <pointLight position={[10, 5, 5]} intensity={0.12} color="#0A84FF" decay={2} distance={25} />
+      <pointLight position={[-8, -3, -5]} intensity={0.08} color="#BF5AF2" decay={2} distance={20} />
+      <pointLight position={[0, 8, -8]} intensity={0.06} color="#64D2FF" decay={2} distance={15} />
 
       {/* Render all universe levels */}
       {universes.map((universe) => (
@@ -156,19 +157,42 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
         />
       ))}
 
-      {/* Apple-style minimal back button */}
+      {/* visionOS style back button with glass effect */}
       {activeDepth > 0 && (
-        <group position={[0, 1.3, 0]}>
-          <Text
-            fontSize={0.06}
-            color="#0A84FF"
-            anchorX="center"
+        <group position={[0, 1.4, 0]}>
+          {/* Button glass background */}
+          <mesh
             onClick={handleGoBack}
             onPointerOver={(e) => (document.body.style.cursor = 'pointer')}
             onPointerOut={(e) => (document.body.style.cursor = 'default')}
-            fillOpacity={0.9}
           >
-            ‹ Назад
+            <planeGeometry args={[0.28, 0.08]} />
+            <meshBasicMaterial 
+              color="#1C1C1E" 
+              transparent 
+              opacity={0.85}
+            />
+          </mesh>
+          
+          {/* Button border glow */}
+          <mesh position={[0, 0, -0.001]}>
+            <planeGeometry args={[0.29, 0.09]} />
+            <meshBasicMaterial 
+              color="#0A84FF" 
+              transparent 
+              opacity={0.2}
+            />
+          </mesh>
+          
+          <Text
+            position={[0, 0, 0.001]}
+            fontSize={0.038}
+            color="#0A84FF"
+            anchorX="center"
+            anchorY="middle"
+            fillOpacity={0.95}
+          >
+            ← Назад
           </Text>
         </group>
       )}

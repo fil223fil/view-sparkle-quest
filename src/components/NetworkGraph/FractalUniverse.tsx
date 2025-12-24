@@ -708,13 +708,13 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Mind Map Widget Nodes */}
+      {/* Mind Map Widget Nodes - visionOS glass style */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        const pulse = 1 + Math.sin(time * 0.6 + node.id * 0.4) * 0.025;
-        const hoverScale = isHovered ? 1.1 : 1;
-        const widgetWidth = 0.14;
-        const widgetHeight = 0.1;
+        const pulse = 1 + Math.sin(time * 0.5 + node.id * 0.3) * 0.015;
+        const hoverScale = isHovered ? 1.08 : 1;
+        const widgetWidth = 0.16;
+        const widgetHeight = 0.11;
         
         // Get concept from current depth's map
         const conceptMap = getConceptMap(depth);
@@ -726,11 +726,24 @@ export const FractalUniverse = ({
             position={node.position}
             scale={node.scale * pulse * hoverScale}
           >
-            {/* Widget glass background */}
+            {/* Outer glow layer - visionOS depth */}
             <RoundedBox
-              args={[widgetWidth, widgetHeight, 0.015]}
-              radius={0.02}
+              args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.002]}
+              radius={0.028}
               smoothness={4}
+            >
+              <meshBasicMaterial 
+                color={palette.glow}
+                transparent 
+                opacity={node.opacity * (isHovered ? 0.15 : 0.04)}
+              />
+            </RoundedBox>
+            
+            {/* Widget glass background - frosted */}
+            <RoundedBox
+              args={[widgetWidth, widgetHeight, 0.018]}
+              radius={0.024}
+              smoothness={6}
               onClick={(e) => {
                 e.stopPropagation();
                 handleNodeClick(node.position);
@@ -745,105 +758,149 @@ export const FractalUniverse = ({
               }}
             >
               <meshBasicMaterial 
-                color={isHovered ? '#2C2C2E' : '#1C1C1E'}
+                color={isHovered ? '#252528' : '#1A1A1C'}
                 transparent 
-                opacity={node.opacity * 0.9}
+                opacity={node.opacity * 0.92}
               />
             </RoundedBox>
             
-            {/* Widget accent border */}
+            {/* Inner highlight - top edge */}
             <RoundedBox
-              args={[widgetWidth + 0.003, widgetHeight + 0.003, 0.01]}
-              radius={0.021}
+              args={[widgetWidth - 0.01, 0.002, 0.016]}
+              radius={0.001}
+              smoothness={2}
+              position={[0, widgetHeight / 2 - 0.008, 0.002]}
+            >
+              <meshBasicMaterial 
+                color="#FFFFFF"
+                transparent 
+                opacity={node.opacity * 0.08}
+              />
+            </RoundedBox>
+            
+            {/* Widget accent border - subtle glow */}
+            <RoundedBox
+              args={[widgetWidth + 0.004, widgetHeight + 0.004, 0.012]}
+              radius={0.025}
               smoothness={4}
             >
               <meshBasicMaterial 
                 color={palette.primary}
                 transparent 
-                opacity={node.opacity * (isHovered ? 0.7 : 0.25)}
+                opacity={node.opacity * (isHovered ? 0.6 : 0.18)}
               />
             </RoundedBox>
             
-            {/* Icon */}
-            <Text
-              position={[0, 0.018, 0.01]}
-              fontSize={0.024}
-              color={isHovered ? '#FFFFFF' : palette.primary}
-              anchorX="center"
-              anchorY="middle"
-              fillOpacity={node.opacity}
-            >
-              {nodeData.icon}
-            </Text>
+            {/* SF Symbol style icon container */}
+            <group position={[0, 0.022, 0.012]}>
+              {/* Icon background circle */}
+              <Sphere args={[0.018, 16, 16]}>
+                <meshBasicMaterial 
+                  color={palette.primary}
+                  transparent 
+                  opacity={node.opacity * (isHovered ? 0.3 : 0.12)}
+                />
+              </Sphere>
+              
+              {/* Icon */}
+              <Text
+                position={[0, 0, 0.008]}
+                fontSize={0.022}
+                color={isHovered ? '#FFFFFF' : palette.glow}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity}
+              >
+                {nodeData.icon}
+              </Text>
+            </group>
             
-            {/* Title */}
+            {/* Title - SF Pro Display style */}
             <Text
-              position={[0, -0.008, 0.01]}
-              fontSize={0.016}
-              color={isHovered ? '#FFFFFF' : '#EBEBF5'}
+              position={[0, -0.012, 0.012]}
+              fontSize={0.015}
+              color={isHovered ? '#FFFFFF' : '#F5F5F7'}
               anchorX="center"
               anchorY="middle"
               fillOpacity={node.opacity * 0.95}
+              letterSpacing={-0.02}
             >
               {nodeData.title}
             </Text>
             
-            {/* Subtitle */}
+            {/* Subtitle - muted */}
             <Text
-              position={[0, -0.028, 0.01]}
-              fontSize={0.009}
+              position={[0, -0.032, 0.012]}
+              fontSize={0.008}
               color={palette.glow}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity * 0.6}
+              fillOpacity={node.opacity * 0.5}
+              letterSpacing={0.02}
             >
               {nodeData.subtitle}
             </Text>
             
-            {/* Connection hints on hover */}
+            {/* Connection hints on hover - pill style */}
             {isHovered && nodeData.connects && (
-              <Text
-                position={[0, -0.065, 0.01]}
-                fontSize={0.007}
-                color={palette.accent}
-                anchorX="center"
-                anchorY="middle"
-                fillOpacity={node.opacity * 0.5}
-              >
-                {`→ ${nodeData.connects.join(' · ')}`}
-              </Text>
+              <group position={[0, -0.072, 0.012]}>
+                <RoundedBox
+                  args={[0.12, 0.016, 0.004]}
+                  radius={0.006}
+                  smoothness={2}
+                >
+                  <meshBasicMaterial 
+                    color={palette.accent}
+                    transparent 
+                    opacity={node.opacity * 0.15}
+                  />
+                </RoundedBox>
+                <Text
+                  position={[0, 0, 0.003]}
+                  fontSize={0.006}
+                  color={palette.accent}
+                  anchorX="center"
+                  anchorY="middle"
+                  fillOpacity={node.opacity * 0.7}
+                >
+                  {`→ ${nodeData.connects.join(' · ')}`}
+                </Text>
+              </group>
             )}
             
-            {/* Hover glow */}
+            {/* Hover state - visionOS selection glow */}
             {isHovered && (
               <>
+                {/* Outer selection ring */}
                 <RoundedBox
-                  args={[widgetWidth + 0.025, widgetHeight + 0.025, 0.005]}
-                  radius={0.026}
+                  args={[widgetWidth + 0.035, widgetHeight + 0.035, 0.003]}
+                  radius={0.032}
                   smoothness={4}
                 >
                   <meshBasicMaterial 
                     color={palette.glow}
                     transparent 
-                    opacity={node.opacity * 0.18}
+                    opacity={node.opacity * 0.12}
                   />
                 </RoundedBox>
-                <Sphere args={[0.1, 12, 12]} position={[0, 0, -0.025]}>
+                
+                {/* Bloom effect */}
+                <Sphere args={[0.12, 12, 12]} position={[0, 0, -0.03]}>
                   <meshBasicMaterial 
                     color={palette.glow}
                     transparent 
-                    opacity={node.opacity * 0.1}
+                    opacity={node.opacity * 0.08}
                   />
                 </Sphere>
               </>
             )}
             
-            {/* Ambient glow */}
-            <Sphere args={[0.055, 8, 8]} position={[0, 0, -0.015]}>
+            {/* Ambient depth shadow */}
+            <Sphere args={[0.07, 8, 8]} position={[0, 0, -0.025]}>
               <meshBasicMaterial 
                 color={palette.primary}
                 transparent 
-                opacity={node.opacity * 0.06}
+                opacity={node.opacity * 0.04}
               />
             </Sphere>
           </group>

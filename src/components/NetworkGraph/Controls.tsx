@@ -11,40 +11,70 @@ interface ControlsProps {
 export const Controls = ({ isPaused, onTogglePause, onReset, onFullscreen }: ControlsProps) => {
   return (
     <div 
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-0.5 px-1.5 py-1.5 rounded-full transition-all duration-500"
+      className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-2 rounded-[28px] transition-all duration-700"
       style={{
-        background: 'rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(50px) saturate(150%)',
-        WebkitBackdropFilter: 'blur(50px) saturate(150%)',
-        border: '0.5px solid rgba(255,255,255,0.12)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.25)'
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
+        backdropFilter: 'blur(80px) saturate(200%) brightness(1.1)',
+        WebkitBackdropFilter: 'blur(80px) saturate(200%) brightness(1.1)',
+        border: '0.5px solid rgba(255,255,255,0.15)',
+        boxShadow: `
+          0 8px 40px rgba(0,0,0,0.5),
+          0 2px 8px rgba(0,0,0,0.3),
+          inset 0 1px 0 rgba(255,255,255,0.1),
+          inset 0 -1px 0 rgba(255,255,255,0.02)
+        `
       }}
     >
       <Button
         variant="ghost"
         size="icon"
         onClick={onTogglePause}
-        className="h-10 w-10 rounded-full text-white/70 hover:text-white hover:bg-white/8 transition-all duration-300"
+        className="h-11 w-11 rounded-full text-white/80 hover:text-white transition-all duration-300 relative group"
+        style={{
+          background: isPaused ? 'rgba(10, 132, 255, 0.2)' : 'transparent',
+        }}
       >
-        {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        <div 
+          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)',
+          }}
+        />
+        {isPaused ? <Play className="h-4.5 w-4.5 relative z-10" /> : <Pause className="h-4.5 w-4.5 relative z-10" />}
       </Button>
+      
+      <div className="w-px h-6 bg-white/10" />
       
       <Button
         variant="ghost"
         size="icon"
         onClick={onReset}
-        className="h-10 w-10 rounded-full text-white/70 hover:text-white hover:bg-white/8 transition-all duration-300"
+        className="h-11 w-11 rounded-full text-white/80 hover:text-white transition-all duration-300 relative group"
       >
-        <RotateCcw className="h-4 w-4" />
+        <div 
+          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)',
+          }}
+        />
+        <RotateCcw className="h-4.5 w-4.5 relative z-10" />
       </Button>
+      
+      <div className="w-px h-6 bg-white/10" />
       
       <Button
         variant="ghost"
         size="icon"
         onClick={onFullscreen}
-        className="h-10 w-10 rounded-full text-white/70 hover:text-white hover:bg-white/8 transition-all duration-300"
+        className="h-11 w-11 rounded-full text-white/80 hover:text-white transition-all duration-300 relative group"
       >
-        <Maximize className="h-4 w-4" />
+        <div 
+          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)',
+          }}
+        />
+        <Maximize className="h-4.5 w-4.5 relative z-10" />
       </Button>
     </div>
   );
