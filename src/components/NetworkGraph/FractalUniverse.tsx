@@ -125,9 +125,8 @@ const generateUniverseEdges = (nodes: UniverseNode[], time: number): UniverseEdg
   const nodeCount = nodes.length;
   
   for (let i = 1; i < nodeCount; i++) {
-    // Each node connects to 2-4 previous nodes for denser network
-    const maxConnections = Math.min(4, i);
-    const connections = 2 + Math.floor(Math.random() * Math.min(3, maxConnections));
+    // Each node connects to 1-3 previous nodes
+    const connections = 1 + Math.floor(Math.random() * Math.min(2, i));
     
     for (let j = 0; j < connections; j++) {
       const target = Math.floor(Math.random() * i);
@@ -145,7 +144,7 @@ const generateUniverseEdges = (nodes: UniverseNode[], time: number): UniverseEdg
         from: i,
         to: target,
         opacity: 0,
-        birthTime: time + i * 0.08 + 0.03,
+        birthTime: time + i * 0.1 + 0.05,
         strength,
       });
     }
@@ -378,7 +377,7 @@ export const FractalUniverse = ({
   useFrame(({ clock }) => {
     if (isActive && initializedForDepth.current !== depth) {
       initializedForDepth.current = depth;
-      const nodeCount = 12 + Math.floor(Math.random() * 6); // 12-17 nodes
+      const nodeCount = Math.max(6, 10 - (depth % 4)); // More nodes, cycling
       const newNodes = generateUniverseNodes(nodeCount, clock.elapsedTime, depth);
       const newEdges = generateUniverseEdges(newNodes, clock.elapsedTime);
       setNodes(newNodes);
