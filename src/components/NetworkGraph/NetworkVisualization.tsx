@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Scene } from './Scene';
+import { FractalScene } from './FractalScene';
 import { Controls } from './Controls';
 
 export const NetworkVisualization = () => {
@@ -34,12 +34,12 @@ export const NetworkVisualization = () => {
       style={{ background: 'linear-gradient(180deg, #0b0c2a 0%, #0a1628 100%)' }}
     >
       {/* Title overlay */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10 text-center">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
         <h1 className="text-2xl font-light tracking-widest text-foreground/90">
           ЯДРО ЛЕНИН
         </h1>
         <p className="text-sm text-foreground/50 mt-1 tracking-wider">
-          Сетевая эволюция
+          Фрактальная вселенная
         </p>
       </div>
 
@@ -49,8 +49,8 @@ export const NetworkVisualization = () => {
         dpr={[1, 2]}
       >
         <color attach="background" args={['#0b0c2a']} />
-        <fog attach="fog" args={['#0b0c2a', 5, 15]} />
-        <Scene
+        <fog attach="fog" args={['#0b0c2a', 3, 20]} />
+        <FractalScene
           isPaused={isPaused}
           onReset={handleReset}
           resetTrigger={resetTrigger}
@@ -64,6 +64,13 @@ export const NetworkVisualization = () => {
         onReset={handleReset}
         onFullscreen={handleFullscreen}
       />
+
+      {/* Instructions */}
+      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
+        <p className="text-xs text-foreground/40 tracking-wide">
+          Кликните на узел чтобы погрузиться во внутреннюю вселенную
+        </p>
+      </div>
     </div>
   );
 };
