@@ -1,0 +1,196 @@
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, Stars, Text, Sphere } from '@react-three/drei';
+import * as THREE from 'three';
+import { FractalUniverse } from './FractalUniverse';
+
+interface UniverseLevel {
+  id: number;
+  depth: number;
+  position: [number, number, number];
+  targetScale: number;
+  currentScale: number;
+  opacity: number;
+}
+
+interface FractalSceneProps {
+  isPaused: boolean;
+  onReset: () => void;
+  resetTrigger: number;
+}
+
+export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
+  const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+  const [universes, setUniverses] = useState<UniverseLevel[]>([
+    { id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }
+  ]);
+  const [activeDepth, setActiveDepth] = useState(0);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomTarget, setZoomTarget] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 5));
+  const lastResetRef = useRef(resetTrigger);
+
+  // Handle reset
+  useEffect(() => {
+    if (resetTrigger !== lastResetRef.current) {
+      lastResetRef.current = resetTrigger;
+      setUniverses([{ id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }]);
+      setActiveDepth(0);
+      setIsZooming(false);
+      setZoomTarget(new THREE.Vector3(0, 0, 5));
+      camera.position.set(0, 0, 5);
+    }
+  }, [resetTrigger, camera]);
+
+  const handleDiveIn = useCallback((position: [number, number, number], newDepth: number) => {
+    if (isZooming || newDepth > 4) return;
+
+    setIsZooming(true);
+    
+    // Create new universe at clicked position
+    const newUniverse: UniverseLevel = {
+      id: Date.now(),
+      depth: newDepth,
+      position,
+      targetScale: 0.3,
+      currentScale: 0,
+      opacity: 0,
+    };
+
+    setUniverses(prev => [...prev, newUniverse]);
+    
+    // Set camera zoom target
+    const targetPos = new THREE.Vector3(...position);
+    const cameraTargetDistance = 1.5 / Math.pow(2, newDepth);
+    const direction = new THREE.Vector3().subVectors(camera.position, targetPos).normalize();
+    const newCameraPos = targetPos.clone().add(direction.multiplyScalar(cameraTargetDistance));
+    
+    setZoomTarget(newCameraPos);
+    setActiveDepth(newDepth);
+  }, [isZooming, camera]);
+
+  useFrame(() => {
+    if (isZooming) {
+      // Smooth camera zoom
+      camera.position.lerp(zoomTarget, 0.03);
+      
+      if (camera.position.distanceTo(zoomTarget) < 0.05) {
+        setIsZooming(false);
+      }
+    }
+
+    // Update universe scales and opacities
+    setUniverses(prev => prev.map(u => {
+      const isCurrentLevel = u.depth === activeDepth;
+      const isPreviousLevel = u.depth === activeDepth - 1;
+      
+      let targetOpacity = 0;
+      if (isCurrentLevel) targetOpacity = 1;
+      else if (isPreviousLevel) targetOpacity = 0.3;
+      
+      return {
+        ...u,
+        currentScale: THREE.MathUtils.lerp(u.currentScale, u.targetScale, 0.05),
+        opacity: THREE.MathUtils.lerp(u.opacity, targetOpacity, 0.05),
+      };
+    }));
+
+    // Update orbit controls target
+    if (controlsRef.current && universes.length > 0) {
+      const activeUniverse = universes.find(u => u.depth === activeDepth);
+      if (activeUniverse) {
+        const target = new THREE.Vector3(...activeUniverse.position);
+        controlsRef.current.target.lerp(target, 0.05);
+      }
+    }
+  });
+
+  // Handle going back
+  const handleGoBack = useCallback(() => {
+    if (activeDepth > 0 && !isZooming) {
+      setIsZooming(true);
+      setActiveDepth(prev => prev - 1);
+      
+      const parentUniverse = universes.find(u => u.depth === activeDepth - 1);
+      if (parentUniverse) {
+        const targetPos = new THREE.Vector3(...parentUniverse.position);
+        const cameraDistance = 2 / Math.pow(2, activeDepth - 1);
+        setZoomTarget(targetPos.clone().add(new THREE.Vector3(0, 0, cameraDistance)));
+      }
+    }
+  }, [activeDepth, isZooming, universes]);
+
+  return (
+    <>
+      {/* Background stars */}
+      <Stars
+        radius={100}
+        depth={50}
+        count={2000}
+        factor={3}
+        saturation={0}
+        fade
+        speed={0.5}
+      />
+
+      {/* Ambient light */}
+      <ambientLight intensity={0.15} />
+      <pointLight position={[0, 0, 0]} intensity={0.8} color="#58C4DD" />
+
+      {/* Render all universe levels */}
+      {universes.map((universe) => (
+        <FractalUniverse
+          key={universe.id}
+          depth={universe.depth}
+          position={universe.position}
+          scale={universe.currentScale}
+          opacity={universe.opacity}
+          onDiveIn={handleDiveIn}
+          isActive={universe.opacity > 0.1}
+        />
+      ))}
+
+      {/* Back button hint when deep */}
+      {activeDepth > 0 && (
+        <group position={[0, 1.5, 0]}>
+          <Text
+            fontSize={0.1}
+            color="#58C4DD"
+            anchorX="center"
+            onClick={handleGoBack}
+            onPointerOver={(e) => (document.body.style.cursor = 'pointer')}
+            onPointerOut={(e) => (document.body.style.cursor = 'default')}
+          >
+            ← Назад (Глубина {activeDepth})
+          </Text>
+        </group>
+      )}
+
+      {/* Instructions */}
+      {activeDepth === 0 && !isZooming && (
+        <Text
+          position={[0, -1.2, 0]}
+          fontSize={0.08}
+          color="#58C4DD"
+          anchorX="center"
+          fillOpacity={0.6}
+        >
+          Нажмите на узел для погружения во вселенную
+        </Text>
+      )}
+
+      {/* Camera controls */}
+      <OrbitControls
+        ref={controlsRef}
+        enablePan={false}
+        enableZoom={true}
+        minDistance={0.5}
+        maxDistance={15}
+        autoRotate={!isPaused && !isZooming}
+        autoRotateSpeed={0.3}
+        enableDamping
+        dampingFactor={0.05}
+      />
+    </>
+  );
+};
