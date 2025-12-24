@@ -708,15 +708,18 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Mind Map Nodes - 3B1B clean mathematical style */}
+      {/* Mind Map Nodes - Widget style */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
         const pulse = 1 + Math.sin(time * 0.4 + node.id * 0.5) * 0.02;
-        const hoverScale = isHovered ? 1.12 : 1;
+        const hoverScale = isHovered ? 1.08 : 1;
         
         // Get concept from current depth's map
         const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
+        
+        const widgetWidth = 0.12;
+        const widgetHeight = 0.065;
         
         return (
           <group 
@@ -724,8 +727,11 @@ export const FractalUniverse = ({
             position={node.position}
             scale={node.scale * pulse * hoverScale}
           >
-            {/* Main node circle - 3B1B style */}
-            <mesh
+            {/* Widget background - frosted glass */}
+            <RoundedBox
+              args={[widgetWidth, widgetHeight, 0.012]}
+              radius={0.015}
+              smoothness={4}
               onClick={(e) => {
                 e.stopPropagation();
                 handleNodeClick(node.position);
@@ -739,54 +745,71 @@ export const FractalUniverse = ({
                 document.body.style.cursor = 'default';
               }}
             >
-              <sphereGeometry args={[0.05, 32, 32]} />
               <meshBasicMaterial 
-                color={palette.primary}
+                color="#1C1C1E"
                 transparent 
-                opacity={node.opacity * (isHovered ? 1 : 0.85)}
+                opacity={node.opacity * 0.92}
               />
-            </mesh>
+            </RoundedBox>
             
-            {/* Outer glow ring */}
-            <mesh>
-              <sphereGeometry args={[0.065, 24, 24]} />
+            {/* Accent border glow */}
+            <RoundedBox
+              args={[widgetWidth + 0.004, widgetHeight + 0.004, 0.008]}
+              radius={0.017}
+              smoothness={4}
+            >
+              <meshBasicMaterial 
+                color={isHovered ? palette.accent : palette.primary}
+                transparent 
+                opacity={node.opacity * (isHovered ? 0.7 : 0.35)}
+              />
+            </RoundedBox>
+            
+            {/* Outer glow */}
+            <RoundedBox
+              args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.004]}
+              radius={0.02}
+              smoothness={3}
+            >
               <meshBasicMaterial 
                 color={palette.glow}
                 transparent 
-                opacity={node.opacity * (isHovered ? 0.4 : 0.15)}
+                opacity={node.opacity * (isHovered ? 0.2 : 0.08)}
               />
-            </mesh>
+            </RoundedBox>
             
-            {/* Soft outer halo */}
-            <mesh>
-              <sphereGeometry args={[0.09, 16, 16]} />
-              <meshBasicMaterial 
-                color={palette.primary}
-                transparent 
-                opacity={node.opacity * 0.05}
-              />
-            </mesh>
-            
-            {/* Label below node - 3B1B typography */}
+            {/* Icon */}
             <Text
-              position={[0, -0.09, 0]}
-              fontSize={0.025}
-              color={isHovered ? '#FFFFFF' : '#CCCCCC'}
+              position={[-0.035, 0.005, 0.008]}
+              fontSize={0.022}
+              color={palette.accent}
               anchorX="center"
-              anchorY="top"
-              fillOpacity={node.opacity * 0.9}
+              anchorY="middle"
+              fillOpacity={node.opacity}
+            >
+              {nodeData.icon}
+            </Text>
+            
+            {/* Title */}
+            <Text
+              position={[0.015, 0.01, 0.008]}
+              fontSize={0.016}
+              color={isHovered ? '#FFFFFF' : '#EBEBF5'}
+              anchorX="center"
+              anchorY="middle"
+              fillOpacity={node.opacity * 0.95}
             >
               {nodeData.title}
             </Text>
             
             {/* Subtitle */}
             <Text
-              position={[0, -0.12, 0]}
-              fontSize={0.014}
+              position={[0.015, -0.012, 0.008]}
+              fontSize={0.01}
               color={palette.glow}
               anchorX="center"
-              anchorY="top"
-              fillOpacity={node.opacity * 0.5}
+              anchorY="middle"
+              fillOpacity={node.opacity * 0.6}
             >
               {nodeData.subtitle}
             </Text>
@@ -794,28 +817,15 @@ export const FractalUniverse = ({
             {/* Connection hints on hover */}
             {isHovered && nodeData.connects && (
               <Text
-                position={[0, -0.16, 0]}
-                fontSize={0.012}
+                position={[0, -0.055, 0.008]}
+                fontSize={0.009}
                 color={palette.accent}
                 anchorX="center"
                 anchorY="top"
-                fillOpacity={node.opacity * 0.6}
+                fillOpacity={node.opacity * 0.7}
               >
                 {`→ ${nodeData.connects.join(' · ')}`}
               </Text>
-            )}
-            
-            {/* Hover highlight ring */}
-            {isHovered && (
-              <mesh>
-                <ringGeometry args={[0.07, 0.075, 32]} />
-                <meshBasicMaterial 
-                  color={palette.accent}
-                  transparent 
-                  opacity={node.opacity * 0.6}
-                  side={THREE.DoubleSide}
-                />
-              </mesh>
             )}
           </group>
         );
