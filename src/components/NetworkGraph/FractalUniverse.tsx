@@ -459,9 +459,9 @@ const MindMapConnection = ({
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [start, end, edgeIndex, isFromCenter]);
 
-  // Animated flow effect - staggered mini-widgets
-  const flowSpeed = 0.25;
-  const pulseIntensity = 0.4 + Math.sin(time * 1.5 + edgeIndex) * 0.15;
+  // Animated flow effect - slower, more elegant
+  const flowSpeed = 0.08;
+  const pulseIntensity = 0.4 + Math.sin(time * 0.8 + edgeIndex) * 0.1;
 
   // Get widgets for this connection
   const flowWidgetData = useMemo(() => {
@@ -493,10 +493,10 @@ const MindMapConnection = ({
       
       {/* Flowing mini-widgets along the connection */}
       {flowWidgetData.map((widget, i) => {
-        const t = ((time * flowSpeed + widget.offset + edgeIndex * 0.15) % 1.4);
+        const t = ((time * flowSpeed + widget.offset + edgeIndex * 0.2) % 2.0);
         // Only show when in valid range
-        if (t < 0.1 || t > 1.1) return null;
-        const clampedT = Math.max(0.05, Math.min(0.95, t - 0.1));
+        if (t < 0.15 || t > 1.15) return null;
+        const clampedT = Math.max(0.05, Math.min(0.95, t - 0.15));
         
         return (
           <FlowingMiniWidget
@@ -512,8 +512,8 @@ const MindMapConnection = ({
       })}
       
       {/* Small particle trail behind widgets */}
-      {[0.15, 0.35, 0.55, 0.75].map((offset, i) => {
-        const t = ((time * flowSpeed * 1.2 + offset + edgeIndex * 0.1) % 1);
+      {[0.2, 0.45, 0.7].map((offset, i) => {
+        const t = ((time * flowSpeed * 0.8 + offset + edgeIndex * 0.15) % 1);
         const pos = curve.getPoint(t);
         const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.4;
         
