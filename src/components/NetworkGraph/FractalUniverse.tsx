@@ -27,43 +27,93 @@ interface FractalUniverseProps {
   isActive: boolean;
 }
 
+// Mind map concept networks - hierarchical knowledge structures
+const CONCEPT_MAPS = {
+  // Level 0: Core philosophy
+  core: {
+    central: { icon: '◉', title: 'ЯДРО', subtitle: 'Центр мысли' },
+    nodes: [
+      { icon: '💡', title: 'Идея', subtitle: 'Зарождение', connects: ['Анализ', 'Синтез'] },
+      { icon: '🔍', title: 'Анализ', subtitle: 'Разложение', connects: ['Данные', 'Паттерны'] },
+      { icon: '🔗', title: 'Синтез', subtitle: 'Объединение', connects: ['Система', 'Модель'] },
+      { icon: '📊', title: 'Данные', subtitle: 'Факты', connects: ['Знание'] },
+      { icon: '🧩', title: 'Паттерны', subtitle: 'Закономерности', connects: ['Знание'] },
+      { icon: '⚙️', title: 'Система', subtitle: 'Структура', connects: ['Результат'] },
+      { icon: '📐', title: 'Модель', subtitle: 'Абстракция', connects: ['Результат'] },
+      { icon: '✨', title: 'Знание', subtitle: 'Понимание', connects: ['Мудрость'] },
+    ]
+  },
+  // Level 1: Technology
+  technology: {
+    central: { icon: '⚡', title: 'TECH', subtitle: 'Технологии' },
+    nodes: [
+      { icon: '🤖', title: 'AI', subtitle: 'Интеллект', connects: ['ML', 'NLP'] },
+      { icon: '📈', title: 'ML', subtitle: 'Обучение', connects: ['Data', 'Модели'] },
+      { icon: '💬', title: 'NLP', subtitle: 'Язык', connects: ['LLM', 'Семантика'] },
+      { icon: '🗃️', title: 'Data', subtitle: 'Данные', connects: ['База', 'Поток'] },
+      { icon: '🧠', title: 'LLM', subtitle: 'GPT', connects: ['Генерация'] },
+      { icon: '🔮', title: 'Модели', subtitle: 'Нейросети', connects: ['Обучение'] },
+      { icon: '🌐', title: 'Web', subtitle: 'Сеть', connects: ['API', 'Cloud'] },
+      { icon: '☁️', title: 'Cloud', subtitle: 'Облако', connects: ['Scale'] },
+    ]
+  },
+  // Level 2: Business
+  business: {
+    central: { icon: '🎯', title: 'БИЗНЕС', subtitle: 'Стратегия' },
+    nodes: [
+      { icon: '👥', title: 'Команда', subtitle: 'Люди', connects: ['Культура', 'Рост'] },
+      { icon: '💰', title: 'Финансы', subtitle: 'Капитал', connects: ['ROI', 'Инвестиции'] },
+      { icon: '📦', title: 'Продукт', subtitle: 'Ценность', connects: ['MVP', 'Scale'] },
+      { icon: '🚀', title: 'Рост', subtitle: 'Growth', connects: ['Метрики', 'Воронка'] },
+      { icon: '📱', title: 'MVP', subtitle: 'Прототип', connects: ['Тест', 'Итерация'] },
+      { icon: '📊', title: 'Метрики', subtitle: 'KPI', connects: ['Решения'] },
+      { icon: '🎨', title: 'UX', subtitle: 'Опыт', connects: ['Продукт', 'Retention'] },
+      { icon: '🔄', title: 'Итерация', subtitle: 'Цикл', connects: ['Улучшение'] },
+    ]
+  },
+  // Level 3: Science
+  science: {
+    central: { icon: '🔬', title: 'НАУКА', subtitle: 'Познание' },
+    nodes: [
+      { icon: '⚛️', title: 'Физика', subtitle: 'Материя', connects: ['Квант', 'Космос'] },
+      { icon: '🧬', title: 'Биология', subtitle: 'Жизнь', connects: ['Эволюция', 'Геном'] },
+      { icon: '🧮', title: 'Математика', subtitle: 'Логика', connects: ['Теория', 'Модель'] },
+      { icon: '🌌', title: 'Космос', subtitle: 'Вселенная', connects: ['Время', 'Энергия'] },
+      { icon: '⏳', title: 'Время', subtitle: 'Измерение', connects: ['Причинность'] },
+      { icon: '💫', title: 'Энергия', subtitle: 'Сила', connects: ['Трансформация'] },
+      { icon: '🔮', title: 'Квант', subtitle: 'Неопределённость', connects: ['Наблюдатель'] },
+      { icon: '🧠', title: 'Сознание', subtitle: 'Разум', connects: ['Опыт', 'Знание'] },
+    ]
+  },
+  // Level 4: Philosophy
+  philosophy: {
+    central: { icon: '∞', title: 'СМЫСЛ', subtitle: 'Философия' },
+    nodes: [
+      { icon: '💭', title: 'Мысль', subtitle: 'Cogito', connects: ['Бытие', 'Сознание'] },
+      { icon: '🌊', title: 'Бытие', subtitle: 'Существование', connects: ['Время', 'Пространство'] },
+      { icon: '⚖️', title: 'Этика', subtitle: 'Мораль', connects: ['Выбор', 'Ценности'] },
+      { icon: '🎭', title: 'Истина', subtitle: 'Алетейя', connects: ['Знание', 'Вера'] },
+      { icon: '🌀', title: 'Хаос', subtitle: 'Энтропия', connects: ['Порядок', 'Эмерджентность'] },
+      { icon: '✨', title: 'Порядок', subtitle: 'Космос', connects: ['Структура', 'Гармония'] },
+      { icon: '🔥', title: 'Воля', subtitle: 'Свобода', connects: ['Действие', 'Цель'] },
+      { icon: '💎', title: 'Ценности', subtitle: 'Аксиология', connects: ['Смысл', 'Цель'] },
+    ]
+  },
+};
+
+// Get concept map for current depth
+const getConceptMap = (depth: number) => {
+  const maps = Object.values(CONCEPT_MAPS);
+  return maps[depth % maps.length];
+};
+
 // Process-describing formulas grouped by category
 const PROCESS_FORMULAS = {
-  // Network dynamics & information flow
-  network: [
-    'dI/dt = αS·I',      // Information spread
-    'C = Σᵢⱼ Aᵢⱼ',       // Connectivity
-    'k̄ = 2E/N',          // Average degree
-    'L = Σᵢⱼ dᵢⱼ/N²',    // Path length
-  ],
-  // Emergence & self-organization
-  emergence: [
-    'S = -Σ pᵢ ln pᵢ',   // Entropy
-    'Φ = Σ φ(Mᵢ)',       // Integrated info
-    'ΔG < 0',            // Spontaneous order
-    'dS/dt ≥ 0',         // Second law
-  ],
-  // Complexity & fractals
-  complexity: [
-    'D = lim ln N/ln ε', // Fractal dimension
-    'λ = lim ln|δₙ|/n',  // Lyapunov exp
-    'f(x) = xⁿ + c',     // Iteration
-    'z → z² + c',        // Mandelbrot
-  ],
-  // Quantum & wave
-  quantum: [
-    'ψ = Σ cₙ|n⟩',       // Superposition
-    'Ĥψ = Eψ',           // Schrödinger
-    'ΔxΔp ≥ ℏ/2',        // Uncertainty
-    '⟨A⟩ = ⟨ψ|Â|ψ⟩',     // Expectation
-  ],
-  // Growth & evolution
-  evolution: [
-    'dN/dt = rN(1-N/K)', // Logistic growth
-    'Δp = sp(1-p)',      // Selection
-    'H² = 8πGρ/3',       // Expansion
-    '∂ρ/∂t + ∇·J = 0',   // Conservation
-  ],
+  network: ['dI/dt = αS·I', 'C = Σᵢⱼ Aᵢⱼ', 'k̄ = 2E/N', 'L = Σdᵢⱼ/N²'],
+  emergence: ['S = -Σpᵢ ln pᵢ', 'Φ = Σφ(Mᵢ)', 'ΔG < 0', 'dS/dt ≥ 0'],
+  complexity: ['D = ln N/ln ε', 'λ = ln|δₙ|/n', 'f(x) = xⁿ+c', 'z→z²+c'],
+  quantum: ['ψ = Σcₙ|n⟩', 'Ĥψ = Eψ', 'ΔxΔp ≥ ℏ/2', '⟨A⟩ = ⟨ψ|Â|ψ⟩'],
+  evolution: ['dN/dt = rN(1-N/K)', 'Δp = sp(1-p)', 'H² = 8πGρ/3', '∂ρ/∂t + ∇·J = 0'],
 };
 
 // Apple signature color palette - soft, luminous, spatial
@@ -436,26 +486,17 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Apple Widget-style nodes */}
+      {/* Mind Map Widget Nodes */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        const pulse = 1 + Math.sin(time * 0.8 + node.id * 0.5) * 0.03;
-        const hoverScale = isHovered ? 1.12 : 1;
-        const widgetWidth = 0.12;
-        const widgetHeight = 0.09;
+        const pulse = 1 + Math.sin(time * 0.6 + node.id * 0.4) * 0.025;
+        const hoverScale = isHovered ? 1.1 : 1;
+        const widgetWidth = 0.14;
+        const widgetHeight = 0.1;
         
-        // Widget icons/labels
-        const widgetData = [
-          { icon: '⚡', label: 'Energy' },
-          { icon: '◉', label: 'Core' },
-          { icon: '⬡', label: 'Node' },
-          { icon: '✦', label: 'Star' },
-          { icon: '◈', label: 'Data' },
-          { icon: '⬢', label: 'Hub' },
-          { icon: '◇', label: 'Flow' },
-          { icon: '○', label: 'Link' },
-        ];
-        const widget = widgetData[node.id % widgetData.length];
+        // Get concept from current depth's map
+        const conceptMap = getConceptMap(depth);
+        const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
         
         return (
           <group 
@@ -465,8 +506,8 @@ export const FractalUniverse = ({
           >
             {/* Widget glass background */}
             <RoundedBox
-              args={[widgetWidth, widgetHeight, 0.012]}
-              radius={0.018}
+              args={[widgetWidth, widgetHeight, 0.015]}
+              radius={0.02}
               smoothness={4}
               onClick={(e) => {
                 e.stopPropagation();
@@ -484,77 +525,103 @@ export const FractalUniverse = ({
               <meshBasicMaterial 
                 color={isHovered ? '#2C2C2E' : '#1C1C1E'}
                 transparent 
-                opacity={node.opacity * 0.85}
+                opacity={node.opacity * 0.9}
               />
             </RoundedBox>
             
-            {/* Widget border/glow frame */}
+            {/* Widget accent border */}
             <RoundedBox
-              args={[widgetWidth + 0.004, widgetHeight + 0.004, 0.008]}
-              radius={0.02}
+              args={[widgetWidth + 0.003, widgetHeight + 0.003, 0.01]}
+              radius={0.021}
               smoothness={4}
             >
               <meshBasicMaterial 
                 color={palette.primary}
                 transparent 
-                opacity={node.opacity * (isHovered ? 0.6 : 0.2)}
+                opacity={node.opacity * (isHovered ? 0.7 : 0.25)}
               />
             </RoundedBox>
             
-            {/* Widget icon */}
+            {/* Icon */}
             <Text
-              position={[0, 0.012, 0.008]}
-              fontSize={0.028}
+              position={[0, 0.018, 0.01]}
+              fontSize={0.024}
               color={isHovered ? '#FFFFFF' : palette.primary}
               anchorX="center"
               anchorY="middle"
               fillOpacity={node.opacity}
             >
-              {widget.icon}
+              {nodeData.icon}
             </Text>
             
-            {/* Widget label */}
+            {/* Title */}
             <Text
-              position={[0, -0.022, 0.008]}
-              fontSize={0.012}
-              color={isHovered ? '#FFFFFF' : palette.glow}
+              position={[0, -0.008, 0.01]}
+              fontSize={0.016}
+              color={isHovered ? '#FFFFFF' : '#EBEBF5'}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={node.opacity * 0.7}
+              fillOpacity={node.opacity * 0.95}
             >
-              {widget.label}
+              {nodeData.title}
             </Text>
             
-            {/* Hover glow expansion */}
+            {/* Subtitle */}
+            <Text
+              position={[0, -0.028, 0.01]}
+              fontSize={0.009}
+              color={palette.glow}
+              anchorX="center"
+              anchorY="middle"
+              fillOpacity={node.opacity * 0.6}
+            >
+              {nodeData.subtitle}
+            </Text>
+            
+            {/* Connection hints on hover */}
+            {isHovered && nodeData.connects && (
+              <Text
+                position={[0, -0.065, 0.01]}
+                fontSize={0.007}
+                color={palette.accent}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity * 0.5}
+              >
+                {`→ ${nodeData.connects.join(' · ')}`}
+              </Text>
+            )}
+            
+            {/* Hover glow */}
             {isHovered && (
               <>
                 <RoundedBox
-                  args={[widgetWidth + 0.03, widgetHeight + 0.03, 0.004]}
-                  radius={0.024}
+                  args={[widgetWidth + 0.025, widgetHeight + 0.025, 0.005]}
+                  radius={0.026}
                   smoothness={4}
                 >
                   <meshBasicMaterial 
                     color={palette.glow}
                     transparent 
-                    opacity={node.opacity * 0.2}
+                    opacity={node.opacity * 0.18}
                   />
                 </RoundedBox>
-                <Sphere args={[0.1, 12, 12]} position={[0, 0, -0.03]}>
+                <Sphere args={[0.1, 12, 12]} position={[0, 0, -0.025]}>
                   <meshBasicMaterial 
                     color={palette.glow}
                     transparent 
-                    opacity={node.opacity * 0.12}
+                    opacity={node.opacity * 0.1}
                   />
                 </Sphere>
               </>
             )}
             
-            {/* Subtle ambient glow */}
-            <Sphere args={[0.06, 8, 8]} position={[0, 0, -0.015]}>
+            {/* Ambient glow */}
+            <Sphere args={[0.055, 8, 8]} position={[0, 0, -0.015]}>
               <meshBasicMaterial 
                 color={palette.primary}
                 transparent 
-                opacity={node.opacity * 0.08}
+                opacity={node.opacity * 0.06}
               />
             </Sphere>
           </group>
