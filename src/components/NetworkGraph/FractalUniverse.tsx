@@ -84,24 +84,29 @@ const DEPTH_PALETTES = [
 const generateUniverseNodes = (count: number, time: number, depth: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
   
+  // Generate priorities - some nodes are more important
+  const priorities: number[] = [];
+  for (let i = 0; i < count; i++) {
+    // Use seeded randomness based on depth for variety
+    const seed = (depth * 17 + i * 31) % 100;
+    // Create hierarchy: 1-2 high priority, rest varies
+    if (i === 0) {
+      priorities.push(1); // First node always high priority
+    } else if (seed < 15) {
+      priorities.push(0.85 + Math.random() * 0.15); // High priority
+    } else if (seed < 40) {
+      priorities.push(0.5 + Math.random() * 0.3); // Medium priority
+    } else {
+      priorities.push(0.2 + Math.random() * 0.3); // Low priority
+    }
+  }
+  
   for (let i = 0; i < count; i++) {
     const phi = Math.acos(-1 + (2 * i) / count);
     const theta = Math.sqrt(count * Math.PI) * phi;
-    const radius = 0.3 + Math.random() * 0.2;
-    
-    // Priority based on position - creates natural hierarchy
-    // First few nodes and some random ones get higher priority
-    let priority: number;
-    const rand = Math.random();
-    if (i === 0) {
-      priority = 1;
-    } else if (i <= 2 || rand < 0.15) {
-      priority = 0.75 + Math.random() * 0.25;
-    } else if (rand < 0.4) {
-      priority = 0.45 + Math.random() * 0.25;
-    } else {
-      priority = 0.25 + Math.random() * 0.2;
-    }
+    // Higher priority nodes closer to center
+    const baseRadius = 0.25 + (1 - priorities[i]) * 0.25;
+    const radius = baseRadius + Math.random() * 0.1;
     
     nodes.push({
       id: i,
@@ -112,24 +117,40 @@ const generateUniverseNodes = (count: number, time: number, depth: number): Univ
       ],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.1,
-      priority,
+      birthTime: time + i * 0.12,
+      priority: priorities[i],
       connections: 0,
     });
   }
   return nodes;
 };
 
-const generateUniverseEdges = (nodes: UniverseNode[], time: number): UniverseEdge[] => {
+const generateUniverseEdges = (nodes: UniverseNode[], time: number, depth: number): UniverseEdge[] => {
   const edges: UniverseEdge[] = [];
   const nodeCount = nodes.length;
   
+  // Track connections per node
+  const connectionCounts = new Array(nodeCount).fill(0);
+  
   for (let i = 1; i < nodeCount; i++) {
-    // Each node connects to 1-3 previous nodes
-    const connections = 1 + Math.floor(Math.random() * Math.min(2, i));
+    // High priority nodes get more connections
+    const maxConnections = Math.ceil(nodes[i].priority * 3) + 1;
+    const connections = Math.min(maxConnections, i);
     
     for (let j = 0; j < connections; j++) {
-      const target = Math.floor(Math.random() * i);
+      // Prefer connecting to high priority nodes
+      let target = 0;
+      if (j === 0) {
+        // First connection to a high priority node
+        const highPriorityNodes = nodes.slice(0, i).filter(n => n.priority > 0.6);
+        if (highPriorityNodes.length > 0) {
+          target = highPriorityNodes[Math.floor(Math.random() * highPriorityNodes.length)].id;
+        } else {
+          target = Math.floor(Math.random() * i);
+        }
+      } else {
+        target = Math.floor(Math.random() * i);
+      }
       
       // Avoid duplicate edges
       const exists = edges.some(e => 
@@ -144,11 +165,19 @@ const generateUniverseEdges = (nodes: UniverseNode[], time: number): UniverseEdg
         from: i,
         to: target,
         opacity: 0,
-        birthTime: time + i * 0.1 + 0.05,
+        birthTime: time + i * 0.12 + 0.08,
         strength,
       });
+      
+      connectionCounts[i]++;
+      connectionCounts[target]++;
     }
   }
+  
+  // Update node connection counts
+  nodes.forEach((node, i) => {
+    node.connections = connectionCounts[i];
+  });
   
   return edges;
 };
@@ -379,7 +408,7 @@ export const FractalUniverse = ({
       initializedForDepth.current = depth;
       const nodeCount = Math.max(6, 10 - (depth % 4)); // More nodes, cycling
       const newNodes = generateUniverseNodes(nodeCount, clock.elapsedTime, depth);
-      const newEdges = generateUniverseEdges(newNodes, clock.elapsedTime);
+      const newEdges = generateUniverseEdges(newNodes, clock.elapsedTime, depth);
       setNodes(newNodes);
       setEdges(newEdges);
     }
