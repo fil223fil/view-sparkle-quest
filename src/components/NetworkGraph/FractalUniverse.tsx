@@ -170,12 +170,12 @@ const applyForces = (
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.0008;      // Force pushing nodes apart
-  const ATTRACTION = 0.003;      // Force pulling connected nodes together
-  const DAMPING = 0.92;          // Velocity damping for smooth movement
-  const CENTER_PULL = 0.0005;    // Gentle pull toward center
-  const MAX_VELOCITY = 0.01;     // Maximum velocity cap
-  const IDEAL_DISTANCE = 0.25;   // Ideal distance between connected nodes
+  const REPULSION = 0.004;       // Stronger repulsion - nodes push apart more
+  const ATTRACTION = 0.015;      // Stronger attraction between connected nodes
+  const DAMPING = 0.88;          // Less damping = more visible movement
+  const CENTER_PULL = 0.001;     // Stronger center pull
+  const MAX_VELOCITY = 0.025;    // Higher max velocity for visible motion
+  const IDEAL_DISTANCE = 0.2;    // Closer ideal distance
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
