@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars, Text, Sphere, Line } from '@react-three/drei';
+import { OrbitControls, Text, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { FractalUniverse } from './FractalUniverse';
 
@@ -19,214 +19,169 @@ interface FractalSceneProps {
   resetTrigger: number;
 }
 
-// Particles that orbit around the camera - YOUR personal cosmos
-const CameraOrbitingParticle = ({ 
-  index, 
-  time,
-  cameraPosition
-}: { 
-  index: number;
-  time: number;
-  cameraPosition: THREE.Vector3;
-}) => {
-  const speed = 0.1 + (index % 5) * 0.03;
-  const radius = 0.8 + (index % 4) * 0.4;
-  const tilt = (index * 0.5) % Math.PI;
-  const phase = index * 0.7;
-  
-  const angle = time * speed + phase;
-  const x = cameraPosition.x + Math.cos(angle) * Math.cos(tilt) * radius;
-  const y = cameraPosition.y + Math.sin(angle) * radius * 0.6;
-  const z = cameraPosition.z + Math.sin(angle) * Math.cos(tilt) * radius - radius;
-  
-  const colors = ['#0A84FF', '#BF5AF2', '#64D2FF', '#5E5CE6', '#30D158', '#FF6482'];
-  const color = colors[index % colors.length];
-  const pulse = 0.5 + Math.sin(time * 2 + index) * 0.3;
-  const size = 0.008 + (index % 3) * 0.004;
-  
-  return (
-    <group position={[x, y, z]}>
-      <Sphere args={[size, 6, 6]}>
-        <meshBasicMaterial color={color} transparent opacity={pulse * 0.7} />
-      </Sphere>
-      {/* Glow */}
-      <Sphere args={[size * 2.5, 4, 4]}>
-        <meshBasicMaterial color={color} transparent opacity={pulse * 0.15} />
-      </Sphere>
-    </group>
-  );
+// 3B1B style colors
+const COLORS = {
+  background: '#1C1C1C',
+  blue: '#58C4DD',
+  lightBlue: '#9CDCEB',
+  teal: '#5CD0B3',
+  green: '#83C167',
+  yellow: '#F9F871',
+  gold: '#E8B923',
+  red: '#FC6255',
+  maroon: '#CF5044',
+  purple: '#9A72AC',
+  pink: '#D147BD',
+  white: '#FFFFFF',
+  grey: '#888888',
+  darkGrey: '#444444',
 };
 
-// Close foreground particles that create depth - very close to you
-const ForegroundParticle = ({
-  index,
-  time,
-  cameraPosition
-}: {
-  index: number;
-  time: number;
-  cameraPosition: THREE.Vector3;
-}) => {
-  const baseOffset = useMemo(() => ({
-    x: (Math.random() - 0.5) * 3,
-    y: (Math.random() - 0.5) * 2,
-    z: -1.5 - Math.random() * 2
-  }), []);
-  
-  const drift = Math.sin(time * 0.2 + index) * 0.3;
-  const x = cameraPosition.x + baseOffset.x + drift;
-  const y = cameraPosition.y + baseOffset.y + Math.cos(time * 0.15 + index) * 0.2;
-  const z = cameraPosition.z + baseOffset.z;
-  
-  const colors = ['#0A84FF', '#BF5AF2', '#64D2FF'];
-  const color = colors[index % 3];
-  const opacity = 0.1 + Math.sin(time * 0.5 + index * 2) * 0.08;
-  
-  return (
-    <Sphere args={[0.003 + (index % 3) * 0.002, 4, 4]} position={[x, y, z]}>
-      <meshBasicMaterial color={color} transparent opacity={opacity} />
-    </Sphere>
-  );
-};
-
-// Energy wisps that float towards/around you
-const EnergyWisp = ({
-  index,
-  time,
-  cameraPosition
-}: {
-  index: number;
-  time: number;
-  cameraPosition: THREE.Vector3;
-}) => {
-  const phase = index * 1.2;
-  const cycleTime = ((time * 0.08 + phase) % 3);
-  
-  // Move from far to close, creating sense of things coming to you
-  const distance = 6 - cycleTime * 2;
-  const angle = phase + time * 0.05;
-  const ySpread = Math.sin(phase) * 2;
-  
-  const x = cameraPosition.x + Math.cos(angle) * distance;
-  const y = cameraPosition.y + ySpread + Math.sin(time * 0.3 + phase) * 0.5;
-  const z = cameraPosition.z - distance * 0.8;
-  
-  const colors = ['#64D2FF', '#BF5AF2', '#0A84FF', '#5E5CE6'];
-  const color = colors[index % 4];
-  const opacity = Math.sin(cycleTime / 3 * Math.PI) * 0.4;
-  const size = 0.015 + Math.sin(time + index) * 0.005;
-  
-  return (
-    <group position={[x, y, z]}>
-      <Sphere args={[size, 6, 6]}>
-        <meshBasicMaterial color={color} transparent opacity={opacity} />
-      </Sphere>
-      {/* Trail */}
-      <Sphere args={[size * 0.7, 4, 4]} position={[0.08, 0, 0.08]}>
-        <meshBasicMaterial color={color} transparent opacity={opacity * 0.4} />
-      </Sphere>
-      <Sphere args={[size * 0.4, 4, 4]} position={[0.15, 0, 0.15]}>
-        <meshBasicMaterial color={color} transparent opacity={opacity * 0.2} />
-      </Sphere>
-    </group>
-  );
-};
-
-// Ambient aura around the camera - the universe breathing with you
-const CameraAura = ({
-  time,
-  cameraPosition
-}: {
-  time: number;
-  cameraPosition: THREE.Vector3;
-}) => {
-  const pulse = 0.8 + Math.sin(time * 0.4) * 0.2;
-  
-  return (
-    <group position={[cameraPosition.x, cameraPosition.y, cameraPosition.z - 2]}>
-      {/* Inner aura */}
-      <Sphere args={[1.5, 16, 16]}>
-        <meshBasicMaterial color="#5E5CE6" transparent opacity={0.02 * pulse} side={THREE.BackSide} />
-      </Sphere>
-      {/* Outer aura */}
-      <Sphere args={[3, 12, 12]}>
-        <meshBasicMaterial color="#0A84FF" transparent opacity={0.01 * pulse} side={THREE.BackSide} />
-      </Sphere>
-    </group>
-  );
-};
-
-// Orbital ring centered on camera
-const PersonalOrbitalRing = ({ 
-  radius, 
-  color, 
-  opacity, 
-  rotationSpeed,
-  tilt,
-  time,
-  cameraPosition
-}: { 
-  radius: number;
-  color: string;
-  opacity: number;
-  rotationSpeed: number;
-  tilt: [number, number, number];
-  time: number;
-  cameraPosition: THREE.Vector3;
-}) => {
-  const points = useMemo(() => {
-    const pts: THREE.Vector3[] = [];
-    const segments = 64;
-    for (let i = 0; i <= segments; i++) {
-      const angle = (i / segments) * Math.PI * 2;
-      pts.push(new THREE.Vector3(
-        Math.cos(angle) * radius,
-        Math.sin(angle * 3) * 0.05,
-        Math.sin(angle) * radius
-      ));
+// Subtle grid plane - 3B1B signature element
+const SubtleGrid = ({ time }: { time: number }) => {
+  const gridLines = useMemo(() => {
+    const lines: { start: THREE.Vector3; end: THREE.Vector3; axis: 'x' | 'z' }[] = [];
+    const size = 8;
+    const divisions = 16;
+    const step = size / divisions;
+    
+    for (let i = -divisions / 2; i <= divisions / 2; i++) {
+      const pos = i * step;
+      // X-axis lines
+      lines.push({
+        start: new THREE.Vector3(-size / 2, -2, pos),
+        end: new THREE.Vector3(size / 2, -2, pos),
+        axis: 'x'
+      });
+      // Z-axis lines
+      lines.push({
+        start: new THREE.Vector3(pos, -2, -size / 2),
+        end: new THREE.Vector3(pos, -2, size / 2),
+        axis: 'z'
+      });
     }
-    return pts;
-  }, [radius]);
-  
+    return lines;
+  }, []);
+
   return (
-    <group position={[cameraPosition.x, cameraPosition.y, cameraPosition.z - 1]} rotation={[tilt[0], time * rotationSpeed, tilt[2]]}>
-      <Line
-        points={points}
-        color={color}
-        lineWidth={1}
-        transparent
-        opacity={opacity}
-      />
+    <group>
+      {gridLines.map((line, i) => {
+        const isMainAxis = Math.abs(line.start.x) < 0.01 || Math.abs(line.start.z) < 0.01;
+        const opacity = isMainAxis ? 0.15 : 0.04;
+        
+        return (
+          <Line
+            key={i}
+            points={[line.start, line.end]}
+            color={COLORS.blue}
+            lineWidth={isMainAxis ? 1.5 : 0.5}
+            transparent
+            opacity={opacity}
+          />
+        );
+      })}
     </group>
   );
 };
 
-// Background nebula - distant but surrounding
-const NebulaCloud = ({
-  position,
-  size,
+// Gentle floating mathematical point
+const MathPoint = ({ 
+  position, 
+  color, 
+  size, 
+  time, 
+  index 
+}: { 
+  position: [number, number, number];
+  color: string;
+  size: number;
+  time: number;
+  index: number;
+}) => {
+  // Very gentle, smooth oscillation - 3B1B style
+  const y = position[1] + Math.sin(time * 0.3 + index * 0.5) * 0.1;
+  const pulse = 0.8 + Math.sin(time * 0.5 + index * 0.7) * 0.2;
+  
+  return (
+    <group position={[position[0], y, position[2]]}>
+      {/* Core */}
+      <mesh>
+        <sphereGeometry args={[size, 16, 16]} />
+        <meshBasicMaterial color={color} transparent opacity={pulse * 0.9} />
+      </mesh>
+      {/* Soft glow */}
+      <mesh>
+        <sphereGeometry args={[size * 2, 12, 12]} />
+        <meshBasicMaterial color={color} transparent opacity={pulse * 0.15} />
+      </mesh>
+    </group>
+  );
+};
+
+// Smooth bezier curve connection - 3B1B signature
+const SmoothCurve = ({
+  start,
+  end,
   color,
   opacity,
-  time
+  time,
+  curveHeight = 0.5
 }: {
-  position: [number, number, number];
-  size: number;
+  start: [number, number, number];
+  end: [number, number, number];
   color: string;
   opacity: number;
   time: number;
+  curveHeight?: number;
 }) => {
-  const pulse = 0.8 + Math.sin(time * 0.2 + position[0]) * 0.2;
-  const drift = Math.sin(time * 0.08 + position[1]) * 0.2;
+  const points = useMemo(() => {
+    const startVec = new THREE.Vector3(...start);
+    const endVec = new THREE.Vector3(...end);
+    const mid = startVec.clone().add(endVec).multiplyScalar(0.5);
+    mid.y += curveHeight;
+    
+    const curve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
+    return curve.getPoints(32);
+  }, [start, end, curveHeight]);
+
+  // Gentle pulse
+  const pulse = 0.7 + Math.sin(time * 0.4) * 0.3;
+
+  return (
+    <Line
+      points={points}
+      color={color}
+      lineWidth={1.5}
+      transparent
+      opacity={opacity * pulse}
+    />
+  );
+};
+
+// Orbiting accent - very subtle
+const OrbitingAccent = ({
+  radius,
+  color,
+  time,
+  speed,
+  yOffset
+}: {
+  radius: number;
+  color: string;
+  time: number;
+  speed: number;
+  yOffset: number;
+}) => {
+  const angle = time * speed;
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  const pulse = 0.6 + Math.sin(time * 0.8) * 0.4;
   
   return (
-    <group position={[position[0] + drift, position[1], position[2]]}>
-      <Sphere args={[size, 12, 12]}>
-        <meshBasicMaterial color={color} transparent opacity={opacity * pulse * 0.12} />
-      </Sphere>
-      <Sphere args={[size * 0.6, 8, 8]}>
-        <meshBasicMaterial color={color} transparent opacity={opacity * pulse * 0.2} />
-      </Sphere>
-    </group>
+    <mesh position={[x, yOffset, z]}>
+      <sphereGeometry args={[0.02, 8, 8]} />
+      <meshBasicMaterial color={color} transparent opacity={pulse * 0.5} />
+    </mesh>
   );
 };
 
@@ -242,14 +197,21 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
   const [time, setTime] = useState(0);
   const lastResetRef = useRef(resetTrigger);
 
+  // Decorative points in 3B1B style
+  const decorativePoints = useMemo(() => [
+    { position: [-3, 0.5, -2] as [number, number, number], color: COLORS.blue, size: 0.03 },
+    { position: [3.5, 0.2, -1.5] as [number, number, number], color: COLORS.teal, size: 0.025 },
+    { position: [-2, -0.3, 2] as [number, number, number], color: COLORS.purple, size: 0.02 },
+    { position: [2.5, 0.8, 2.5] as [number, number, number], color: COLORS.gold, size: 0.025 },
+    { position: [0, 1.2, -3] as [number, number, number], color: COLORS.lightBlue, size: 0.03 },
+    { position: [-3.5, -0.5, 0] as [number, number, number], color: COLORS.pink, size: 0.02 },
+  ], []);
 
-  // Generate nebula clouds
-  const nebulaClouds = useMemo(() => [
-    { position: [6, 2, -8] as [number, number, number], size: 2, color: '#5E5CE6', opacity: 0.4 },
-    { position: [-7, -1, -6] as [number, number, number], size: 1.8, color: '#BF5AF2', opacity: 0.35 },
-    { position: [4, -3, 7] as [number, number, number], size: 1.5, color: '#0A84FF', opacity: 0.3 },
-    { position: [-5, 3, 5] as [number, number, number], size: 2.2, color: '#64D2FF', opacity: 0.25 },
-    { position: [0, 5, -10] as [number, number, number], size: 3, color: '#FF6482', opacity: 0.2 },
+  // Subtle connecting curves
+  const decorativeCurves = useMemo(() => [
+    { start: [-3, 0.5, -2] as [number, number, number], end: [0, 1.2, -3] as [number, number, number], color: COLORS.blue },
+    { start: [3.5, 0.2, -1.5] as [number, number, number], end: [2.5, 0.8, 2.5] as [number, number, number], color: COLORS.teal },
+    { start: [-2, -0.3, 2] as [number, number, number], end: [-3.5, -0.5, 0] as [number, number, number], color: COLORS.purple },
   ], []);
 
   // Handle reset
@@ -298,7 +260,8 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
     }
     
     if (isZooming) {
-      camera.position.lerp(zoomTarget, 0.03);
+      // Smooth easing - 3B1B style
+      camera.position.lerp(zoomTarget, 0.04);
       
       if (camera.position.distanceTo(zoomTarget) < 0.05) {
         setIsZooming(false);
@@ -315,8 +278,8 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       
       return {
         ...u,
-        currentScale: THREE.MathUtils.lerp(u.currentScale, u.targetScale, 0.05),
-        opacity: THREE.MathUtils.lerp(u.opacity, targetOpacity, 0.05),
+        currentScale: THREE.MathUtils.lerp(u.currentScale, u.targetScale, 0.06),
+        opacity: THREE.MathUtils.lerp(u.opacity, targetOpacity, 0.06),
       };
     }));
 
@@ -324,7 +287,7 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       const activeUniverse = universes.find(u => u.depth === activeDepth);
       if (activeUniverse) {
         const target = new THREE.Vector3(...activeUniverse.position);
-        controlsRef.current.target.lerp(target, 0.05);
+        controlsRef.current.target.lerp(target, 0.06);
       }
     }
   });
@@ -345,100 +308,43 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
 
   return (
     <>
-      {/* Deep space star layers - multiple depths for parallax feel */}
-      <Stars
-        radius={300}
-        depth={200}
-        count={1500}
-        factor={1.5}
-        saturation={0.15}
-        fade
-        speed={0.05}
-      />
-      <Stars
-        radius={150}
-        depth={80}
-        count={500}
-        factor={2}
-        saturation={0.2}
-        fade
-        speed={0.1}
-      />
+      {/* 3B1B signature: subtle grid */}
+      <SubtleGrid time={time} />
 
-      {/* Nebula clouds - distant cosmic atmosphere */}
-      {nebulaClouds.map((cloud, i) => (
-        <NebulaCloud
-          key={`nebula-${i}`}
-          position={cloud.position}
-          size={cloud.size}
-          color={cloud.color}
-          opacity={cloud.opacity}
+      {/* Clean, minimal lighting */}
+      <ambientLight intensity={0.15} color="#FFFFFF" />
+      <pointLight position={[0, 3, 3]} intensity={0.3} color={COLORS.blue} decay={2} distance={15} />
+      <pointLight position={[-3, 2, -2]} intensity={0.15} color={COLORS.purple} decay={2} distance={10} />
+
+      {/* Decorative mathematical points */}
+      {decorativePoints.map((point, i) => (
+        <MathPoint
+          key={`point-${i}`}
+          position={point.position}
+          color={point.color}
+          size={point.size}
           time={time}
-        />
-      ))}
-
-      {/* Personal orbital rings - YOUR space */}
-      <PersonalOrbitalRing radius={2} color="#5E5CE6" opacity={0.06} rotationSpeed={0.03} tilt={[0.2, 0, 0.1]} time={time} cameraPosition={camera.position} />
-      <PersonalOrbitalRing radius={2.8} color="#0A84FF" opacity={0.04} rotationSpeed={-0.02} tilt={[0.4, 0, -0.15]} time={time} cameraPosition={camera.position} />
-      <PersonalOrbitalRing radius={3.5} color="#BF5AF2" opacity={0.03} rotationSpeed={0.015} tilt={[-0.15, 0, 0.3]} time={time} cameraPosition={camera.position} />
-
-      {/* Particles orbiting around YOU */}
-      {[...Array(20)].map((_, i) => (
-        <CameraOrbitingParticle
-          key={`orbit-${i}`}
           index={i}
-          time={time}
-          cameraPosition={camera.position}
         />
       ))}
 
-      {/* Very close foreground particles - intimacy */}
-      {[...Array(15)].map((_, i) => (
-        <ForegroundParticle
-          key={`fg-${i}`}
-          index={i}
+      {/* Subtle connecting curves */}
+      {decorativeCurves.map((curve, i) => (
+        <SmoothCurve
+          key={`curve-${i}`}
+          start={curve.start}
+          end={curve.end}
+          color={curve.color}
+          opacity={0.15}
           time={time}
-          cameraPosition={camera.position}
+          curveHeight={0.3 + i * 0.1}
         />
       ))}
 
-      {/* Energy wisps flowing towards you */}
-      {[...Array(8)].map((_, i) => (
-        <EnergyWisp
-          key={`wisp-${i}`}
-          index={i}
-          time={time}
-          cameraPosition={camera.position}
-        />
-      ))}
-
-      {/* Your personal aura - the universe breathing with you */}
-      <CameraAura time={time} cameraPosition={camera.position} />
-
-      {/* Volumetric lighting - pulsing with life */}
-      <ambientLight intensity={0.025 + Math.sin(time * 0.5) * 0.01} color="#E8E8ED" />
-      <pointLight 
-        position={[0, 0, 0]} 
-        intensity={0.2 + Math.sin(time * 0.8) * 0.05} 
-        color="#5E5CE6" 
-        decay={2} 
-        distance={20} 
-      />
-      <pointLight 
-        position={[Math.sin(time * 0.2) * 10, 5, Math.cos(time * 0.2) * 5]} 
-        intensity={0.1} 
-        color="#0A84FF" 
-        decay={2} 
-        distance={25} 
-      />
-      <pointLight 
-        position={[Math.cos(time * 0.15) * -8, -3, Math.sin(time * 0.15) * -5]} 
-        intensity={0.08} 
-        color="#BF5AF2" 
-        decay={2} 
-        distance={20} 
-      />
-      <pointLight position={[0, 8, -8]} intensity={0.05} color="#64D2FF" decay={2} distance={15} />
+      {/* Gentle orbiting accents */}
+      <OrbitingAccent radius={4} color={COLORS.blue} time={time} speed={0.08} yOffset={0} />
+      <OrbitingAccent radius={5} color={COLORS.teal} time={time} speed={-0.05} yOffset={0.5} />
+      <OrbitingAccent radius={3.5} color={COLORS.purple} time={time} speed={0.06} yOffset={-0.3} />
 
       {/* Render all universe levels */}
       {universes.map((universe) => (
@@ -453,48 +359,38 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
         />
       ))}
 
-      {/* visionOS style back button */}
+      {/* 3B1B style back button */}
       {activeDepth > 0 && (
-        <group position={[0, 1.4, 0]}>
-          <mesh
+        <group position={[0, 1.5, 0]}>
+          <Text
+            fontSize={0.05}
+            color={COLORS.blue}
+            anchorX="center"
+            anchorY="middle"
             onClick={handleGoBack}
             onPointerOver={(e) => (document.body.style.cursor = 'pointer')}
             onPointerOut={(e) => (document.body.style.cursor = 'default')}
+            fillOpacity={0.9}
           >
-            <planeGeometry args={[0.28, 0.08]} />
-            <meshBasicMaterial color="#1C1C1E" transparent opacity={0.85} />
-          </mesh>
-          <mesh position={[0, 0, -0.001]}>
-            <planeGeometry args={[0.29, 0.09]} />
-            <meshBasicMaterial color="#0A84FF" transparent opacity={0.2} />
-          </mesh>
-          <Text
-            position={[0, 0, 0.001]}
-            fontSize={0.038}
-            color="#0A84FF"
-            anchorX="center"
-            anchorY="middle"
-            fillOpacity={0.95}
-          >
-            ← Назад
+            ← назад
           </Text>
         </group>
       )}
 
-      {/* Instructions */}
+      {/* Instructions - 3B1B style */}
       {activeDepth === 0 && !isZooming && (
         <Text
-          position={[0, -1.0, 0]}
-          fontSize={0.045}
-          color="#ffffff"
+          position={[0, -1.2, 0]}
+          fontSize={0.04}
+          color={COLORS.grey}
           anchorX="center"
-          fillOpacity={0.2}
+          fillOpacity={0.5}
         >
-          Нажмите на узел
+          нажмите на узел
         </Text>
       )}
 
-      {/* Camera controls */}
+      {/* Camera controls - slower, smoother */}
       <OrbitControls
         ref={controlsRef}
         enablePan={false}
@@ -502,9 +398,9 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
         minDistance={0.5}
         maxDistance={15}
         autoRotate={!isPaused && !isZooming}
-        autoRotateSpeed={0.25}
+        autoRotateSpeed={0.15}
         enableDamping
-        dampingFactor={0.05}
+        dampingFactor={0.03}
       />
     </>
   );
