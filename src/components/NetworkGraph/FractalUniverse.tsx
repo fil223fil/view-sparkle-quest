@@ -364,14 +364,13 @@ export const FractalUniverse = ({
   });
 
   const handleNodeClick = useCallback((nodePosition: [number, number, number]) => {
-    if (depth < 4) {
-      const worldPos: [number, number, number] = [
-        position[0] + nodePosition[0] * universeScale,
-        position[1] + nodePosition[1] * universeScale,
-        position[2] + nodePosition[2] * universeScale,
-      ];
-      onDiveIn(worldPos, depth + 1);
-    }
+    // No depth limit - infinite exploration
+    const worldPos: [number, number, number] = [
+      position[0] + nodePosition[0] * universeScale,
+      position[1] + nodePosition[1] * universeScale,
+      position[2] + nodePosition[2] * universeScale,
+    ];
+    onDiveIn(worldPos, depth + 1);
   }, [depth, position, universeScale, onDiveIn]);
 
   if (!isActive) return null;
