@@ -66,16 +66,16 @@ const PROCESS_FORMULAS = {
   ],
 };
 
-// Extended cosmic color palette - vibrant and diverse
+// Apple Vision Pro / iOS 26 Color Palette - Luminous and spatial
 const DEPTH_PALETTES = [
-  { primary: '#00D9FF', secondary: '#0099B8', glow: '#80ECFF', accent: '#FF6B9D' },  // Electric Cyan
-  { primary: '#FF2D7B', secondary: '#B81F56', glow: '#FF7AAF', accent: '#00FFD1' },  // Hot Pink
-  { primary: '#A855F7', secondary: '#7C3AED', glow: '#C084FC', accent: '#FACC15' },  // Vivid Purple
-  { primary: '#FFB800', secondary: '#CC9300', glow: '#FFD54F', accent: '#00E5FF' },  // Solar Gold
-  { primary: '#00FF87', secondary: '#00B85C', glow: '#7AFFB8', accent: '#FF4D6D' },  // Neon Green
-  { primary: '#FF6B35', secondary: '#CC5529', glow: '#FF9A70', accent: '#4ECDC4' },  // Sunset Orange
-  { primary: '#667EEA', secondary: '#5A67D8', glow: '#A3BFFA', accent: '#F687B3' },  // Indigo Dream
-  { primary: '#38B2AC', secondary: '#2C9A94', glow: '#81E6D9', accent: '#FC8181' },  // Teal Wave
+  { primary: '#0A84FF', secondary: '#0066CC', glow: '#5AC8FA', accent: '#FF6FAF' },  // Apple Blue
+  { primary: '#BF5AF2', secondary: '#9135D4', glow: '#DA8FFF', accent: '#64D2FF' },  // Apple Purple
+  { primary: '#FF6482', secondary: '#E54666', glow: '#FF9FB3', accent: '#5AC8FA' },  // Apple Pink
+  { primary: '#30D158', secondary: '#25A847', glow: '#7AE99A', accent: '#FF9F0A' },  // Apple Green
+  { primary: '#64D2FF', secondary: '#40A9E0', glow: '#9FE4FF', accent: '#BF5AF2' },  // Apple Cyan
+  { primary: '#FF9F0A', secondary: '#E08A00', glow: '#FFB84D', accent: '#30D158' },  // Apple Orange
+  { primary: '#5E5CE6', secondary: '#4B49C7', glow: '#8E8DF0', accent: '#FF375F' },  // Apple Indigo
+  { primary: '#FF375F', secondary: '#D6264A', glow: '#FF7A94', accent: '#5E5CE6' },  // Apple Red
 ];
 
 const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
@@ -124,7 +124,7 @@ const getFormulasForDepth = (depth: number): string[] => {
   return PROCESS_FORMULAS[category];
 };
 
-// Single formula character component - moves along the edge
+// Apple-style formula character - softer, more luminous
 const FormulaChar = ({
   curve,
   char,
@@ -145,11 +145,15 @@ const FormulaChar = ({
   return (
     <Text
       position={[point.x, point.y, point.z]}
-      fontSize={0.016 * scale}
+      fontSize={0.014 * scale}
       color={color}
       anchorX="center"
       anchorY="middle"
-      fillOpacity={opacity}
+      fillOpacity={opacity * 0.9}
+      font="/fonts/SF-Pro-Display-Regular.otf"
+      outlineWidth={0.001}
+      outlineColor={color}
+      outlineOpacity={opacity * 0.3}
     >
       {char}
     </Text>
@@ -377,30 +381,39 @@ export const FractalUniverse = ({
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
-      {/* Inner stars with depth color */}
+      {/* Vision Pro style subtle particles */}
       <Stars
-        radius={2}
-        depth={1}
-        count={80}
-        factor={0.4}
-        saturation={0.5}
+        radius={1.5}
+        depth={0.8}
+        count={40}
+        factor={0.25}
+        saturation={0.3}
         fade
-        speed={0.2}
+        speed={0.1}
       />
 
-      {/* Center core with pulsing glow */}
-      <Sphere args={[0.04, 16, 16]}>
+      {/* Apple-style center core - softer, more luminous */}
+      <Sphere args={[0.03, 24, 24]}>
         <meshBasicMaterial 
           color={palette.primary} 
           transparent 
-          opacity={(0.4 + Math.sin(time * 3) * 0.2) * universeOpacity} 
+          opacity={(0.6 + Math.sin(time * 2) * 0.15) * universeOpacity} 
         />
       </Sphere>
-      <Sphere args={[0.08, 12, 12]}>
+      {/* Soft bloom layer */}
+      <Sphere args={[0.06, 16, 16]}>
         <meshBasicMaterial 
           color={palette.glow} 
           transparent 
-          opacity={(0.1 + Math.sin(time * 2) * 0.05) * universeOpacity} 
+          opacity={(0.15 + Math.sin(time * 1.5) * 0.05) * universeOpacity} 
+        />
+      </Sphere>
+      {/* Extended halo */}
+      <Sphere args={[0.12, 12, 12]}>
+        <meshBasicMaterial 
+          color={palette.glow} 
+          transparent 
+          opacity={(0.05) * universeOpacity} 
         />
       </Sphere>
 
@@ -424,17 +437,17 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Nodes with glow */}
+      {/* Apple Vision Pro style nodes - softer, more spatial */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        const pulse = 1 + Math.sin(time * 2 + node.id) * 0.1;
+        const pulse = 1 + Math.sin(time * 1.5 + node.id * 0.5) * 0.08;
         
         return (
           <group key={`node-${node.id}`} position={node.position}>
-            {/* Core */}
+            {/* Inner core - bright center */}
             <Sphere
-              args={[0.025, 24, 24]}
-              scale={node.scale * pulse * (isHovered ? 1.4 : 1)}
+              args={[0.018, 32, 32]}
+              scale={node.scale * pulse * (isHovered ? 1.5 : 1)}
               onClick={(e) => {
                 e.stopPropagation();
                 handleNodeClick(node.position);
@@ -449,40 +462,58 @@ export const FractalUniverse = ({
               }}
             >
               <meshBasicMaterial 
-                color={isHovered ? palette.glow : palette.primary} 
+                color={isHovered ? '#FFFFFF' : palette.primary} 
                 transparent 
-                opacity={node.opacity} 
+                opacity={node.opacity * 0.95} 
               />
             </Sphere>
-            {/* Outer glow */}
-            <Sphere args={[0.025, 12, 12]} scale={node.scale * pulse * 2.5}>
+            {/* Mid glow - Apple bloom effect */}
+            <Sphere args={[0.018, 20, 20]} scale={node.scale * pulse * 2}>
               <meshBasicMaterial 
                 color={palette.glow} 
                 transparent 
-                opacity={node.opacity * 0.12} 
+                opacity={node.opacity * 0.2} 
               />
             </Sphere>
-            {/* Extra glow on hover */}
+            {/* Outer soft halo */}
+            <Sphere args={[0.018, 12, 12]} scale={node.scale * pulse * 3.5}>
+              <meshBasicMaterial 
+                color={palette.glow} 
+                transparent 
+                opacity={node.opacity * 0.06} 
+              />
+            </Sphere>
+            {/* Hover expansion - spatial depth */}
             {isHovered && (
-              <Sphere args={[0.025, 8, 8]} scale={node.scale * 4}>
-                <meshBasicMaterial 
-                  color={palette.glow} 
-                  transparent 
-                  opacity={node.opacity * 0.08} 
-                />
-              </Sphere>
+              <>
+                <Sphere args={[0.018, 8, 8]} scale={node.scale * 5}>
+                  <meshBasicMaterial 
+                    color={palette.primary} 
+                    transparent 
+                    opacity={node.opacity * 0.08} 
+                  />
+                </Sphere>
+                <Sphere args={[0.018, 8, 8]} scale={node.scale * 7}>
+                  <meshBasicMaterial 
+                    color={palette.glow} 
+                    transparent 
+                    opacity={node.opacity * 0.03} 
+                  />
+                </Sphere>
+              </>
             )}
           </group>
         );
       })}
 
-      {/* Depth indicator */}
+      {/* Apple-style depth indicator - subtle and elegant */}
       <Text
         position={[0, -0.55, 0]}
-        fontSize={0.035}
-        color={palette.primary}
+        fontSize={0.028}
+        color={palette.glow}
         anchorX="center"
-        fillOpacity={universeOpacity * 0.4}
+        fillOpacity={universeOpacity * 0.35}
+        font="/fonts/SF-Pro-Display-Regular.otf"
       >
         {`Уровень ${depth + 1}`}
       </Text>
