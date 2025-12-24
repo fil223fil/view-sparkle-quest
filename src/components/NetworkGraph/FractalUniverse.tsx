@@ -150,7 +150,6 @@ const FormulaChar = ({
       anchorX="center"
       anchorY="middle"
       fillOpacity={opacity * 0.9}
-      font="/fonts/SF-Pro-Display-Regular.otf"
       outlineWidth={0.001}
       outlineColor={color}
       outlineOpacity={opacity * 0.3}
@@ -513,7 +512,6 @@ export const FractalUniverse = ({
         color={palette.glow}
         anchorX="center"
         fillOpacity={universeOpacity * 0.35}
-        font="/fonts/SF-Pro-Display-Regular.otf"
       >
         {`Уровень ${depth + 1}`}
       </Text>
