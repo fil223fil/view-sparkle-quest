@@ -317,7 +317,104 @@ const FormulaStream = ({
   );
 };
 
-// Mind-map 3D connection line with label
+// Flowing mini-widget along connection
+const FlowingMiniWidget = ({
+  curve,
+  t,
+  opacity,
+  palette,
+  icon,
+  label,
+}: {
+  curve: THREE.QuadraticBezierCurve3;
+  t: number;
+  opacity: number;
+  palette: typeof DEPTH_PALETTES[0];
+  icon: string;
+  label: string;
+}) => {
+  const pos = curve.getPoint(t);
+  const fadeOpacity = Math.sin(t * Math.PI) * opacity;
+  const widgetWidth = 0.05;
+  const widgetHeight = 0.032;
+  
+  return (
+    <group position={[pos.x, pos.y, pos.z]} scale={0.8}>
+      {/* Mini widget background */}
+      <RoundedBox
+        args={[widgetWidth, widgetHeight, 0.006]}
+        radius={0.008}
+        smoothness={3}
+      >
+        <meshBasicMaterial 
+          color="#1C1C1E"
+          transparent 
+          opacity={fadeOpacity * 0.95}
+        />
+      </RoundedBox>
+      
+      {/* Accent border */}
+      <RoundedBox
+        args={[widgetWidth + 0.002, widgetHeight + 0.002, 0.004]}
+        radius={0.009}
+        smoothness={3}
+      >
+        <meshBasicMaterial 
+          color={palette.primary}
+          transparent 
+          opacity={fadeOpacity * 0.5}
+        />
+      </RoundedBox>
+      
+      {/* Icon */}
+      <Text
+        position={[-0.012, 0, 0.004]}
+        fontSize={0.012}
+        color={palette.accent}
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={fadeOpacity}
+      >
+        {icon}
+      </Text>
+      
+      {/* Label */}
+      <Text
+        position={[0.01, 0, 0.004]}
+        fontSize={0.007}
+        color="#EBEBF5"
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={fadeOpacity * 0.9}
+      >
+        {label}
+      </Text>
+      
+      {/* Glow trail */}
+      <Sphere args={[0.025, 8, 8]} position={[0, 0, -0.01]}>
+        <meshBasicMaterial 
+          color={palette.glow}
+          transparent 
+          opacity={fadeOpacity * 0.2}
+        />
+      </Sphere>
+    </group>
+  );
+};
+
+// Mini widget data for flow animation
+const FLOW_WIDGETS = [
+  { icon: '⚡', label: 'Энергия' },
+  { icon: '📊', label: 'Данные' },
+  { icon: '🔗', label: 'Связь' },
+  { icon: '💡', label: 'Идея' },
+  { icon: '🎯', label: 'Цель' },
+  { icon: '✨', label: 'Смысл' },
+  { icon: '🔄', label: 'Поток' },
+  { icon: '📈', label: 'Рост' },
+];
+
+// Mind-map 3D connection line with flowing mini-widgets
 const MindMapConnection = ({ 
   start, 
   end, 
@@ -362,38 +459,66 @@ const MindMapConnection = ({
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [start, end, edgeIndex, isFromCenter]);
 
-  // Animated flow effect
-  const flowOffset = (time * 0.5 + edgeIndex * 0.2) % 1;
+  // Animated flow effect - staggered mini-widgets
+  const flowSpeed = 0.25;
   const pulseIntensity = 0.4 + Math.sin(time * 1.5 + edgeIndex) * 0.15;
+
+  // Get widgets for this connection
+  const flowWidgetData = useMemo(() => {
+    return [
+      { ...FLOW_WIDGETS[edgeIndex % FLOW_WIDGETS.length], offset: 0 },
+      { ...FLOW_WIDGETS[(edgeIndex + 3) % FLOW_WIDGETS.length], offset: 0.5 },
+    ];
+  }, [edgeIndex]);
 
   return (
     <group>
-      {/* Main connection line - glowing tube effect */}
+      {/* Main connection line - subtle glowing path */}
       <Line
         points={points}
         color={palette.primary}
-        lineWidth={isFromCenter ? 2.5 : 1.8}
+        lineWidth={isFromCenter ? 2 : 1.5}
         transparent
-        opacity={opacity * pulseIntensity * 0.8}
+        opacity={opacity * pulseIntensity * 0.5}
       />
       
       {/* Outer glow line */}
       <Line
         points={points}
         color={palette.glow}
-        lineWidth={isFromCenter ? 5 : 3.5}
+        lineWidth={isFromCenter ? 4 : 3}
         transparent
-        opacity={opacity * 0.15}
+        opacity={opacity * 0.1}
       />
       
-      {/* Flow particles along the line */}
-      {[0, 0.33, 0.66].map((offset, i) => {
-        const t = (flowOffset + offset) % 1;
-        const pos = curve.getPoint(t);
-        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.9;
+      {/* Flowing mini-widgets along the connection */}
+      {flowWidgetData.map((widget, i) => {
+        const t = ((time * flowSpeed + widget.offset + edgeIndex * 0.15) % 1.4);
+        // Only show when in valid range
+        if (t < 0.1 || t > 1.1) return null;
+        const clampedT = Math.max(0.05, Math.min(0.95, t - 0.1));
         
         return (
-          <Sphere key={i} args={[0.008, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+          <FlowingMiniWidget
+            key={i}
+            curve={curve}
+            t={clampedT}
+            opacity={opacity * 0.95}
+            palette={palette}
+            icon={widget.icon}
+            label={widget.label}
+          />
+        );
+      })}
+      
+      {/* Small particle trail behind widgets */}
+      {[0.15, 0.35, 0.55, 0.75].map((offset, i) => {
+        const t = ((time * flowSpeed * 1.2 + offset + edgeIndex * 0.1) % 1);
+        const pos = curve.getPoint(t);
+        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.4;
+        
+        return (
+          <Sphere key={`particle-${i}`} args={[0.004, 6, 6]} position={[pos.x, pos.y, pos.z]}>
             <meshBasicMaterial 
               color={palette.accent}
               transparent 
@@ -405,13 +530,13 @@ const MindMapConnection = ({
       
       {/* Connection label at midpoint */}
       {connectionLabel && (
-        <group position={[midPoint.x, midPoint.y + 0.025, midPoint.z]}>
+        <group position={[midPoint.x, midPoint.y + 0.035, midPoint.z]}>
           {/* Label background */}
-          <RoundedBox args={[0.06, 0.018, 0.004]} radius={0.004} smoothness={2}>
+          <RoundedBox args={[0.04, 0.016, 0.004]} radius={0.004} smoothness={2}>
             <meshBasicMaterial 
               color="#1C1C1E"
               transparent 
-              opacity={opacity * 0.85}
+              opacity={opacity * 0.9}
             />
           </RoundedBox>
           
@@ -422,28 +547,28 @@ const MindMapConnection = ({
             color={palette.glow}
             anchorX="center"
             anchorY="middle"
-            fillOpacity={opacity * 0.7}
+            fillOpacity={opacity * 0.8}
           >
             {connectionLabel}
           </Text>
         </group>
       )}
       
-      {/* Start point connector dot */}
-      <Sphere args={[0.012, 12, 12]} position={start}>
+      {/* Start point connector */}
+      <Sphere args={[0.01, 10, 10]} position={start}>
         <meshBasicMaterial 
           color={palette.primary}
           transparent 
-          opacity={opacity * 0.6}
+          opacity={opacity * 0.7}
         />
       </Sphere>
       
-      {/* End point connector dot */}
-      <Sphere args={[0.012, 12, 12]} position={end}>
+      {/* End point connector */}
+      <Sphere args={[0.01, 10, 10]} position={end}>
         <meshBasicMaterial 
           color={palette.accent}
           transparent 
-          opacity={opacity * 0.6}
+          opacity={opacity * 0.7}
         />
       </Sphere>
     </group>
