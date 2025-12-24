@@ -35,14 +35,19 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
   const [activeDepth, setActiveDepth] = useState(0);
   const lastResetRef = useRef(resetTrigger);
 
-  // Handle reset
+  // Set camera closer on start and handle reset
+  useEffect(() => {
+    // Initial camera position - closer to the scene
+    camera.position.set(0, 0, 2);
+  }, [camera]);
+
   useEffect(() => {
     if (resetTrigger !== lastResetRef.current) {
       lastResetRef.current = resetTrigger;
       setUniverses([{ id: 0, depth: 0, position: [0, 0, 0], targetScale: 1, currentScale: 0, opacity: 1 }]);
       setActiveDepth(0);
       setDivePhase('idle');
-      camera.position.set(0, 0, 5);
+      camera.position.set(0, 0, 2);
     }
   }, [resetTrigger, camera]);
 
