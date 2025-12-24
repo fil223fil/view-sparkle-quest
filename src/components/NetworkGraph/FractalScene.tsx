@@ -3,13 +3,6 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { FractalUniverse } from './FractalUniverse';
-import { FormulaTunnel } from './FormulaTunnel';
-
-// Color palette for tunnel
-const TUNNEL_COLORS = [
-  '#00D9FF', '#FF2D7B', '#A855F7', '#FFB800', 
-  '#00FF87', '#FF6B35', '#667EEA', '#38B2AC'
-];
 
 interface UniverseLevel {
   id: number;
@@ -54,7 +47,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
   const [divePhase, setDivePhase] = useState<'idle' | 'approaching' | 'entering' | 'expanding'>('idle');
   const diveTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
   const diveProgressRef = useRef(0);
-  const [tunnelProgress, setTunnelProgress] = useState(0);
   const universeIdCounter = useRef(1);
 
   const handleDiveIn = useCallback((position: [number, number, number], newDepth: number) => {
@@ -63,7 +55,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
     const targetPos = new THREE.Vector3(...position);
     diveTargetRef.current = targetPos;
     diveProgressRef.current = 0;
-    setTunnelProgress(0);
     
     setDivePhase('approaching');
     setActiveDepth(newDepth);
@@ -80,7 +71,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
 
     // Remove old universes aggressively to prevent memory issues
     setUniverses(prev => {
-      // Keep only current-1 and new
       const filtered = prev.filter(u => u.depth >= newDepth - 1);
       return [...filtered, newUniverse];
     });
@@ -90,41 +80,55 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
     const target = diveTargetRef.current;
     
     if (divePhase === 'approaching') {
-      diveProgressRef.current += delta * 1.8;
-      setTunnelProgress(Math.min(diveProgressRef.current * 0.5, 0.5));
-      
+      diveProgressRef.current += delta * 1.5;
       const eased = 1 - Math.pow(1 - Math.min(diveProgressRef.current, 1), 3);
       
+      // Smooth camera approach to target
       const direction = new THREE.Vector3().subVectors(target, camera.position).normalize();
       const distanceToTarget = camera.position.distanceTo(target);
-      const moveSpeed = distanceToTarget * 0.12 * (1 + eased);
+      const moveSpeed = distanceToTarget * 0.1 * (1 + eased * 0.5);
       camera.position.add(direction.multiplyScalar(moveSpeed));
       
-      if (distanceToTarget < 0.1) {
+      // Start showing new universe as we approach
+      setUniverses(prev => prev.map(u => {
+        if (u.depth === activeDepth) {
+          return {
+            ...u,
+            targetScale: 0.1 + eased * 0.3,
+            opacity: Math.min(u.opacity + delta * 1.5, 0.8),
+          };
+        }
+        // Fade out previous level slowly
+        if (u.depth < activeDepth) {
+          return { ...u, opacity: Math.max(u.opacity - delta * 0.8, 0.2) };
+        }
+        return u;
+      }));
+      
+      if (distanceToTarget < 0.15) {
         setDivePhase('entering');
         diveProgressRef.current = 0;
       }
     }
     
     if (divePhase === 'entering') {
-      diveProgressRef.current += delta * 2.5;
+      diveProgressRef.current += delta * 2;
       const t = Math.min(diveProgressRef.current, 1);
-      setTunnelProgress(0.5 + t * 0.5);
       
-      // Camera passes through
+      // Camera passes through smoothly
       const direction = new THREE.Vector3().subVectors(target, camera.position).normalize();
-      camera.position.add(direction.multiplyScalar(delta * 2));
+      camera.position.add(direction.multiplyScalar(delta * 1.5));
       
       setUniverses(prev => prev.map(u => {
         if (u.depth === activeDepth) {
           return {
             ...u,
-            targetScale: 0.3 + t * 0.5,
+            targetScale: 0.4 + t * 0.4,
             opacity: Math.min(u.opacity + delta * 2, 1),
           };
         }
         if (u.depth < activeDepth) {
-          return { ...u, opacity: Math.max(u.opacity - delta * 3, 0) };
+          return { ...u, opacity: Math.max(u.opacity - delta * 2, 0) };
         }
         return u;
       }));
@@ -132,7 +136,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       if (t >= 1) {
         setDivePhase('expanding');
         diveProgressRef.current = 0;
-        setTunnelProgress(0);
       }
     }
     
@@ -220,14 +223,6 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
       {/* Ambient light */}
       <ambientLight intensity={0.15} />
       <pointLight position={[0, 0, 0]} intensity={0.8} color="#58C4DD" />
-
-      {/* Formula tunnel effect during dive */}
-      <FormulaTunnel
-        isActive={divePhase === 'approaching' || divePhase === 'entering'}
-        progress={tunnelProgress}
-        targetPosition={[diveTargetRef.current.x, diveTargetRef.current.y, diveTargetRef.current.z]}
-        color={TUNNEL_COLORS[activeDepth % TUNNEL_COLORS.length]}
-      />
 
       {/* Render all universe levels */}
       {universes.map((universe) => (
