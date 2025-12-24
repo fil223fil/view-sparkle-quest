@@ -636,9 +636,11 @@ export const FractalUniverse = ({
       }
     }
 
+    // Убираем вращение для фронтального вида
+    // Только очень лёгкое дыхание
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.0005;
-      groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.15) * 0.03;
+      groupRef.current.rotation.y = 0;
+      groupRef.current.rotation.x = 0;
     }
   });
 
