@@ -66,16 +66,16 @@ const PROCESS_FORMULAS = {
   ],
 };
 
-// Apple Vision Pro / iOS 26 Color Palette - Luminous and spatial
+// Apple signature color palette - soft, luminous, spatial
 const DEPTH_PALETTES = [
-  { primary: '#0A84FF', secondary: '#0066CC', glow: '#5AC8FA', accent: '#FF6FAF' },  // Apple Blue
-  { primary: '#BF5AF2', secondary: '#9135D4', glow: '#DA8FFF', accent: '#64D2FF' },  // Apple Purple
-  { primary: '#FF6482', secondary: '#E54666', glow: '#FF9FB3', accent: '#5AC8FA' },  // Apple Pink
-  { primary: '#30D158', secondary: '#25A847', glow: '#7AE99A', accent: '#FF9F0A' },  // Apple Green
-  { primary: '#64D2FF', secondary: '#40A9E0', glow: '#9FE4FF', accent: '#BF5AF2' },  // Apple Cyan
-  { primary: '#FF9F0A', secondary: '#E08A00', glow: '#FFB84D', accent: '#30D158' },  // Apple Orange
-  { primary: '#5E5CE6', secondary: '#4B49C7', glow: '#8E8DF0', accent: '#FF375F' },  // Apple Indigo
-  { primary: '#FF375F', secondary: '#D6264A', glow: '#FF7A94', accent: '#5E5CE6' },  // Apple Red
+  { primary: '#0A84FF', secondary: '#0066CC', glow: '#64D2FF', accent: '#FF6482' },  // System Blue
+  { primary: '#BF5AF2', secondary: '#9B4BD5', glow: '#DA8FFF', accent: '#64D2FF' },  // System Purple  
+  { primary: '#FF6482', secondary: '#E84D6A', glow: '#FF9EB0', accent: '#30D158' },  // System Pink
+  { primary: '#30D158', secondary: '#28B84C', glow: '#7AE99A', accent: '#FF9F0A' },  // System Green
+  { primary: '#64D2FF', secondary: '#4BBDE8', glow: '#A0E5FF', accent: '#BF5AF2' },  // System Cyan
+  { primary: '#FF9F0A', secondary: '#E58C00', glow: '#FFBF4D', accent: '#0A84FF' },  // System Orange
+  { primary: '#5E5CE6', secondary: '#4B49C7', glow: '#9896F1', accent: '#FF375F' },  // System Indigo
+  { primary: '#AC8E68', secondary: '#917554', glow: '#C9B08E', accent: '#64D2FF' },  // System Brown/Gold
 ];
 
 const generateUniverseNodes = (count: number, time: number): UniverseNode[] => {
@@ -380,39 +380,39 @@ export const FractalUniverse = ({
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
-      {/* Vision Pro style subtle particles */}
+      {/* Minimal particle field */}
       <Stars
-        radius={1.5}
-        depth={0.8}
-        count={40}
-        factor={0.25}
-        saturation={0.3}
+        radius={1.2}
+        depth={0.6}
+        count={25}
+        factor={0.15}
+        saturation={0}
         fade
-        speed={0.1}
+        speed={0.05}
       />
 
-      {/* Apple-style center core - softer, more luminous */}
-      <Sphere args={[0.03, 24, 24]}>
+      {/* Central orb - Apple style soft glow */}
+      <Sphere args={[0.025, 32, 32]}>
         <meshBasicMaterial 
           color={palette.primary} 
           transparent 
-          opacity={(0.6 + Math.sin(time * 2) * 0.15) * universeOpacity} 
+          opacity={(0.8 + Math.sin(time * 1.5) * 0.1) * universeOpacity} 
         />
       </Sphere>
-      {/* Soft bloom layer */}
-      <Sphere args={[0.06, 16, 16]}>
+      {/* Soft inner glow */}
+      <Sphere args={[0.045, 24, 24]}>
         <meshBasicMaterial 
           color={palette.glow} 
           transparent 
-          opacity={(0.15 + Math.sin(time * 1.5) * 0.05) * universeOpacity} 
+          opacity={(0.2 + Math.sin(time * 1.2) * 0.05) * universeOpacity} 
         />
       </Sphere>
-      {/* Extended halo */}
-      <Sphere args={[0.12, 12, 12]}>
+      {/* Outer bloom */}
+      <Sphere args={[0.08, 16, 16]}>
         <meshBasicMaterial 
           color={palette.glow} 
           transparent 
-          opacity={(0.05) * universeOpacity} 
+          opacity={(0.06) * universeOpacity} 
         />
       </Sphere>
 
@@ -436,17 +436,17 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Apple Vision Pro style nodes - softer, more spatial */}
+      {/* Nodes - clean Apple aesthetic */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        const pulse = 1 + Math.sin(time * 1.5 + node.id * 0.5) * 0.08;
+        const pulse = 1 + Math.sin(time * 1.2 + node.id * 0.7) * 0.05;
         
         return (
           <group key={`node-${node.id}`} position={node.position}>
-            {/* Inner core - bright center */}
+            {/* Core - crisp center */}
             <Sphere
-              args={[0.018, 32, 32]}
-              scale={node.scale * pulse * (isHovered ? 1.5 : 1)}
+              args={[0.015, 32, 32]}
+              scale={node.scale * pulse * (isHovered ? 1.6 : 1)}
               onClick={(e) => {
                 e.stopPropagation();
                 handleNodeClick(node.position);
@@ -463,57 +463,48 @@ export const FractalUniverse = ({
               <meshBasicMaterial 
                 color={isHovered ? '#FFFFFF' : palette.primary} 
                 transparent 
-                opacity={node.opacity * 0.95} 
+                opacity={node.opacity} 
               />
             </Sphere>
-            {/* Mid glow - Apple bloom effect */}
-            <Sphere args={[0.018, 20, 20]} scale={node.scale * pulse * 2}>
+            {/* Soft glow */}
+            <Sphere args={[0.015, 20, 20]} scale={node.scale * pulse * 2.2}>
               <meshBasicMaterial 
                 color={palette.glow} 
                 transparent 
-                opacity={node.opacity * 0.2} 
+                opacity={node.opacity * 0.25} 
               />
             </Sphere>
-            {/* Outer soft halo */}
-            <Sphere args={[0.018, 12, 12]} scale={node.scale * pulse * 3.5}>
+            {/* Outer aura */}
+            <Sphere args={[0.015, 12, 12]} scale={node.scale * pulse * 4}>
               <meshBasicMaterial 
                 color={palette.glow} 
                 transparent 
-                opacity={node.opacity * 0.06} 
+                opacity={node.opacity * 0.08} 
               />
             </Sphere>
-            {/* Hover expansion - spatial depth */}
+            {/* Hover expansion */}
             {isHovered && (
-              <>
-                <Sphere args={[0.018, 8, 8]} scale={node.scale * 5}>
-                  <meshBasicMaterial 
-                    color={palette.primary} 
-                    transparent 
-                    opacity={node.opacity * 0.08} 
-                  />
-                </Sphere>
-                <Sphere args={[0.018, 8, 8]} scale={node.scale * 7}>
-                  <meshBasicMaterial 
-                    color={palette.glow} 
-                    transparent 
-                    opacity={node.opacity * 0.03} 
-                  />
-                </Sphere>
-              </>
+              <Sphere args={[0.015, 8, 8]} scale={node.scale * 6}>
+                <meshBasicMaterial 
+                  color={palette.primary} 
+                  transparent 
+                  opacity={node.opacity * 0.1} 
+                />
+              </Sphere>
             )}
           </group>
         );
       })}
 
-      {/* Apple-style depth indicator - subtle and elegant */}
+      {/* Depth label - minimal */}
       <Text
-        position={[0, -0.55, 0]}
-        fontSize={0.028}
+        position={[0, -0.5, 0]}
+        fontSize={0.022}
         color={palette.glow}
         anchorX="center"
-        fillOpacity={universeOpacity * 0.35}
+        fillOpacity={universeOpacity * 0.25}
       >
-        {`Уровень ${depth + 1}`}
+        {depth + 1}
       </Text>
     </group>
   );

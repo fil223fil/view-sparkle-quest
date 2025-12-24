@@ -126,22 +126,22 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
 
   return (
     <>
-      {/* Apple Vision Pro style subtle stars - less dense, softer */}
+      {/* Minimal starfield - Apple style subtle */}
       <Stars
-        radius={150}
-        depth={80}
-        count={800}
-        factor={2}
-        saturation={0.2}
+        radius={200}
+        depth={100}
+        count={500}
+        factor={1.5}
+        saturation={0}
         fade
-        speed={0.2}
+        speed={0.1}
       />
 
-      {/* Soft ambient lighting - Apple style */}
-      <ambientLight intensity={0.08} />
-      <pointLight position={[0, 0, 0]} intensity={0.5} color="#5E5CE6" decay={2} />
-      <pointLight position={[5, 5, 5]} intensity={0.2} color="#0A84FF" decay={2} />
-      <pointLight position={[-5, -5, -5]} intensity={0.15} color="#BF5AF2" decay={2} />
+      {/* Soft ambient lighting */}
+      <ambientLight intensity={0.05} />
+      <pointLight position={[0, 0, 0]} intensity={0.3} color="#5E5CE6" decay={2} />
+      <pointLight position={[8, 4, 4]} intensity={0.15} color="#0A84FF" decay={2} />
+      <pointLight position={[-6, -4, -4]} intensity={0.1} color="#BF5AF2" decay={2} />
 
       {/* Render all universe levels */}
       {universes.map((universe) => (
@@ -156,42 +156,33 @@ export const FractalScene = ({ isPaused, resetTrigger }: FractalSceneProps) => {
         />
       ))}
 
-      {/* Apple-style back button hint */}
+      {/* Apple-style minimal back button */}
       {activeDepth > 0 && (
-        <group position={[0, 1.5, 0]}>
+        <group position={[0, 1.3, 0]}>
           <Text
-            fontSize={0.08}
+            fontSize={0.06}
             color="#0A84FF"
             anchorX="center"
             onClick={handleGoBack}
             onPointerOver={(e) => (document.body.style.cursor = 'pointer')}
             onPointerOut={(e) => (document.body.style.cursor = 'default')}
-            fillOpacity={0.8}
+            fillOpacity={0.9}
           >
-            ← Назад
-          </Text>
-          <Text
-            position={[0, -0.12, 0]}
-            fontSize={0.04}
-            color="#8E8DF0"
-            anchorX="center"
-            fillOpacity={0.5}
-          >
-            {`Глубина ${activeDepth}`}
+            ‹ Назад
           </Text>
         </group>
       )}
 
-      {/* Instructions - Vision Pro subtle */}
+      {/* Instructions - barely visible */}
       {activeDepth === 0 && !isZooming && (
         <Text
-          position={[0, -1.2, 0]}
-          fontSize={0.06}
-          color="#5AC8FA"
+          position={[0, -1.0, 0]}
+          fontSize={0.045}
+          color="#ffffff"
           anchorX="center"
-          fillOpacity={0.4}
+          fillOpacity={0.2}
         >
-          Нажмите на узел для погружения во вселенную
+          Нажмите на узел
         </Text>
       )}
 
