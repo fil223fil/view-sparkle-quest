@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useMemo } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Sphere, Stars, Text, Line, RoundedBox, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -28,155 +28,272 @@ interface FractalUniverseProps {
   isActive: boolean;
 }
 
-// Mind map concept networks - hierarchical knowledge structures
+// Зоны мозга с функциями и связанными процессами
+const BRAIN_ZONES = {
+  // Лобная доля - исполнительные функции, планирование
+  frontal: {
+    name: 'Лобная доля',
+    position: [0, 0.25, 0.15] as [number, number, number],
+    color: '#FF6B9D',
+    functions: ['Планирование', 'Решения', 'Воля', 'Логика'],
+    icon: '🎯',
+    processes: ['Анализ → Синтез', 'Цель → Действие']
+  },
+  // Теменная доля - пространственное восприятие, интеграция
+  parietal: {
+    name: 'Теменная доля',
+    position: [0, 0.3, -0.1] as [number, number, number],
+    color: '#58C4DD',
+    functions: ['Интеграция', 'Пространство', 'Расчёт', 'Тело'],
+    icon: '🧩',
+    processes: ['Сенсор → Модель', 'Ощущение → Осознание']
+  },
+  // Височная доля - память, слух, речь
+  temporal_left: {
+    name: 'Левая височная',
+    position: [-0.3, 0, 0] as [number, number, number],
+    color: '#9B59B6',
+    functions: ['Речь', 'Память', 'Логика', 'Анализ'],
+    icon: '💬',
+    processes: ['Звук → Смысл', 'Слово → Понятие']
+  },
+  temporal_right: {
+    name: 'Правая височная',
+    position: [0.3, 0, 0] as [number, number, number],
+    color: '#E74C3C',
+    functions: ['Музыка', 'Эмоции', 'Интуиция', 'Образы'],
+    icon: '🎵',
+    processes: ['Тон → Эмоция', 'Ритм → Чувство']
+  },
+  // Затылочная доля - зрение
+  occipital: {
+    name: 'Затылочная доля',
+    position: [0, 0.1, -0.3] as [number, number, number],
+    color: '#2ECC71',
+    functions: ['Зрение', 'Цвет', 'Форма', 'Движение'],
+    icon: '👁️',
+    processes: ['Свет → Образ', 'Паттерн → Объект']
+  },
+  // Мозжечок - координация
+  cerebellum: {
+    name: 'Мозжечок',
+    position: [0, -0.2, -0.2] as [number, number, number],
+    color: '#F39C12',
+    functions: ['Баланс', 'Координация', 'Моторика', 'Ритм'],
+    icon: '⚖️',
+    processes: ['Намерение → Движение', 'Ошибка → Коррекция']
+  },
+  // Лимбическая система - эмоции
+  limbic: {
+    name: 'Лимбическая система',
+    position: [0, 0, 0] as [number, number, number],
+    color: '#E91E63',
+    functions: ['Эмоции', 'Память', 'Мотивация', 'Награда'],
+    icon: '❤️',
+    processes: ['Стимул → Эмоция', 'Опыт → Память']
+  },
+  // Префронтальная кора - высшие функции
+  prefrontal: {
+    name: 'Префронтальная кора',
+    position: [0, 0.2, 0.25] as [number, number, number],
+    color: '#3498DB',
+    functions: ['Сознание', 'Самоконтроль', 'Абстракция', 'Творчество'],
+    icon: '✨',
+    processes: ['Идея → План', 'Импульс → Контроль']
+  }
+};
+
+// Нейронные связи между зонами мозга (аксональные пути)
+const NEURAL_PATHWAYS = [
+  { from: 'frontal', to: 'parietal', name: 'Лобно-теменной путь', process: 'Внимание' },
+  { from: 'frontal', to: 'temporal_left', name: 'Дугообразный пучок', process: 'Речь' },
+  { from: 'frontal', to: 'limbic', name: 'Мезолимбический путь', process: 'Мотивация' },
+  { from: 'frontal', to: 'prefrontal', name: 'Префронтальный контур', process: 'Контроль' },
+  { from: 'parietal', to: 'occipital', name: 'Дорсальный поток', process: 'Где?' },
+  { from: 'temporal_left', to: 'temporal_right', name: 'Мозолистое тело', process: 'Интеграция' },
+  { from: 'temporal_right', to: 'limbic', name: 'Эмоциональный контур', process: 'Чувства' },
+  { from: 'occipital', to: 'temporal_left', name: 'Вентральный поток', process: 'Что?' },
+  { from: 'cerebellum', to: 'frontal', name: 'Мозжечково-таламический', process: 'Координация' },
+  { from: 'limbic', to: 'prefrontal', name: 'Амигдало-префронтальный', process: 'Регуляция' },
+  { from: 'prefrontal', to: 'parietal', name: 'Фронто-париетальный', process: 'Осознанность' },
+  { from: 'limbic', to: 'cerebellum', name: 'Лимбико-мозжечковый', process: 'Эмоц. моторика' },
+];
+
+// Типы виджетов привязанные к зонам мозга
+const WIDGET_BRAIN_MAPPING = {
+  // Аналитические виджеты → Лобная доля
+  analytics: { zone: 'frontal', widgets: ['📊', '📈', '🔍', '📉'] },
+  // Творческие виджеты → Правая височная
+  creative: { zone: 'temporal_right', widgets: ['🎨', '🎵', '💡', '✨'] },
+  // Коммуникационные → Левая височная  
+  communication: { zone: 'temporal_left', widgets: ['💬', '📝', '🗣️', '📖'] },
+  // Визуальные → Затылочная доля
+  visual: { zone: 'occipital', widgets: ['👁️', '🖼️', '📷', '🎬'] },
+  // Эмоциональные → Лимбическая система
+  emotional: { zone: 'limbic', widgets: ['❤️', '😊', '🎭', '💝'] },
+  // Координационные → Мозжечок
+  motor: { zone: 'cerebellum', widgets: ['⚡', '🏃', '🎯', '🔄'] },
+  // Интеграционные → Теменная доля
+  integration: { zone: 'parietal', widgets: ['🧩', '🔗', '🌐', '📐'] },
+  // Высшие функции → Префронтальная кора
+  executive: { zone: 'prefrontal', widgets: ['🧠', '💎', '🎓', '🏆'] },
+};
+
+// Получить зону мозга для виджета
+const getBrainZoneForWidget = (icon: string): keyof typeof BRAIN_ZONES => {
+  for (const [_, mapping] of Object.entries(WIDGET_BRAIN_MAPPING)) {
+    if (mapping.widgets.includes(icon)) {
+      return mapping.zone as keyof typeof BRAIN_ZONES;
+    }
+  }
+  return 'limbic'; // По умолчанию - центр
+};
+
+// Mind map concepts с привязкой к зонам мозга
 const CONCEPT_MAPS = {
-  // Level 0: Core philosophy
   core: {
-    central: { icon: '◉', title: 'ЯДРО', subtitle: 'Центр мысли' },
+    central: { icon: '🧠', title: 'РАЗУМ', subtitle: 'Центр мысли' },
     nodes: [
-      { icon: '💡', title: 'Идея', subtitle: 'Зарождение', connects: ['Анализ', 'Синтез'] },
-      { icon: '🔍', title: 'Анализ', subtitle: 'Разложение', connects: ['Данные', 'Паттерны'] },
-      { icon: '🔗', title: 'Синтез', subtitle: 'Объединение', connects: ['Система', 'Модель'] },
-      { icon: '📊', title: 'Данные', subtitle: 'Факты', connects: ['Знание'] },
-      { icon: '🧩', title: 'Паттерны', subtitle: 'Закономерности', connects: ['Знание'] },
-      { icon: '⚙️', title: 'Система', subtitle: 'Структура', connects: ['Результат'] },
-      { icon: '📐', title: 'Модель', subtitle: 'Абстракция', connects: ['Результат'] },
-      { icon: '✨', title: 'Знание', subtitle: 'Понимание', connects: ['Мудрость'] },
+      { icon: '💡', title: 'Идея', subtitle: 'Инсайт', connects: ['Анализ', 'Синтез'], zone: 'prefrontal' },
+      { icon: '🔍', title: 'Анализ', subtitle: 'Разбор', connects: ['Данные', 'Паттерны'], zone: 'frontal' },
+      { icon: '🔗', title: 'Синтез', subtitle: 'Сборка', connects: ['Система', 'Модель'], zone: 'parietal' },
+      { icon: '📊', title: 'Данные', subtitle: 'Факты', connects: ['Знание'], zone: 'frontal' },
+      { icon: '🧩', title: 'Паттерны', subtitle: 'Связи', connects: ['Знание'], zone: 'parietal' },
+      { icon: '⚙️', title: 'Система', subtitle: 'Структура', connects: ['Результат'], zone: 'frontal' },
+      { icon: '📐', title: 'Модель', subtitle: 'Абстракция', connects: ['Результат'], zone: 'parietal' },
+      { icon: '✨', title: 'Знание', subtitle: 'Понимание', connects: ['Мудрость'], zone: 'prefrontal' },
     ]
   },
-  // Level 1: Technology
-  technology: {
-    central: { icon: '⚡', title: 'TECH', subtitle: 'Технологии' },
+  emotions: {
+    central: { icon: '❤️', title: 'ЭМОЦИИ', subtitle: 'Лимбическая система' },
     nodes: [
-      { icon: '🤖', title: 'AI', subtitle: 'Интеллект', connects: ['ML', 'NLP'] },
-      { icon: '📈', title: 'ML', subtitle: 'Обучение', connects: ['Data', 'Модели'] },
-      { icon: '💬', title: 'NLP', subtitle: 'Язык', connects: ['LLM', 'Семантика'] },
-      { icon: '🗃️', title: 'Data', subtitle: 'Данные', connects: ['База', 'Поток'] },
-      { icon: '🧠', title: 'LLM', subtitle: 'GPT', connects: ['Генерация'] },
-      { icon: '🔮', title: 'Модели', subtitle: 'Нейросети', connects: ['Обучение'] },
-      { icon: '🌐', title: 'Web', subtitle: 'Сеть', connects: ['API', 'Cloud'] },
-      { icon: '☁️', title: 'Cloud', subtitle: 'Облако', connects: ['Scale'] },
+      { icon: '😊', title: 'Радость', subtitle: 'Дофамин', connects: ['Мотивация', 'Память'], zone: 'limbic' },
+      { icon: '😢', title: 'Грусть', subtitle: 'Рефлексия', connects: ['Память', 'Рост'], zone: 'limbic' },
+      { icon: '😠', title: 'Гнев', subtitle: 'Энергия', connects: ['Действие', 'Защита'], zone: 'limbic' },
+      { icon: '😨', title: 'Страх', subtitle: 'Амигдала', connects: ['Осторожность', 'Обучение'], zone: 'limbic' },
+      { icon: '🎭', title: 'Эмпатия', subtitle: 'Зеркальные нейроны', connects: ['Связь'], zone: 'temporal_right' },
+      { icon: '💝', title: 'Любовь', subtitle: 'Окситоцин', connects: ['Привязанность'], zone: 'limbic' },
+      { icon: '🌟', title: 'Вдохновение', subtitle: 'Творчество', connects: ['Идея'], zone: 'temporal_right' },
+      { icon: '🙏', title: 'Благодарность', subtitle: 'Серотонин', connects: ['Счастье'], zone: 'prefrontal' },
     ]
   },
-  // Level 2: Business
-  business: {
-    central: { icon: '🎯', title: 'БИЗНЕС', subtitle: 'Стратегия' },
+  perception: {
+    central: { icon: '👁️', title: 'ВОСПРИЯТИЕ', subtitle: 'Затылочная доля' },
     nodes: [
-      { icon: '👥', title: 'Команда', subtitle: 'Люди', connects: ['Культура', 'Рост'] },
-      { icon: '💰', title: 'Финансы', subtitle: 'Капитал', connects: ['ROI', 'Инвестиции'] },
-      { icon: '📦', title: 'Продукт', subtitle: 'Ценность', connects: ['MVP', 'Scale'] },
-      { icon: '🚀', title: 'Рост', subtitle: 'Growth', connects: ['Метрики', 'Воронка'] },
-      { icon: '📱', title: 'MVP', subtitle: 'Прототип', connects: ['Тест', 'Итерация'] },
-      { icon: '📊', title: 'Метрики', subtitle: 'KPI', connects: ['Решения'] },
-      { icon: '🎨', title: 'UX', subtitle: 'Опыт', connects: ['Продукт', 'Retention'] },
-      { icon: '🔄', title: 'Итерация', subtitle: 'Цикл', connects: ['Улучшение'] },
+      { icon: '🎨', title: 'Цвет', subtitle: 'V4 область', connects: ['Форма', 'Эмоция'], zone: 'occipital' },
+      { icon: '📐', title: 'Форма', subtitle: 'Контуры', connects: ['Объект', 'Паттерн'], zone: 'occipital' },
+      { icon: '🏃', title: 'Движение', subtitle: 'MT/V5', connects: ['Время', 'Действие'], zone: 'occipital' },
+      { icon: '🌌', title: 'Глубина', subtitle: 'Стерео', connects: ['Пространство'], zone: 'parietal' },
+      { icon: '👂', title: 'Звук', subtitle: 'Слуховая кора', connects: ['Речь', 'Музыка'], zone: 'temporal_left' },
+      { icon: '🎵', title: 'Музыка', subtitle: 'Тембр', connects: ['Эмоция', 'Память'], zone: 'temporal_right' },
+      { icon: '✋', title: 'Осязание', subtitle: 'Соматосенсорная', connects: ['Тело'], zone: 'parietal' },
+      { icon: '🌡️', title: 'Ощущение', subtitle: 'Интероцепция', connects: ['Эмоция'], zone: 'limbic' },
     ]
   },
-  // Level 3: Science
-  science: {
-    central: { icon: '🔬', title: 'НАУКА', subtitle: 'Познание' },
+  cognition: {
+    central: { icon: '🎯', title: 'ПОЗНАНИЕ', subtitle: 'Префронтальная кора' },
     nodes: [
-      { icon: '⚛️', title: 'Физика', subtitle: 'Материя', connects: ['Квант', 'Космос'] },
-      { icon: '🧬', title: 'Биология', subtitle: 'Жизнь', connects: ['Эволюция', 'Геном'] },
-      { icon: '🧮', title: 'Математика', subtitle: 'Логика', connects: ['Теория', 'Модель'] },
-      { icon: '🌌', title: 'Космос', subtitle: 'Вселенная', connects: ['Время', 'Энергия'] },
-      { icon: '⏳', title: 'Время', subtitle: 'Измерение', connects: ['Причинность'] },
-      { icon: '💫', title: 'Энергия', subtitle: 'Сила', connects: ['Трансформация'] },
-      { icon: '🔮', title: 'Квант', subtitle: 'Неопределённость', connects: ['Наблюдатель'] },
-      { icon: '🧠', title: 'Сознание', subtitle: 'Разум', connects: ['Опыт', 'Знание'] },
+      { icon: '🧮', title: 'Расчёт', subtitle: 'Логика', connects: ['Решение', 'Модель'], zone: 'frontal' },
+      { icon: '💭', title: 'Мысль', subtitle: 'Рабочая память', connects: ['Внимание', 'Язык'], zone: 'prefrontal' },
+      { icon: '🎓', title: 'Обучение', subtitle: 'Пластичность', connects: ['Память', 'Навык'], zone: 'parietal' },
+      { icon: '💡', title: 'Инсайт', subtitle: 'Ага-момент', connects: ['Творчество'], zone: 'temporal_right' },
+      { icon: '🗣️', title: 'Язык', subtitle: 'Брока', connects: ['Общение', 'Мысль'], zone: 'temporal_left' },
+      { icon: '📖', title: 'Чтение', subtitle: 'Вернике', connects: ['Понимание'], zone: 'temporal_left' },
+      { icon: '✍️', title: 'Письмо', subtitle: 'Моторная кора', connects: ['Выражение'], zone: 'frontal' },
+      { icon: '🧘', title: 'Внимание', subtitle: 'Фокус', connects: ['Осознанность'], zone: 'prefrontal' },
     ]
   },
-  // Level 4: Philosophy
-  philosophy: {
-    central: { icon: '∞', title: 'СМЫСЛ', subtitle: 'Философия' },
+  memory: {
+    central: { icon: '📚', title: 'ПАМЯТЬ', subtitle: 'Гиппокамп' },
     nodes: [
-      { icon: '💭', title: 'Мысль', subtitle: 'Cogito', connects: ['Бытие', 'Сознание'] },
-      { icon: '🌊', title: 'Бытие', subtitle: 'Существование', connects: ['Время', 'Пространство'] },
-      { icon: '⚖️', title: 'Этика', subtitle: 'Мораль', connects: ['Выбор', 'Ценности'] },
-      { icon: '🎭', title: 'Истина', subtitle: 'Алетейя', connects: ['Знание', 'Вера'] },
-      { icon: '🌀', title: 'Хаос', subtitle: 'Энтропия', connects: ['Порядок', 'Эмерджентность'] },
-      { icon: '✨', title: 'Порядок', subtitle: 'Космос', connects: ['Структура', 'Гармония'] },
-      { icon: '🔥', title: 'Воля', subtitle: 'Свобода', connects: ['Действие', 'Цель'] },
-      { icon: '💎', title: 'Ценности', subtitle: 'Аксиология', connects: ['Смысл', 'Цель'] },
+      { icon: '⚡', title: 'Рабочая', subtitle: '7±2', connects: ['Внимание', 'Обработка'], zone: 'prefrontal' },
+      { icon: '📝', title: 'Эпизодическая', subtitle: 'События', connects: ['Время', 'Место'], zone: 'temporal_left' },
+      { icon: '🧩', title: 'Семантическая', subtitle: 'Факты', connects: ['Знание', 'Язык'], zone: 'temporal_left' },
+      { icon: '🚴', title: 'Процедурная', subtitle: 'Навыки', connects: ['Автоматизм'], zone: 'cerebellum' },
+      { icon: '❤️', title: 'Эмоциональная', subtitle: 'Амигдала', connects: ['Чувства', 'Травма'], zone: 'limbic' },
+      { icon: '🔮', title: 'Проспективная', subtitle: 'Планы', connects: ['Будущее'], zone: 'prefrontal' },
+      { icon: '🌙', title: 'Консолидация', subtitle: 'Сон', connects: ['Долгосрочная'], zone: 'limbic' },
+      { icon: '🔄', title: 'Извлечение', subtitle: 'Воспоминание', connects: ['Осознание'], zone: 'prefrontal' },
     ]
   },
 };
 
-// Get concept map for current depth
 const getConceptMap = (depth: number) => {
   const maps = Object.values(CONCEPT_MAPS);
   return maps[depth % maps.length];
 };
 
-// Process-describing formulas grouped by category
-const PROCESS_FORMULAS = {
-  network: ['dI/dt = αS·I', 'C = Σᵢⱼ Aᵢⱼ', 'k̄ = 2E/N', 'L = Σdᵢⱼ/N²'],
-  emergence: ['S = -Σpᵢ ln pᵢ', 'Φ = Σφ(Mᵢ)', 'ΔG < 0', 'dS/dt ≥ 0'],
-  complexity: ['D = ln N/ln ε', 'λ = ln|δₙ|/n', 'f(x) = xⁿ+c', 'z→z²+c'],
-  quantum: ['ψ = Σcₙ|n⟩', 'Ĥψ = Eψ', 'ΔxΔp ≥ ℏ/2', '⟨A⟩ = ⟨ψ|Â|ψ⟩'],
-  evolution: ['dN/dt = rN(1-N/K)', 'Δp = sp(1-p)', 'H² = 8πGρ/3', '∂ρ/∂t + ∇·J = 0'],
-};
-
-// iOS 26 style color palette - soft, refined, elegant
+// Цветовые палитры для разных уровней
 const DEPTH_PALETTES = [
-  { primary: '#A8C5DA', secondary: '#C8DCE8', glow: '#B8D4E8', accent: '#E8A8B8' },  // Soft sky blue
-  { primary: '#B8D4C8', secondary: '#D0E8DC', glow: '#C8E0D4', accent: '#D4C8B8' },  // Sage green
-  { primary: '#C8B8D8', secondary: '#DCD0E8', glow: '#D4C8E0', accent: '#B8D4D8' },  // Lavender
-  { primary: '#E0D4C0', secondary: '#EDE8DC', glow: '#E8E0D0', accent: '#C8B8D0' },  // Warm sand
-  { primary: '#B8D8D8', secondary: '#D0E8E8', glow: '#C8E0E0', accent: '#D8C0C8' },  // Soft teal
-  { primary: '#D8C0C8', secondary: '#E8D8DC', glow: '#E0D0D4', accent: '#B8D0D8' },  // Blush pink
-  { primary: '#C8D0D8', secondary: '#DCE4E8', glow: '#D4DCE4', accent: '#D8D0C0' },  // Cool gray
-  { primary: '#D8D4C0', secondary: '#E8E4D4', glow: '#E0DCC8', accent: '#C0C8D8' },  // Cream
+  { primary: '#FF6B9D', secondary: '#FFB8D0', glow: '#FF8FB8', accent: '#58C4DD' },  // Розовый-голубой
+  { primary: '#58C4DD', secondary: '#A8E4F0', glow: '#78D4ED', accent: '#9B59B6' },  // Голубой
+  { primary: '#9B59B6', secondary: '#C8A8D8', glow: '#B078C6', accent: '#2ECC71' },  // Фиолетовый
+  { primary: '#2ECC71', secondary: '#A8E6C0', glow: '#58D68D', accent: '#F39C12' },  // Зелёный
+  { primary: '#F39C12', secondary: '#F8D488', glow: '#F5B041', accent: '#E74C3C' },  // Оранжевый
 ];
 
-// Генерация узлов вокруг центра - достаточно далеко для видимости
-const generateMindMapNodes = (count: number, time: number): UniverseNode[] => {
+// Генерация узлов на основе зон мозга
+const generateBrainNodes = (count: number, time: number, depth: number): UniverseNode[] => {
   const nodes: UniverseNode[] = [];
+  const conceptMap = getConceptMap(depth);
   
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.2;
-    const radius = 0.25 + Math.random() * 0.15; // Увеличенный радиус для видимости
+  for (let i = 0; i < Math.min(count, conceptMap.nodes.length); i++) {
+    const nodeData = conceptMap.nodes[i];
+    const zoneName = (nodeData as any).zone || 'limbic';
+    const zone = BRAIN_ZONES[zoneName as keyof typeof BRAIN_ZONES];
+    
+    // Позиция близко к зоне мозга с небольшим смещением
+    const jitter = 0.08;
     
     nodes.push({
       id: i,
       position: [
-        radius * Math.cos(angle),
-        (Math.random() - 0.5) * 0.1,
-        radius * Math.sin(angle),
+        zone.position[0] + (Math.random() - 0.5) * jitter,
+        zone.position[1] + (Math.random() - 0.5) * jitter,
+        zone.position[2] + (Math.random() - 0.5) * jitter,
       ],
       velocity: [0, 0, 0],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.05,
+      birthTime: time + i * 0.08,
     });
   }
   return nodes;
 };
 
-// Force-directed physics simulation
-const applyForces = (
+// Физическая симуляция с притяжением к зонам мозга
+const applyBrainForces = (
   nodes: UniverseNode[], 
   edges: UniverseEdge[], 
+  depth: number,
   deltaTime: number
 ): UniverseNode[] => {
   if (!nodes || nodes.length === 0) return nodes;
   
-  const REPULSION = 0.004;       // Отталкивание
-  const ATTRACTION = 0.012;      // Притяжение связанных
-  const DAMPING = 0.95;          // Плавное
-  const CENTER_PULL = 0.004;     // Притяжение к ядру
-  const MAX_VELOCITY = 0.01;     // Скорость
-  const IDEAL_DISTANCE = 0.3;    // Оптимальное расстояние
+  const conceptMap = getConceptMap(depth);
+  
+  const REPULSION = 0.003;
+  const ATTRACTION = 0.008;
+  const ZONE_PULL = 0.015; // Притяжение к своей зоне мозга
+  const DAMPING = 0.92;
+  const MAX_VELOCITY = 0.008;
   
   return nodes.map((node, i) => {
     if (!node || !node.position) return node;
     
-    // Ensure velocity exists
-    const nodeVelocity = node.velocity || [0, 0, 0];
+    const nodeData = conceptMap.nodes[i % conceptMap.nodes.length];
+    const zoneName = (nodeData as any).zone || 'limbic';
+    const zone = BRAIN_ZONES[zoneName as keyof typeof BRAIN_ZONES];
     
+    const nodeVelocity = node.velocity || [0, 0, 0];
     let fx = 0, fy = 0, fz = 0;
     
-    // Repulsion from all other nodes (magnetic field effect)
+    // Притяжение к своей зоне мозга
+    fx += (zone.position[0] - node.position[0]) * ZONE_PULL;
+    fy += (zone.position[1] - node.position[1]) * ZONE_PULL;
+    fz += (zone.position[2] - node.position[2]) * ZONE_PULL;
+    
+    // Отталкивание от других узлов
     nodes.forEach((other, j) => {
       if (i === j || !other || !other.position) return;
       
@@ -185,14 +302,13 @@ const applyForces = (
       const dz = node.position[2] - other.position[2];
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
       
-      // Inverse square repulsion
       const force = REPULSION / (dist * dist);
       fx += (dx / dist) * force;
       fy += (dy / dist) * force;
       fz += (dz / dist) * force;
     });
     
-    // Attraction along edges (connected nodes pull each other)
+    // Притяжение по связям
     edges.forEach(edge => {
       if (!edge) return;
       let otherIndex = -1;
@@ -207,9 +323,7 @@ const applyForces = (
           const dz = other.position[2] - node.position[2];
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
           
-          // Spring-like attraction (stronger when far from ideal distance)
-          const displacement = dist - IDEAL_DISTANCE;
-          const force = displacement * ATTRACTION;
+          const force = dist * ATTRACTION;
           fx += (dx / dist) * force;
           fy += (dy / dist) * force;
           fz += (dz / dist) * force;
@@ -217,17 +331,10 @@ const applyForces = (
       }
     });
     
-    // Gentle center pull to keep graph compact
-    fx -= node.position[0] * CENTER_PULL;
-    fy -= node.position[1] * CENTER_PULL;
-    fz -= node.position[2] * CENTER_PULL;
-    
-    // Update velocity with forces
     let vx = (nodeVelocity[0] + fx) * DAMPING;
     let vy = (nodeVelocity[1] + fy) * DAMPING;
     let vz = (nodeVelocity[2] + fz) * DAMPING;
     
-    // Clamp velocity
     const speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
     if (speed > MAX_VELOCITY) {
       const scale = MAX_VELOCITY / speed;
@@ -236,7 +343,6 @@ const applyForces = (
       vz *= scale;
     }
     
-    // Update position
     return {
       ...node,
       position: [
@@ -249,29 +355,18 @@ const applyForces = (
   });
 };
 
-// Generate mind-map connections based on concept relationships
-const generateMindMapEdges = (nodeCount: number, time: number, depth: number): UniverseEdge[] => {
+// Генерация нейронных связей на основе зон мозга
+const generateNeuralEdges = (nodeCount: number, time: number, depth: number): UniverseEdge[] => {
   const edges: UniverseEdge[] = [];
   const conceptMap = getConceptMap(depth);
   
-  // Connect each node to central (node 0 connects to all)
-  for (let i = 1; i < Math.min(4, nodeCount); i++) {
-    edges.push({
-      from: 0,
-      to: i,
-      opacity: 0,
-      birthTime: time + i * 0.1,
-    });
-  }
-  
-  // Create semantic connections based on concept map
+  // Создаём связи на основе семантических связей в concept map
   for (let i = 0; i < nodeCount; i++) {
     const nodeData = conceptMap.nodes[i % conceptMap.nodes.length];
     if (nodeData.connects) {
       nodeData.connects.forEach((targetName, idx) => {
         const targetIndex = conceptMap.nodes.findIndex(n => n.title === targetName);
         if (targetIndex !== -1 && targetIndex < nodeCount && targetIndex !== i) {
-          // Avoid duplicate edges
           const exists = edges.some(e => 
             (e.from === i && e.to === targetIndex) || 
             (e.from === targetIndex && e.to === i)
@@ -292,311 +387,179 @@ const generateMindMapEdges = (nodeCount: number, time: number, depth: number): U
   return edges;
 };
 
-// Get formulas based on depth level
-const getFormulasForDepth = (depth: number): string[] => {
-  const categories = Object.keys(PROCESS_FORMULAS) as (keyof typeof PROCESS_FORMULAS)[];
-  const category = categories[depth % categories.length];
-  return PROCESS_FORMULAS[category];
-};
-
-// Apple-style formula character - softer, more luminous
-const FormulaChar = ({
-  curve,
-  char,
-  t,
-  opacity,
-  color,
-  scale = 1,
-}: {
-  curve: THREE.QuadraticBezierCurve3;
-  char: string;
-  t: number;
-  opacity: number;
-  color: string;
-  scale?: number;
-}) => {
-  const point = curve.getPoint(t);
-  
-  return (
-    <Text
-      position={[point.x, point.y, point.z]}
-      fontSize={0.014 * scale}
-      color={color}
-      anchorX="center"
-      anchorY="middle"
-      fillOpacity={opacity * 0.9}
-      outlineWidth={0.001}
-      outlineColor={color}
-      outlineOpacity={opacity * 0.3}
-    >
-      {char}
-    </Text>
-  );
-};
-
-// Formula stream - characters building up and flowing along the edge
-const FormulaStream = ({
-  curve,
-  formula,
-  baseOffset,
-  speed,
-  opacity,
-  primaryColor,
-  accentColor,
-  time,
-  streamIndex,
-}: {
-  curve: THREE.QuadraticBezierCurve3;
-  formula: string;
-  baseOffset: number;
-  speed: number;
-  opacity: number;
-  primaryColor: string;
-  accentColor: string;
-  time: number;
-  streamIndex: number;
-}) => {
-  const chars = formula.split('');
-  const charSpacing = 0.04;
-  
-  // Building animation - characters appear one by one
-  const buildProgress = ((time * 0.3 + baseOffset * 2) % 3) / 3;
-  const visibleChars = Math.floor(buildProgress * chars.length * 1.5);
-  
-  // Flow position
-  const flowT = ((time * speed + baseOffset) % 1.2);
-  
-  return (
-    <group>
-      {chars.map((char, i) => {
-        // Character visibility based on build progress
-        const charBuildDelay = i / chars.length;
-        const isVisible = buildProgress > charBuildDelay * 0.6;
-        if (!isVisible) return null;
-        
-        // Position along curve
-        const t = Math.max(0, Math.min(1, flowT - i * charSpacing));
-        if (t <= 0 || t >= 1) return null;
-        
-        // Fade edges
-        const fadeIn = Math.min(1, t / 0.1);
-        const fadeOut = Math.min(1, (1 - t) / 0.1);
-        const charOpacity = opacity * fadeIn * fadeOut * 0.85;
-        
-        // Alternate colors for visual interest
-        const useAccent = (i + streamIndex) % 5 === 0;
-        const color = useAccent ? accentColor : primaryColor;
-        
-        // Slight scale variation for depth
-        const scale = 0.9 + Math.sin(time * 3 + i) * 0.1;
-        
-        return (
-          <FormulaChar
-            key={`${streamIndex}-${i}`}
-            curve={curve}
-            char={char}
-            t={t}
-            opacity={charOpacity}
-            color={color}
-            scale={scale}
-          />
-        );
-      })}
-    </group>
-  );
-};
-
-// Flowing mini-widget along connection
-const FlowingMiniWidget = ({
-  curve,
-  t,
-  opacity,
-  palette,
-  icon,
-  label,
-}: {
-  curve: THREE.QuadraticBezierCurve3;
-  t: number;
-  opacity: number;
-  palette: typeof DEPTH_PALETTES[0];
-  icon: string;
-  label: string;
-}) => {
-  const pos = curve.getPoint(t);
-  const fadeOpacity = Math.sin(t * Math.PI) * opacity;
-  const widgetWidth = 0.05;
-  const widgetHeight = 0.032;
-  
-  return (
-    <group position={[pos.x, pos.y, pos.z]} scale={0.8}>
-      {/* Mini widget background */}
-      <RoundedBox
-        args={[widgetWidth, widgetHeight, 0.006]}
-        radius={0.008}
-        smoothness={3}
-      >
-        <meshBasicMaterial 
-          color="#1C1C1E"
-          transparent 
-          opacity={fadeOpacity * 0.95}
-        />
-      </RoundedBox>
-      
-      {/* Accent border */}
-      <RoundedBox
-        args={[widgetWidth + 0.002, widgetHeight + 0.002, 0.004]}
-        radius={0.009}
-        smoothness={3}
-      >
-        <meshBasicMaterial 
-          color={palette.primary}
-          transparent 
-          opacity={fadeOpacity * 0.5}
-        />
-      </RoundedBox>
-      
-      {/* Icon */}
-      <Text
-        position={[-0.012, 0, 0.004]}
-        fontSize={0.012}
-        color={palette.accent}
-        anchorX="center"
-        anchorY="middle"
-        fillOpacity={fadeOpacity}
-      >
-        {icon}
-      </Text>
-      
-      {/* Label */}
-      <Text
-        position={[0.01, 0, 0.004]}
-        fontSize={0.007}
-        color="#EBEBF5"
-        anchorX="center"
-        anchorY="middle"
-        fillOpacity={fadeOpacity * 0.9}
-      >
-        {label}
-      </Text>
-      
-      {/* Glow trail */}
-      <Sphere args={[0.025, 8, 8]} position={[0, 0, -0.01]}>
-        <meshBasicMaterial 
-          color={palette.glow}
-          transparent 
-          opacity={fadeOpacity * 0.2}
-        />
-      </Sphere>
-    </group>
-  );
-};
-
-// Mini widget data for flow animation
-const FLOW_WIDGETS = [
-  { icon: '⚡', label: 'Энергия' },
-  { icon: '📊', label: 'Данные' },
-  { icon: '🔗', label: 'Связь' },
-  { icon: '💡', label: 'Идея' },
-  { icon: '🎯', label: 'Цель' },
-  { icon: '✨', label: 'Смысл' },
-  { icon: '🔄', label: 'Поток' },
-  { icon: '📈', label: 'Рост' },
-];
-
-// Elegant iOS-style connection line
-const MindMapConnection = ({ 
+// Нейронная связь - синапс с импульсами
+const NeuralConnection = ({ 
   start, 
   end, 
   opacity, 
   palette, 
   edgeIndex,
-  connectionLabel,
   time,
-  isFromCenter
+  processLabel
 }: { 
   start: [number, number, number]; 
   end: [number, number, number]; 
   opacity: number; 
   palette: typeof DEPTH_PALETTES[0];
   edgeIndex: number;
-  connectionLabel?: string;
   time: number;
-  isFromCenter: boolean;
+  processLabel?: string;
 }) => {
-  // Create smooth cubic bezier path for elegant curves
   const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...start);
     const endVec = new THREE.Vector3(...end);
     const distance = startVec.distanceTo(endVec);
     
-    // Smoother, more organic curves
+    // Создаём изогнутую линию как аксон
     const direction = endVec.clone().sub(startVec).normalize();
     const perpendicular = new THREE.Vector3()
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
       .normalize();
     
-    // Gentler curve for elegance
-    const curveAmount = distance * (isFromCenter ? 0.12 : 0.18);
-    const yLift = isFromCenter ? 0.03 : 0.05;
+    const curveAmount = distance * 0.3;
+    const yLift = 0.05 + (edgeIndex % 3) * 0.02;
     
-    // Calculate control points for cubic bezier (smoother than quadratic)
     const ctrl1 = startVec.clone().lerp(endVec, 0.33);
     ctrl1.add(perpendicular.clone().multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 1 : -1)));
     ctrl1.y += yLift;
     
     const ctrl2 = startVec.clone().lerp(endVec, 0.66);
-    ctrl2.add(perpendicular.clone().multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 0.5 : -0.5)));
-    ctrl2.y += yLift * 0.8;
+    ctrl2.add(perpendicular.clone().multiplyScalar(curveAmount * (edgeIndex % 2 === 0 ? 0.3 : -0.3)));
+    ctrl2.y += yLift * 0.6;
     
     const bezierCurve = new THREE.CubicBezierCurve3(startVec, ctrl1, ctrl2, endVec);
-    const curvePoints = bezierCurve.getPoints(60); // More points for smoother line
+    const curvePoints = bezierCurve.getPoints(50);
     
     const mid = bezierCurve.getPoint(0.5);
     
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
-  }, [start, end, edgeIndex, isFromCenter]);
+  }, [start, end, edgeIndex]);
 
-  // Органичное дыхание линии
-  const breatheSpeed = 0.25 + (edgeIndex % 4) * 0.05;
-  const breathe = 0.6 + Math.sin(time * breatheSpeed + edgeIndex * 0.8) * 0.2;
+  // Пульсация нейронного сигнала
+  const pulseSpeed = 0.5 + (edgeIndex % 4) * 0.1;
+  const pulsePhase = edgeIndex * 0.5;
+  
+  // Несколько импульсов вдоль аксона
+  const impulses = useMemo(() => {
+    return [0, 0.33, 0.66].map((offset, i) => ({
+      offset,
+      speed: 0.3 + i * 0.1,
+      size: 0.012 - i * 0.002,
+    }));
+  }, []);
 
   return (
     <group>
-      {/* Мягкая основная линия */}
+      {/* Аксон - основная линия */}
       <Line
         points={points}
-        color={palette.primary}
-        lineWidth={isFromCenter ? 1 : 0.6}
+        color={palette.secondary}
+        lineWidth={0.8}
         transparent
-        opacity={opacity * breathe * 0.4}
+        opacity={opacity * 0.3}
       />
       
-      {/* Нежное свечение */}
+      {/* Миелиновая оболочка - свечение */}
       <Line
         points={points}
         color={palette.glow}
-        lineWidth={isFromCenter ? 2.5 : 2}
+        lineWidth={2.5}
         transparent
-        opacity={opacity * 0.05}
+        opacity={opacity * 0.08}
       />
       
-      {/* Одна плавная частица */}
-      {(() => {
-        const flowSpeed = 0.02 + (edgeIndex % 3) * 0.005;
-        const t = ((time * flowSpeed + edgeIndex * 0.2) % 1);
+      {/* Нейронные импульсы - движущиеся сигналы */}
+      {impulses.map((impulse, i) => {
+        const t = ((time * impulse.speed + impulse.offset + edgeIndex * 0.2) % 1);
         const pos = curve.getPoint(t);
-        const particleOpacity = Math.sin(t * Math.PI) * opacity * 0.4;
+        const impulseOpacity = Math.sin(t * Math.PI) * opacity * 0.9;
         
         return (
-          <Sphere args={[0.004, 8, 8]} position={[pos.x, pos.y, pos.z]}>
-            <meshBasicMaterial 
-              color={palette.secondary}
-              transparent 
-              opacity={particleOpacity}
-            />
-          </Sphere>
+          <group key={i}>
+            {/* Ядро импульса */}
+            <Sphere args={[impulse.size, 12, 12]} position={[pos.x, pos.y, pos.z]}>
+              <meshBasicMaterial 
+                color={palette.primary}
+                transparent 
+                opacity={impulseOpacity}
+              />
+            </Sphere>
+            {/* Свечение импульса */}
+            <Sphere args={[impulse.size * 2, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+              <meshBasicMaterial 
+                color={palette.glow}
+                transparent 
+                opacity={impulseOpacity * 0.3}
+              />
+            </Sphere>
+          </group>
         );
-      })()}
+      })}
+      
+      {/* Метка процесса в середине связи */}
+      {processLabel && (
+        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.03, midPoint.z]}>
+          <Text
+            fontSize={0.018}
+            color={palette.accent}
+            anchorX="center"
+            anchorY="middle"
+            fillOpacity={opacity * 0.7}
+          >
+            {processLabel}
+          </Text>
+        </Billboard>
+      )}
+      
+      {/* Синаптические терминали на концах */}
+      <Sphere args={[0.008, 8, 8]} position={start}>
+        <meshBasicMaterial 
+          color={palette.primary}
+          transparent 
+          opacity={opacity * 0.6}
+        />
+      </Sphere>
+      <Sphere args={[0.008, 8, 8]} position={end}>
+        <meshBasicMaterial 
+          color={palette.accent}
+          transparent 
+          opacity={opacity * 0.6}
+        />
+      </Sphere>
+    </group>
+  );
+};
+
+// Визуализация зоны мозга
+const BrainZoneIndicator = ({
+  zone,
+  opacity,
+  time,
+}: {
+  zone: typeof BRAIN_ZONES[keyof typeof BRAIN_ZONES];
+  opacity: number;
+  time: number;
+}) => {
+  const breathe = 1 + Math.sin(time * 0.5) * 0.1;
+  
+  return (
+    <group position={zone.position}>
+      {/* Ореол зоны */}
+      <Sphere args={[0.12 * breathe, 24, 24]}>
+        <meshBasicMaterial 
+          color={zone.color}
+          transparent 
+          opacity={opacity * 0.08}
+        />
+      </Sphere>
+      {/* Ядро зоны */}
+      <Sphere args={[0.04, 16, 16]}>
+        <meshBasicMaterial 
+          color={zone.color}
+          transparent 
+          opacity={opacity * 0.2}
+        />
+      </Sphere>
     </group>
   );
 };
@@ -617,34 +580,30 @@ export const FractalUniverse = ({
   const initialized = useRef(false);
 
   const palette = DEPTH_PALETTES[depth % DEPTH_PALETTES.length];
+  const conceptMap = getConceptMap(depth);
 
-  // Initialize universe when becoming active
   useFrame(({ clock }) => {
     if (isActive && !initialized.current) {
       initialized.current = true;
-      const nodeCount = Math.max(6, 8);
-      setNodes(generateMindMapNodes(nodeCount, clock.elapsedTime));
-      setEdges(generateMindMapEdges(nodeCount, clock.elapsedTime, depth));
+      const nodeCount = Math.min(8, conceptMap.nodes.length);
+      setNodes(generateBrainNodes(nodeCount, clock.elapsedTime, depth));
+      setEdges(generateNeuralEdges(nodeCount, clock.elapsedTime, depth));
     }
     
     if (isActive) {
       setTime(clock.elapsedTime);
       
-      // Apply force-directed physics
       if (nodes.length > 0 && edges.length > 0) {
-        setNodes(prevNodes => applyForces(prevNodes, edges, 0.016));
+        setNodes(prevNodes => applyBrainForces(prevNodes, edges, depth, 0.016));
       }
     }
 
-    // Убираем вращение для фронтального вида
-    // Только очень лёгкое дыхание
     if (groupRef.current) {
-      groupRef.current.rotation.y = 0;
-      groupRef.current.rotation.x = 0;
+      // Очень лёгкое вращение для динамики
+      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.1) * 0.05;
     }
   });
 
-  // Animate nodes
   const animatedNodes = nodes.map((node) => {
     const age = time - node.birthTime;
     const progress = Math.min(1, Math.max(0, age / 0.8));
@@ -672,104 +631,105 @@ export const FractalUniverse = ({
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
-      {/* Minimal particle field */}
       <Stars
-        radius={1.2}
-        depth={0.6}
-        count={25}
-        factor={0.15}
+        radius={1.5}
+        depth={0.8}
+        count={30}
+        factor={0.12}
         saturation={0}
         fade
-        speed={0.05}
+        speed={0.03}
       />
 
-      {/* Central orb - Apple style soft glow */}
-      <Sphere args={[0.08, 32, 32]}>
+      {/* Визуализация зон мозга */}
+      {Object.values(BRAIN_ZONES).map((zone, i) => (
+        <BrainZoneIndicator
+          key={zone.name}
+          zone={zone}
+          opacity={universeOpacity * 0.8}
+          time={time}
+        />
+      ))}
+
+      {/* Центральный "мозг" */}
+      <Sphere args={[0.06, 32, 32]}>
         <meshBasicMaterial 
           color={palette.primary} 
           transparent 
-          opacity={(0.8 + Math.sin(time * 1.5) * 0.1) * universeOpacity} 
+          opacity={(0.6 + Math.sin(time * 1.5) * 0.15) * universeOpacity} 
         />
       </Sphere>
-      {/* Soft inner glow */}
-      <Sphere args={[0.12, 24, 24]}>
+      <Sphere args={[0.1, 24, 24]}>
         <meshBasicMaterial 
           color={palette.glow} 
           transparent 
-          opacity={(0.2 + Math.sin(time * 1.2) * 0.05) * universeOpacity} 
+          opacity={0.15 * universeOpacity} 
         />
       </Sphere>
-      {/* Outer bloom */}
-      <Sphere args={[0.18, 16, 16]}>
-        <meshBasicMaterial 
-          color={palette.glow} 
-          transparent 
-          opacity={(0.06) * universeOpacity} 
-        />
-      </Sphere>
+      
+      {/* Название уровня */}
+      <Billboard follow={true} position={[0, -0.12, 0]}>
+        <Text
+          fontSize={0.025}
+          color={palette.primary}
+          anchorX="center"
+          fillOpacity={universeOpacity * 0.8}
+        >
+          {conceptMap.central.title}
+        </Text>
+        <Text
+          fontSize={0.015}
+          color={palette.secondary}
+          anchorX="center"
+          position={[0, -0.03, 0]}
+          fillOpacity={universeOpacity * 0.5}
+        >
+          {conceptMap.central.subtitle}
+        </Text>
+      </Billboard>
 
-      {/* Mind-map 3D connections */}
+      {/* Нейронные связи */}
       {animatedEdges.map((edge, i) => {
         const startNode = animatedNodes.find(n => n.id === edge.from);
         const endNode = animatedNodes.find(n => n.id === edge.to);
         if (!startNode || !endNode) return null;
 
-        const conceptMap = getConceptMap(depth);
         const startData = conceptMap.nodes[edge.from % conceptMap.nodes.length];
         const endData = conceptMap.nodes[edge.to % conceptMap.nodes.length];
         
-        // Get connection label if it's a semantic connection
-        const connectionLabel = startData.connects?.includes(endData.title) 
-          ? '→' 
-          : endData.connects?.includes(startData.title) 
-            ? '←' 
-            : undefined;
+        // Определяем процесс для связи
+        const processLabel = startData.connects?.includes(endData.title) 
+          ? `${startData.title} → ${endData.title}`
+          : undefined;
 
         return (
-          <MindMapConnection
+          <NeuralConnection
             key={`edge-${i}`}
             start={startNode.position}
             end={endNode.position}
             opacity={edge.opacity}
             palette={palette}
             edgeIndex={i}
-            connectionLabel={connectionLabel}
             time={time}
-            isFromCenter={edge.from === 0}
+            processLabel={i % 2 === 0 ? undefined : undefined} // Убираем лейблы для чистоты
           />
         );
       })}
 
-      {/* Mind Map Nodes - Widget style */}
+      {/* Виджеты-нейроны */}
       {animatedNodes.map((node) => {
         const isHovered = hoveredNode === node.id;
-        
-        // Органичное дыхание - каждый узел дышит в своём ритме
-        const breatheSpeed = 0.3 + (node.id % 5) * 0.08;
-        const breathePhase = node.id * 1.2;
-        const breathe = 1 + Math.sin(time * breatheSpeed + breathePhase) * 0.015;
-        
-        // Лёгкое покачивание
-        const swayX = Math.sin(time * 0.2 + node.id * 0.7) * 0.003;
-        const swayY = Math.cos(time * 0.15 + node.id * 0.5) * 0.002;
-        
-        const hoverScale = isHovered ? 1.05 : 1;
-        
-        const conceptMap = getConceptMap(depth);
         const nodeData = conceptMap.nodes[node.id % conceptMap.nodes.length];
+        const zoneName = (nodeData as any).zone || 'limbic';
+        const zone = BRAIN_ZONES[zoneName as keyof typeof BRAIN_ZONES];
         
-        // Apple widget размеры - увеличенные для читаемости
-        const widgetWidth = 0.35;
-        const widgetHeight = 0.2;
-        const cornerRadius = 0.04;
-        const connectionCount = nodeData.connects?.length || 0;
+        const breatheSpeed = 0.4 + (node.id % 5) * 0.1;
+        const breathe = 1 + Math.sin(time * breatheSpeed + node.id * 1.5) * 0.02;
+        const hoverScale = isHovered ? 1.08 : 1;
         
-        // Позиция с органичным покачиванием
-        const organicPosition: [number, number, number] = [
-          node.position[0] + swayX,
-          node.position[1] + swayY,
-          node.position[2]
-        ];
+        const widgetWidth = 0.28;
+        const widgetHeight = 0.16;
+        const cornerRadius = 0.03;
         
         return (
           <Billboard
@@ -780,25 +740,38 @@ export const FractalUniverse = ({
             lockZ={false}
           >
             <group 
-              position={organicPosition}
+              position={node.position}
               scale={node.scale * breathe * hoverScale}
             >
-              {/* Apple widget - внешнее свечение */}
+              {/* Связь с зоной мозга - светящаяся линия */}
+              <Line
+                points={[[0, 0, 0], [
+                  zone.position[0] - node.position[0],
+                  zone.position[1] - node.position[1],
+                  zone.position[2] - node.position[2]
+                ]]}
+                color={zone.color}
+                lineWidth={0.5}
+                transparent
+                opacity={node.opacity * 0.15}
+              />
+              
+              {/* Внешнее свечение цвета зоны */}
               <RoundedBox
-                args={[widgetWidth + 0.03, widgetHeight + 0.03, 0.005]}
-                radius={cornerRadius + 0.01}
+                args={[widgetWidth + 0.025, widgetHeight + 0.025, 0.004]}
+                radius={cornerRadius + 0.008}
                 smoothness={4}
               >
                 <meshBasicMaterial 
-                  color={palette.glow}
+                  color={zone.color}
                   transparent 
-                  opacity={node.opacity * 0.1}
+                  opacity={node.opacity * 0.2}
                 />
               </RoundedBox>
               
-              {/* Apple widget - основной фон (glassmorphism эффект) */}
+              {/* Основной фон виджета */}
               <RoundedBox
-                args={[widgetWidth, widgetHeight, 0.025]}
+                args={[widgetWidth, widgetHeight, 0.02]}
                 radius={cornerRadius}
                 smoothness={4}
                 onClick={(e) => {
@@ -815,31 +788,29 @@ export const FractalUniverse = ({
                 }}
               >
                 <meshBasicMaterial 
-                  color="#2C2C2E"
+                  color="#1C1C1E"
                   transparent 
                   opacity={node.opacity * 0.95}
                 />
               </RoundedBox>
               
-              {/* Apple widget - тонкая светлая обводка сверху (highlight) */}
-              <RoundedBox
-                args={[widgetWidth - 0.02, 0.008, 0.003]}
-                radius={0.003}
-                smoothness={2}
-                position={[0, widgetHeight / 2 - 0.02, 0.015]}
+              {/* Индикатор зоны мозга */}
+              <Sphere 
+                args={[0.012, 8, 8]} 
+                position={[widgetWidth / 2 - 0.02, widgetHeight / 2 - 0.02, 0.015]}
               >
                 <meshBasicMaterial 
-                  color="#FFFFFF"
+                  color={zone.color}
                   transparent 
-                  opacity={node.opacity * 0.1}
+                  opacity={node.opacity * 0.9}
                 />
-              </RoundedBox>
+              </Sphere>
               
-              {/* Иконка - крупная, по центру слева */}
+              {/* Иконка */}
               <Text
-                position={[-0.1, 0.01, 0.02]}
-                fontSize={0.07}
-                color={palette.accent}
+                position={[-0.08, 0.01, 0.015]}
+                fontSize={0.055}
+                color={zone.color}
                 anchorX="center"
                 anchorY="middle"
                 fillOpacity={node.opacity}
@@ -847,10 +818,10 @@ export const FractalUniverse = ({
                 {nodeData.icon}
               </Text>
               
-              {/* Название - крупное, SF Pro стиль */}
+              {/* Название */}
               <Text
-                position={[0.05, 0.035, 0.02]}
-                fontSize={0.038}
+                position={[0.04, 0.03, 0.015]}
+                fontSize={0.032}
                 color={isHovered ? '#FFFFFF' : '#F5F5F7'}
                 anchorX="center"
                 anchorY="middle"
@@ -859,10 +830,10 @@ export const FractalUniverse = ({
                 {nodeData.title}
               </Text>
               
-              {/* Подзаголовок - мелкий, приглушённый */}
+              {/* Подзаголовок */}
               <Text
-                position={[0.05, -0.015, 0.02]}
-                fontSize={0.022}
+                position={[0.04, -0.01, 0.015]}
+                fontSize={0.018}
                 color="#98989D"
                 anchorX="center"
                 anchorY="middle"
@@ -871,36 +842,29 @@ export const FractalUniverse = ({
                 {nodeData.subtitle || ''}
               </Text>
               
-              {/* Индикатор связей - маленькие точки */}
-              {connectionCount > 0 && (
-                <group position={[0.05, -0.055, 0.02]}>
-                  {Array.from({ length: Math.min(connectionCount, 4) }).map((_, i) => (
-                    <Sphere 
-                      key={i} 
-                      args={[0.008, 8, 8]} 
-                      position={[(i - (Math.min(connectionCount, 4) - 1) / 2) * 0.025, 0, 0]}
-                    >
-                      <meshBasicMaterial 
-                        color={palette.primary}
-                        transparent 
-                        opacity={node.opacity * 0.7}
-                      />
-                    </Sphere>
-                  ))}
-                </group>
-              )}
+              {/* Зона мозга - маленький текст */}
+              <Text
+                position={[0.04, -0.04, 0.015]}
+                fontSize={0.012}
+                color={zone.color}
+                anchorX="center"
+                anchorY="middle"
+                fillOpacity={node.opacity * 0.6}
+              >
+                {zone.name}
+              </Text>
               
-              {/* Hover glow effect */}
+              {/* Hover эффект */}
               {isHovered && (
                 <RoundedBox
-                  args={[widgetWidth + 0.015, widgetHeight + 0.015, 0.003]}
-                  radius={cornerRadius + 0.005}
+                  args={[widgetWidth + 0.01, widgetHeight + 0.01, 0.002]}
+                  radius={cornerRadius + 0.003}
                   smoothness={3}
                 >
                   <meshBasicMaterial 
-                    color={palette.accent}
+                    color={zone.color}
                     transparent 
-                    opacity={node.opacity * 0.3}
+                    opacity={node.opacity * 0.4}
                   />
                 </RoundedBox>
               )}
@@ -909,15 +873,15 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Depth label - minimal */}
+      {/* Индикатор глубины */}
       <Text
-        position={[0, -0.5, 0]}
-        fontSize={0.022}
+        position={[0, -0.55, 0]}
+        fontSize={0.018}
         color={palette.glow}
         anchorX="center"
-        fillOpacity={universeOpacity * 0.25}
+        fillOpacity={universeOpacity * 0.3}
       >
-        {depth + 1}
+        Уровень {depth + 1}
       </Text>
     </group>
   );
