@@ -29,217 +29,542 @@ interface FractalUniverseProps {
   isActive: boolean;
 }
 
-// Полная карта зон мозга с анатомически корректными позициями
+// Полная анатомическая карта мозга с обоими полушариями
 const BRAIN_ANATOMY = {
-  // ЛЕВОЕ ПОЛУШАРИЕ
+  // ========== ЛЕВОЕ ПОЛУШАРИЕ ==========
+  // Лобная доля
   prefrontal_left: {
     name: 'Префронтальная кора (Л)',
     shortName: 'Планирование',
-    position: [-0.15, 0.28, 0.25] as [number, number, number],
+    position: [-0.22, 0.32, 0.3] as [number, number, number],
     color: '#FF6B9D',
-    size: 0.08,
+    size: 0.055,
+    hemisphere: 'left',
+  },
+  dorsolateral_left: {
+    name: 'Дорсолатеральная ПФК (Л)',
+    shortName: 'Рабочая память',
+    position: [-0.28, 0.28, 0.22] as [number, number, number],
+    color: '#FF8FAB',
+    size: 0.045,
+    hemisphere: 'left',
   },
   frontal_left: {
     name: 'Лобная доля (Л)',
     shortName: 'Решения',
-    position: [-0.2, 0.2, 0.15] as [number, number, number],
+    position: [-0.25, 0.22, 0.18] as [number, number, number],
     color: '#FF8FAB',
-    size: 0.1,
+    size: 0.06,
+    hemisphere: 'left',
   },
   motor_left: {
     name: 'Моторная кора (Л)',
-    shortName: 'Движение',
-    position: [-0.18, 0.25, 0] as [number, number, number],
+    shortName: 'Движение П',
+    position: [-0.2, 0.32, 0.02] as [number, number, number],
     color: '#E74C3C',
-    size: 0.06,
+    size: 0.045,
+    hemisphere: 'left',
   },
+  premotor_left: {
+    name: 'Премоторная кора (Л)',
+    shortName: 'Подготовка',
+    position: [-0.24, 0.3, 0.08] as [number, number, number],
+    color: '#C0392B',
+    size: 0.04,
+    hemisphere: 'left',
+  },
+  broca: {
+    name: 'Зона Брока',
+    shortName: 'Речь',
+    position: [-0.32, 0.12, 0.15] as [number, number, number],
+    color: '#9B59B6',
+    size: 0.04,
+    hemisphere: 'left',
+  },
+
+  // Теменная доля
   parietal_left: {
     name: 'Теменная доля (Л)',
     shortName: 'Интеграция',
-    position: [-0.15, 0.22, -0.12] as [number, number, number],
+    position: [-0.18, 0.28, -0.1] as [number, number, number],
     color: '#58C4DD',
-    size: 0.09,
+    size: 0.055,
+    hemisphere: 'left',
   },
+  somatosensory_left: {
+    name: 'Соматосенсорная кора (Л)',
+    shortName: 'Ощущения П',
+    position: [-0.18, 0.32, -0.02] as [number, number, number],
+    color: '#3498DB',
+    size: 0.04,
+    hemisphere: 'left',
+  },
+  angular_left: {
+    name: 'Угловая извилина (Л)',
+    shortName: 'Чтение',
+    position: [-0.22, 0.2, -0.18] as [number, number, number],
+    color: '#5DADE2',
+    size: 0.035,
+    hemisphere: 'left',
+  },
+
+  // Височная доля
   temporal_left: {
     name: 'Височная доля (Л)',
-    shortName: 'Речь',
-    position: [-0.28, 0.02, 0.05] as [number, number, number],
+    shortName: 'Слух',
+    position: [-0.35, 0.02, 0.08] as [number, number, number],
     color: '#9B59B6',
-    size: 0.1,
+    size: 0.06,
+    hemisphere: 'left',
   },
+  wernicke: {
+    name: 'Зона Вернике',
+    shortName: 'Понимание',
+    position: [-0.3, 0.08, -0.05] as [number, number, number],
+    color: '#8E44AD',
+    size: 0.04,
+    hemisphere: 'left',
+  },
+  auditory_left: {
+    name: 'Слуховая кора (Л)',
+    shortName: 'Слух обраб.',
+    position: [-0.33, 0.08, 0.02] as [number, number, number],
+    color: '#AF7AC5',
+    size: 0.035,
+    hemisphere: 'left',
+  },
+
+  // Затылочная доля
   occipital_left: {
     name: 'Затылочная доля (Л)',
     shortName: 'Зрение',
-    position: [-0.1, 0.12, -0.28] as [number, number, number],
+    position: [-0.12, 0.15, -0.32] as [number, number, number],
     color: '#2ECC71',
-    size: 0.08,
+    size: 0.055,
+    hemisphere: 'left',
   },
-  
-  // ПРАВОЕ ПОЛУШАРИЕ  
+  visual_primary_left: {
+    name: 'Первичная зрит. кора (Л)',
+    shortName: 'V1',
+    position: [-0.08, 0.1, -0.35] as [number, number, number],
+    color: '#27AE60',
+    size: 0.04,
+    hemisphere: 'left',
+  },
+
+  // ========== ПРАВОЕ ПОЛУШАРИЕ ==========
+  // Лобная доля
   prefrontal_right: {
     name: 'Префронтальная кора (П)',
     shortName: 'Самоконтроль',
-    position: [0.15, 0.28, 0.25] as [number, number, number],
+    position: [0.22, 0.32, 0.3] as [number, number, number],
     color: '#FF6B9D',
-    size: 0.08,
+    size: 0.055,
+    hemisphere: 'right',
+  },
+  dorsolateral_right: {
+    name: 'Дорсолатеральная ПФК (П)',
+    shortName: 'Внимание',
+    position: [0.28, 0.28, 0.22] as [number, number, number],
+    color: '#FF8FAB',
+    size: 0.045,
+    hemisphere: 'right',
   },
   frontal_right: {
     name: 'Лобная доля (П)',
-    shortName: 'Внимание',
-    position: [0.2, 0.2, 0.15] as [number, number, number],
+    shortName: 'Эмпатия',
+    position: [0.25, 0.22, 0.18] as [number, number, number],
     color: '#FF8FAB',
-    size: 0.1,
+    size: 0.06,
+    hemisphere: 'right',
   },
   motor_right: {
     name: 'Моторная кора (П)',
-    shortName: 'Координация',
-    position: [0.18, 0.25, 0] as [number, number, number],
+    shortName: 'Движение Л',
+    position: [0.2, 0.32, 0.02] as [number, number, number],
     color: '#E74C3C',
-    size: 0.06,
+    size: 0.045,
+    hemisphere: 'right',
   },
+  premotor_right: {
+    name: 'Премоторная кора (П)',
+    shortName: 'Имитация',
+    position: [0.24, 0.3, 0.08] as [number, number, number],
+    color: '#C0392B',
+    size: 0.04,
+    hemisphere: 'right',
+  },
+
+  // Теменная доля
   parietal_right: {
     name: 'Теменная доля (П)',
     shortName: 'Пространство',
-    position: [0.15, 0.22, -0.12] as [number, number, number],
+    position: [0.18, 0.28, -0.1] as [number, number, number],
     color: '#58C4DD',
-    size: 0.09,
+    size: 0.055,
+    hemisphere: 'right',
   },
+  somatosensory_right: {
+    name: 'Соматосенсорная кора (П)',
+    shortName: 'Ощущения Л',
+    position: [0.18, 0.32, -0.02] as [number, number, number],
+    color: '#3498DB',
+    size: 0.04,
+    hemisphere: 'right',
+  },
+  angular_right: {
+    name: 'Угловая извилина (П)',
+    shortName: 'Метафоры',
+    position: [0.22, 0.2, -0.18] as [number, number, number],
+    color: '#5DADE2',
+    size: 0.035,
+    hemisphere: 'right',
+  },
+
+  // Височная доля
   temporal_right: {
     name: 'Височная доля (П)',
-    shortName: 'Эмоции',
-    position: [0.28, 0.02, 0.05] as [number, number, number],
+    shortName: 'Музыка',
+    position: [0.35, 0.02, 0.08] as [number, number, number],
     color: '#E91E63',
-    size: 0.1,
+    size: 0.06,
+    hemisphere: 'right',
   },
+  fusiform_right: {
+    name: 'Веретенов. извилина (П)',
+    shortName: 'Лица',
+    position: [0.3, -0.02, 0.02] as [number, number, number],
+    color: '#F06292',
+    size: 0.04,
+    hemisphere: 'right',
+  },
+  auditory_right: {
+    name: 'Слуховая кора (П)',
+    shortName: 'Тональность',
+    position: [0.33, 0.08, 0.02] as [number, number, number],
+    color: '#CE93D8',
+    size: 0.035,
+    hemisphere: 'right',
+  },
+
+  // Затылочная доля
   occipital_right: {
     name: 'Затылочная доля (П)',
     shortName: 'Образы',
-    position: [0.1, 0.12, -0.28] as [number, number, number],
+    position: [0.12, 0.15, -0.32] as [number, number, number],
     color: '#2ECC71',
-    size: 0.08,
+    size: 0.055,
+    hemisphere: 'right',
   },
-  
-  // ЦЕНТРАЛЬНЫЕ СТРУКТУРЫ
+  visual_primary_right: {
+    name: 'Первичная зрит. кора (П)',
+    shortName: 'V1',
+    position: [0.08, 0.1, -0.35] as [number, number, number],
+    color: '#27AE60',
+    size: 0.04,
+    hemisphere: 'right',
+  },
+
+  // ========== ЦЕНТРАЛЬНЫЕ СТРУКТУРЫ ==========
   corpus_callosum: {
     name: 'Мозолистое тело',
     shortName: 'Связь полушарий',
-    position: [0, 0.15, 0] as [number, number, number],
+    position: [0, 0.2, 0] as [number, number, number],
     color: '#F39C12',
-    size: 0.12,
+    size: 0.08,
+    hemisphere: 'center',
+  },
+  anterior_cingulate: {
+    name: 'Передняя поясная кора',
+    shortName: 'Конфликты',
+    position: [0, 0.28, 0.12] as [number, number, number],
+    color: '#E67E22',
+    size: 0.04,
+    hemisphere: 'center',
+  },
+  posterior_cingulate: {
+    name: 'Задняя поясная кора',
+    shortName: 'Самосознание',
+    position: [0, 0.22, -0.08] as [number, number, number],
+    color: '#D35400',
+    size: 0.035,
+    hemisphere: 'center',
   },
   thalamus: {
     name: 'Таламус',
     shortName: 'Ретрансляция',
-    position: [0, 0.08, 0] as [number, number, number],
+    position: [0, 0.1, 0.02] as [number, number, number],
     color: '#3498DB',
-    size: 0.06,
-  },
-  hippocampus: {
-    name: 'Гиппокамп',
-    shortName: 'Память',
-    position: [0, 0, 0.05] as [number, number, number],
-    color: '#1ABC9C',
     size: 0.05,
+    hemisphere: 'center',
   },
-  amygdala: {
-    name: 'Амигдала',
-    shortName: 'Страх/Эмоции',
-    position: [0, -0.02, 0.08] as [number, number, number],
+  hippocampus_left: {
+    name: 'Гиппокамп (Л)',
+    shortName: 'Память Л',
+    position: [-0.1, 0.02, 0.06] as [number, number, number],
+    color: '#1ABC9C',
+    size: 0.035,
+    hemisphere: 'left',
+  },
+  hippocampus_right: {
+    name: 'Гиппокамп (П)',
+    shortName: 'Память П',
+    position: [0.1, 0.02, 0.06] as [number, number, number],
+    color: '#16A085',
+    size: 0.035,
+    hemisphere: 'right',
+  },
+  amygdala_left: {
+    name: 'Амигдала (Л)',
+    shortName: 'Страх Л',
+    position: [-0.12, -0.02, 0.1] as [number, number, number],
     color: '#E74C3C',
-    size: 0.04,
+    size: 0.03,
+    hemisphere: 'left',
+  },
+  amygdala_right: {
+    name: 'Амигдала (П)',
+    shortName: 'Эмоции П',
+    position: [0.12, -0.02, 0.1] as [number, number, number],
+    color: '#C0392B',
+    size: 0.03,
+    hemisphere: 'right',
   },
   hypothalamus: {
     name: 'Гипоталамус',
     shortName: 'Гомеостаз',
-    position: [0, -0.05, 0.1] as [number, number, number],
+    position: [0, -0.02, 0.12] as [number, number, number],
     color: '#9B59B6',
+    size: 0.035,
+    hemisphere: 'center',
+  },
+  basal_ganglia: {
+    name: 'Базальные ганглии',
+    shortName: 'Привычки',
+    position: [0, 0.08, 0.08] as [number, number, number],
+    color: '#34495E',
     size: 0.04,
+    hemisphere: 'center',
+  },
+  insula_left: {
+    name: 'Островок (Л)',
+    shortName: 'Интероцепция',
+    position: [-0.22, 0.08, 0.1] as [number, number, number],
+    color: '#E91E63',
+    size: 0.035,
+    hemisphere: 'left',
+  },
+  insula_right: {
+    name: 'Островок (П)',
+    shortName: 'Эмпатия тела',
+    position: [0.22, 0.08, 0.1] as [number, number, number],
+    color: '#C2185B',
+    size: 0.035,
+    hemisphere: 'right',
   },
   brainstem: {
     name: 'Ствол мозга',
     shortName: 'Жизнь',
-    position: [0, -0.15, -0.05] as [number, number, number],
+    position: [0, -0.12, -0.02] as [number, number, number],
     color: '#34495E',
-    size: 0.07,
+    size: 0.05,
+    hemisphere: 'center',
   },
-  cerebellum: {
-    name: 'Мозжечок',
-    shortName: 'Баланс',
-    position: [0, -0.1, -0.2] as [number, number, number],
+  cerebellum_left: {
+    name: 'Мозжечок (Л)',
+    shortName: 'Баланс Л',
+    position: [-0.12, -0.08, -0.22] as [number, number, number],
     color: '#F39C12',
-    size: 0.12,
+    size: 0.06,
+    hemisphere: 'left',
+  },
+  cerebellum_right: {
+    name: 'Мозжечок (П)',
+    shortName: 'Баланс П',
+    position: [0.12, -0.08, -0.22] as [number, number, number],
+    color: '#E67E22',
+    size: 0.06,
+    hemisphere: 'right',
+  },
+  vermis: {
+    name: 'Червь мозжечка',
+    shortName: 'Координация',
+    position: [0, -0.1, -0.25] as [number, number, number],
+    color: '#D35400',
+    size: 0.04,
+    hemisphere: 'center',
   },
 };
 
-// Виджеты когнитивных процессов с привязкой к зонам мозга
+// Расширенная карта виджетов с цепями взаимосвязей
 const COGNITIVE_WIDGETS = {
-  // Уровень 0: Базовые процессы
   basic: [
-    { id: 'think', icon: '💭', title: 'Мысль', subtitle: 'Когнитивный процесс', zone: 'prefrontal_left', connects: ['decide', 'analyze'] },
-    { id: 'decide', icon: '🎯', title: 'Решение', subtitle: 'Выбор действия', zone: 'frontal_left', connects: ['action', 'plan'] },
-    { id: 'analyze', icon: '🔍', title: 'Анализ', subtitle: 'Разбор данных', zone: 'parietal_left', connects: ['memory', 'pattern'] },
-    { id: 'action', icon: '⚡', title: 'Действие', subtitle: 'Моторный выход', zone: 'motor_left', connects: ['feedback'] },
-    { id: 'speak', icon: '🗣️', title: 'Речь', subtitle: 'Зона Брока', zone: 'temporal_left', connects: ['think', 'memory'] },
-    { id: 'see', icon: '👁️', title: 'Зрение', subtitle: 'Визуальный вход', zone: 'occipital_left', connects: ['recognize', 'space'] },
-    { id: 'feel', icon: '❤️', title: 'Эмоция', subtitle: 'Лимбическая система', zone: 'amygdala', connects: ['memory', 'decide'] },
-    { id: 'memory', icon: '📚', title: 'Память', subtitle: 'Гиппокамп', zone: 'hippocampus', connects: ['learn', 'recall'] },
+    { id: 'think', icon: '💭', title: 'Мысль', subtitle: 'Когнитив', zone: 'prefrontal_left', 
+      connects: ['decide', 'analyze', 'memory'], chain: 'executive' },
+    { id: 'decide', icon: '🎯', title: 'Решение', subtitle: 'Выбор', zone: 'frontal_left', 
+      connects: ['action', 'plan'], chain: 'executive' },
+    { id: 'analyze', icon: '🔍', title: 'Анализ', subtitle: 'Данные', zone: 'parietal_left', 
+      connects: ['memory', 'pattern'], chain: 'cognitive' },
+    { id: 'action', icon: '⚡', title: 'Действие', subtitle: 'Мотор', zone: 'motor_left', 
+      connects: ['feedback', 'coord'], chain: 'motor' },
+    { id: 'speak', icon: '🗣️', title: 'Речь', subtitle: 'Брока', zone: 'broca', 
+      connects: ['think', 'understand'], chain: 'language' },
+    { id: 'see', icon: '👁️', title: 'Зрение', subtitle: 'V1', zone: 'occipital_left', 
+      connects: ['recognize', 'space'], chain: 'visual' },
+    { id: 'feel', icon: '❤️', title: 'Эмоция', subtitle: 'Амигдала', zone: 'amygdala_left', 
+      connects: ['memory', 'decide', 'body'], chain: 'limbic' },
+    { id: 'memory', icon: '📚', title: 'Память', subtitle: 'Гиппокамп', zone: 'hippocampus_left', 
+      connects: ['learn', 'recall'], chain: 'memory' },
+    { id: 'hear', icon: '👂', title: 'Слух', subtitle: 'Аудио', zone: 'auditory_left', 
+      connects: ['speak', 'music'], chain: 'auditory' },
+    { id: 'body', icon: '🫀', title: 'Тело', subtitle: 'Интероцепция', zone: 'insula_left', 
+      connects: ['feel', 'regulate'], chain: 'interoception' },
   ],
-  // Уровень 1: Высшие функции
   advanced: [
-    { id: 'plan', icon: '📋', title: 'Планирование', subtitle: 'Стратегия', zone: 'prefrontal_left', connects: ['goal', 'sequence'] },
-    { id: 'focus', icon: '🎯', title: 'Внимание', subtitle: 'Фокусировка', zone: 'frontal_right', connects: ['filter', 'priority'] },
-    { id: 'create', icon: '✨', title: 'Творчество', subtitle: 'Генерация идей', zone: 'temporal_right', connects: ['imagine', 'combine'] },
-    { id: 'logic', icon: '🧮', title: 'Логика', subtitle: 'Рассуждение', zone: 'parietal_left', connects: ['deduce', 'verify'] },
-    { id: 'space', icon: '🗺️', title: 'Пространство', subtitle: 'Ориентация', zone: 'parietal_right', connects: ['navigate', 'map'] },
-    { id: 'rhythm', icon: '🎵', title: 'Ритм', subtitle: 'Паттерны', zone: 'cerebellum', connects: ['timing', 'flow'] },
-    { id: 'balance', icon: '⚖️', title: 'Баланс', subtitle: 'Равновесие', zone: 'cerebellum', connects: ['posture', 'move'] },
-    { id: 'relay', icon: '📡', title: 'Ретрансляция', subtitle: 'Передача сигналов', zone: 'thalamus', connects: ['sense', 'cortex'] },
+    { id: 'plan', icon: '📋', title: 'План', subtitle: 'Стратегия', zone: 'prefrontal_right', 
+      connects: ['goal', 'sequence', 'monitor'], chain: 'executive' },
+    { id: 'focus', icon: '🎯', title: 'Внимание', subtitle: 'Фокус', zone: 'dorsolateral_right', 
+      connects: ['filter', 'priority'], chain: 'attention' },
+    { id: 'create', icon: '✨', title: 'Творчество', subtitle: 'Идеи', zone: 'temporal_right', 
+      connects: ['imagine', 'combine'], chain: 'creative' },
+    { id: 'space', icon: '🗺️', title: 'Простр.', subtitle: 'Навигация', zone: 'parietal_right', 
+      connects: ['navigate', 'map'], chain: 'spatial' },
+    { id: 'faces', icon: '😊', title: 'Лица', subtitle: 'Узнавание', zone: 'fusiform_right', 
+      connects: ['social', 'emotion'], chain: 'social' },
+    { id: 'music', icon: '🎵', title: 'Музыка', subtitle: 'Мелодия', zone: 'auditory_right', 
+      connects: ['rhythm', 'emotion'], chain: 'auditory' },
+    { id: 'coord', icon: '🤝', title: 'Коорд.', subtitle: 'Синхрон', zone: 'motor_right', 
+      connects: ['timing', 'balance'], chain: 'motor' },
+    { id: 'balance', icon: '⚖️', title: 'Баланс', subtitle: 'Равновесие', zone: 'cerebellum_right', 
+      connects: ['posture', 'move'], chain: 'cerebellar' },
+    { id: 'empathy', icon: '💕', title: 'Эмпатия', subtitle: 'Понимание', zone: 'insula_right', 
+      connects: ['social', 'feel'], chain: 'social' },
+    { id: 'monitor', icon: '🔔', title: 'Контроль', subtitle: 'Ошибки', zone: 'anterior_cingulate', 
+      connects: ['focus', 'decide'], chain: 'executive' },
   ],
-  // Уровень 2: Интеграция
   integration: [
-    { id: 'conscious', icon: '🌟', title: 'Сознание', subtitle: 'Осознанность', zone: 'prefrontal_right', connects: ['self', 'meta'] },
-    { id: 'integrate', icon: '🔗', title: 'Интеграция', subtitle: 'Связывание', zone: 'corpus_callosum', connects: ['left', 'right'] },
-    { id: 'regulate', icon: '🎛️', title: 'Регуляция', subtitle: 'Контроль', zone: 'hypothalamus', connects: ['hormone', 'state'] },
-    { id: 'survive', icon: '💓', title: 'Выживание', subtitle: 'Базовые функции', zone: 'brainstem', connects: ['breathe', 'heart'] },
-    { id: 'learn', icon: '📖', title: 'Обучение', subtitle: 'Пластичность', zone: 'hippocampus', connects: ['encode', 'strengthen'] },
-    { id: 'recognize', icon: '🔎', title: 'Распознавание', subtitle: 'Идентификация', zone: 'temporal_left', connects: ['pattern', 'name'] },
-    { id: 'imagine', icon: '💫', title: 'Воображение', subtitle: 'Симуляция', zone: 'temporal_right', connects: ['scenario', 'future'] },
-    { id: 'coordinate', icon: '🤝', title: 'Координация', subtitle: 'Синхронизация', zone: 'motor_right', connects: ['timing', 'sequence'] },
+    { id: 'integrate', icon: '🔗', title: 'Интегр.', subtitle: 'Связь', zone: 'corpus_callosum', 
+      connects: ['left', 'right', 'sync'], chain: 'integration' },
+    { id: 'self', icon: '🌟', title: 'Я', subtitle: 'Сознание', zone: 'posterior_cingulate', 
+      connects: ['reflect', 'narrative'], chain: 'default' },
+    { id: 'regulate', icon: '🎛️', title: 'Регуляция', subtitle: 'Гомеостаз', zone: 'hypothalamus', 
+      connects: ['hormone', 'state', 'stress'], chain: 'autonomic' },
+    { id: 'survive', icon: '💓', title: 'Жизнь', subtitle: 'Витальные', zone: 'brainstem', 
+      connects: ['breathe', 'heart', 'alert'], chain: 'autonomic' },
+    { id: 'habit', icon: '🔄', title: 'Привычка', subtitle: 'Автомат', zone: 'basal_ganglia', 
+      connects: ['reward', 'routine'], chain: 'basal' },
+    { id: 'relay', icon: '📡', title: 'Реле', subtitle: 'Сигналы', zone: 'thalamus', 
+      connects: ['sense', 'cortex', 'attention'], chain: 'thalamic' },
+    { id: 'learn', icon: '📖', title: 'Обучение', subtitle: 'Пластичн.', zone: 'hippocampus_right', 
+      connects: ['encode', 'consolidate'], chain: 'memory' },
+    { id: 'emotion', icon: '😢', title: 'Чувства', subtitle: 'Валентность', zone: 'amygdala_right', 
+      connects: ['social', 'memory', 'fear'], chain: 'limbic' },
+    { id: 'timing', icon: '⏱️', title: 'Тайминг', subtitle: 'Ритм', zone: 'cerebellum_left', 
+      connects: ['sequence', 'predict'], chain: 'cerebellar' },
+    { id: 'understand', icon: '💡', title: 'Понимание', subtitle: 'Вернике', zone: 'wernicke', 
+      connects: ['speak', 'read', 'semantic'], chain: 'language' },
   ],
 };
 
-// Нейронные пути между зонами с названиями процессов
+// Цепи связей виджетов (при клике выделяется вся цепь)
+const WIDGET_CHAINS = {
+  executive: { name: 'Исполнительная сеть', color: '#FF6B9D', description: 'Планирование, решения, контроль' },
+  language: { name: 'Языковая сеть', color: '#9B59B6', description: 'Речь, понимание, семантика' },
+  visual: { name: 'Зрительная сеть', color: '#2ECC71', description: 'Восприятие, распознавание' },
+  motor: { name: 'Моторная сеть', color: '#E74C3C', description: 'Движение, координация' },
+  limbic: { name: 'Лимбическая сеть', color: '#E91E63', description: 'Эмоции, мотивация' },
+  memory: { name: 'Сеть памяти', color: '#1ABC9C', description: 'Запоминание, воспроизведение' },
+  attention: { name: 'Сеть внимания', color: '#3498DB', description: 'Фокус, фильтрация' },
+  default: { name: 'Сеть покоя', color: '#F39C12', description: 'Самосознание, рефлексия' },
+  social: { name: 'Социальная сеть', color: '#FF69B4', description: 'Лица, эмпатия' },
+  auditory: { name: 'Слуховая сеть', color: '#AF7AC5', description: 'Слух, музыка' },
+  cerebellar: { name: 'Мозжечковая сеть', color: '#F39C12', description: 'Баланс, тайминг' },
+  autonomic: { name: 'Автономная сеть', color: '#34495E', description: 'Жизнеобеспечение' },
+  interoception: { name: 'Интероцепция', color: '#C2185B', description: 'Ощущения тела' },
+  spatial: { name: 'Пространственная', color: '#58C4DD', description: 'Навигация, карты' },
+  creative: { name: 'Креативная сеть', color: '#E91E63', description: 'Творчество, воображение' },
+  cognitive: { name: 'Когнитивная', color: '#58C4DD', description: 'Анализ, паттерны' },
+  integration: { name: 'Интеграция', color: '#F39C12', description: 'Связь полушарий' },
+  thalamic: { name: 'Таламическая', color: '#3498DB', description: 'Ретрансляция сигналов' },
+  basal: { name: 'Базальная', color: '#34495E', description: 'Автоматизмы, привычки' },
+};
+
+// Полная карта нейронных путей между зонами
 const NEURAL_PATHWAYS_FULL = [
-  // Основные тракты
-  { from: 'prefrontal_left', to: 'frontal_left', process: 'Принятие решений', color: '#FF6B9D' },
-  { from: 'frontal_left', to: 'motor_left', process: 'Моторная команда', color: '#E74C3C' },
-  { from: 'frontal_left', to: 'temporal_left', process: 'Речевой контроль', color: '#9B59B6' },
-  { from: 'temporal_left', to: 'parietal_left', process: 'Понимание', color: '#58C4DD' },
+  // ========== ВНУТРИ ЛЕВОГО ПОЛУШАРИЯ ==========
+  { from: 'prefrontal_left', to: 'dorsolateral_left', process: 'Рабочая память', color: '#FF6B9D' },
+  { from: 'prefrontal_left', to: 'frontal_left', process: 'Решения', color: '#FF6B9D' },
+  { from: 'frontal_left', to: 'premotor_left', process: 'Планирование движ.', color: '#E74C3C' },
+  { from: 'premotor_left', to: 'motor_left', process: 'Команда', color: '#E74C3C' },
+  { from: 'broca', to: 'motor_left', process: 'Артикуляция', color: '#9B59B6' },
+  { from: 'broca', to: 'wernicke', process: 'Дугообразный пучок', color: '#9B59B6' },
+  { from: 'wernicke', to: 'angular_left', process: 'Чтение', color: '#5DADE2' },
+  { from: 'temporal_left', to: 'wernicke', process: 'Слуховой анализ', color: '#9B59B6' },
+  { from: 'auditory_left', to: 'temporal_left', process: 'Слуховой вход', color: '#AF7AC5' },
+  { from: 'occipital_left', to: 'visual_primary_left', process: 'Визуальный вход', color: '#2ECC71' },
   { from: 'occipital_left', to: 'parietal_left', process: 'Где? (дорсальный)', color: '#2ECC71' },
   { from: 'occipital_left', to: 'temporal_left', process: 'Что? (вентральный)', color: '#2ECC71' },
+  { from: 'parietal_left', to: 'somatosensory_left', process: 'Соматотопия', color: '#3498DB' },
+  { from: 'parietal_left', to: 'frontal_left', process: 'Парието-фронтальный', color: '#58C4DD' },
+  { from: 'hippocampus_left', to: 'temporal_left', process: 'Консолидация', color: '#1ABC9C' },
+  { from: 'hippocampus_left', to: 'prefrontal_left', process: 'Эпизодическая память', color: '#1ABC9C' },
+  { from: 'amygdala_left', to: 'hippocampus_left', process: 'Эмоц. память', color: '#E74C3C' },
+  { from: 'amygdala_left', to: 'prefrontal_left', process: 'Контроль страха', color: '#E74C3C' },
+  { from: 'insula_left', to: 'amygdala_left', process: 'Интероцепция', color: '#E91E63' },
+  { from: 'cerebellum_left', to: 'motor_left', process: 'Тонкая моторика', color: '#F39C12' },
   
-  // Межполушарные связи
-  { from: 'frontal_left', to: 'frontal_right', process: 'Координация', color: '#F39C12' },
-  { from: 'temporal_left', to: 'temporal_right', process: 'Интеграция', color: '#F39C12' },
-  { from: 'parietal_left', to: 'parietal_right', process: 'Пространство', color: '#F39C12' },
-  { from: 'motor_left', to: 'motor_right', process: 'Билатеральное движение', color: '#F39C12' },
+  // ========== ВНУТРИ ПРАВОГО ПОЛУШАРИЯ ==========
+  { from: 'prefrontal_right', to: 'dorsolateral_right', process: 'Внимание', color: '#FF6B9D' },
+  { from: 'prefrontal_right', to: 'frontal_right', process: 'Социальные решения', color: '#FF6B9D' },
+  { from: 'frontal_right', to: 'premotor_right', process: 'Имитация', color: '#C0392B' },
+  { from: 'premotor_right', to: 'motor_right', process: 'Зеркальные нейроны', color: '#E74C3C' },
+  { from: 'temporal_right', to: 'fusiform_right', process: 'Распознавание лиц', color: '#F06292' },
+  { from: 'auditory_right', to: 'temporal_right', process: 'Музыкальный анализ', color: '#CE93D8' },
+  { from: 'occipital_right', to: 'visual_primary_right', process: 'Визуальный вход П', color: '#2ECC71' },
+  { from: 'occipital_right', to: 'parietal_right', process: 'Пространство', color: '#2ECC71' },
+  { from: 'parietal_right', to: 'somatosensory_right', process: 'Телесная схема', color: '#3498DB' },
+  { from: 'parietal_right', to: 'frontal_right', process: 'Пространств. внимание', color: '#58C4DD' },
+  { from: 'hippocampus_right', to: 'temporal_right', process: 'Пространств. память', color: '#16A085' },
+  { from: 'amygdala_right', to: 'hippocampus_right', process: 'Эмоц. контекст', color: '#C0392B' },
+  { from: 'amygdala_right', to: 'fusiform_right', process: 'Эмоции в лицах', color: '#C0392B' },
+  { from: 'insula_right', to: 'amygdala_right', process: 'Эмпатия тела', color: '#C2185B' },
+  { from: 'cerebellum_right', to: 'motor_right', process: 'Координация Л', color: '#E67E22' },
   
-  // Лимбические связи
-  { from: 'prefrontal_left', to: 'amygdala', process: 'Контроль эмоций', color: '#E74C3C' },
-  { from: 'amygdala', to: 'hippocampus', process: 'Эмоц. память', color: '#1ABC9C' },
-  { from: 'hippocampus', to: 'temporal_left', process: 'Консолидация', color: '#1ABC9C' },
-  { from: 'amygdala', to: 'hypothalamus', process: 'Стресс-реакция', color: '#9B59B6' },
+  // ========== МЕЖПОЛУШАРНЫЕ СВЯЗИ ==========
+  { from: 'prefrontal_left', to: 'prefrontal_right', process: 'Когнитивная интеграция', color: '#F39C12' },
+  { from: 'frontal_left', to: 'frontal_right', process: 'Билат. контроль', color: '#F39C12' },
+  { from: 'motor_left', to: 'motor_right', process: 'Билат. движение', color: '#F39C12' },
+  { from: 'parietal_left', to: 'parietal_right', process: 'Пространств. интеграция', color: '#F39C12' },
+  { from: 'temporal_left', to: 'temporal_right', process: 'Аудио интеграция', color: '#F39C12' },
+  { from: 'occipital_left', to: 'occipital_right', process: 'Визуальная интеграция', color: '#F39C12' },
+  { from: 'hippocampus_left', to: 'hippocampus_right', process: 'Память интеграция', color: '#F39C12' },
+  { from: 'amygdala_left', to: 'amygdala_right', process: 'Эмоц. синхронизация', color: '#F39C12' },
+  { from: 'cerebellum_left', to: 'cerebellum_right', process: 'Мозжечок связь', color: '#D35400' },
   
-  // Таламические связи
-  { from: 'thalamus', to: 'prefrontal_left', process: 'Осознание', color: '#3498DB' },
-  { from: 'thalamus', to: 'occipital_left', process: 'Визуальный вход', color: '#3498DB' },
-  { from: 'thalamus', to: 'parietal_left', process: 'Соматосенсорный', color: '#3498DB' },
-  
-  // Мозжечковые связи
-  { from: 'cerebellum', to: 'motor_left', process: 'Тонкая моторика', color: '#F39C12' },
-  { from: 'cerebellum', to: 'frontal_left', process: 'Когн. координация', color: '#F39C12' },
-  { from: 'brainstem', to: 'thalamus', process: 'Восходящий сигнал', color: '#34495E' },
-  { from: 'brainstem', to: 'cerebellum', process: 'Проприоцепция', color: '#34495E' },
+  // ========== ПОДКОРКОВЫЕ СВЯЗИ ==========
+  { from: 'thalamus', to: 'prefrontal_left', process: 'Осознание Л', color: '#3498DB' },
+  { from: 'thalamus', to: 'prefrontal_right', process: 'Осознание П', color: '#3498DB' },
+  { from: 'thalamus', to: 'occipital_left', process: 'Визуальный реле Л', color: '#3498DB' },
+  { from: 'thalamus', to: 'occipital_right', process: 'Визуальный реле П', color: '#3498DB' },
+  { from: 'thalamus', to: 'parietal_left', process: 'Соматосенсорный реле', color: '#3498DB' },
+  { from: 'thalamus', to: 'temporal_left', process: 'Слуховой реле', color: '#3498DB' },
+  { from: 'basal_ganglia', to: 'frontal_left', process: 'Привычки → действия', color: '#34495E' },
+  { from: 'basal_ganglia', to: 'thalamus', process: 'Базальный контур', color: '#34495E' },
+  { from: 'hypothalamus', to: 'amygdala_left', process: 'Стресс Л', color: '#9B59B6' },
+  { from: 'hypothalamus', to: 'brainstem', process: 'Автономный контроль', color: '#9B59B6' },
+  { from: 'brainstem', to: 'thalamus', process: 'Ретикулярная активация', color: '#34495E' },
+  { from: 'brainstem', to: 'cerebellum_left', process: 'Проприоцепция Л', color: '#34495E' },
+  { from: 'brainstem', to: 'cerebellum_right', process: 'Проприоцепция П', color: '#34495E' },
+  { from: 'vermis', to: 'cerebellum_left', process: 'Координация Л', color: '#D35400' },
+  { from: 'vermis', to: 'cerebellum_right', process: 'Координация П', color: '#D35400' },
+  { from: 'anterior_cingulate', to: 'prefrontal_left', process: 'Мониторинг ошибок', color: '#E67E22' },
+  { from: 'anterior_cingulate', to: 'amygdala_left', process: 'Эмоц. регуляция', color: '#E67E22' },
+  { from: 'posterior_cingulate', to: 'hippocampus_left', process: 'Автобиография', color: '#D35400' },
+  { from: 'posterior_cingulate', to: 'parietal_right', process: 'Самолокализация', color: '#D35400' },
+  { from: 'corpus_callosum', to: 'prefrontal_left', process: 'Передняя комиссура', color: '#F39C12' },
+  { from: 'corpus_callosum', to: 'prefrontal_right', process: 'Передняя комиссура П', color: '#F39C12' },
+  { from: 'corpus_callosum', to: 'parietal_left', process: 'Задняя комиссура', color: '#F39C12' },
+  { from: 'corpus_callosum', to: 'parietal_right', process: 'Задняя комиссура П', color: '#F39C12' },
 ];
 
 const DEPTH_PALETTES = [
@@ -253,7 +578,6 @@ const getWidgetsForDepth = (depth: number) => {
   return levels[depth % levels.length];
 };
 
-// Генерация узлов на основе виджетов и зон мозга
 const generateBrainWidgets = (time: number, depth: number): UniverseNode[] => {
   const widgets = getWidgetsForDepth(depth);
   const nodes: UniverseNode[] = [];
@@ -262,26 +586,26 @@ const generateBrainWidgets = (time: number, depth: number): UniverseNode[] => {
     const zone = BRAIN_ANATOMY[widget.zone as keyof typeof BRAIN_ANATOMY];
     if (!zone) return;
     
-    // Позиция рядом с зоной
-    const offset = 0.06;
+    // Позиция виджета над зоной мозга
+    const offsetZ = 0.12;
+    const offsetY = 0.06;
     nodes.push({
       id: i,
       position: [
-        zone.position[0] + (Math.random() - 0.5) * offset,
-        zone.position[1] + (Math.random() - 0.5) * offset,
-        zone.position[2] + (Math.random() - 0.5) * offset + 0.1, // Немного вперёд
+        zone.position[0] * 1.1,
+        zone.position[1] + offsetY,
+        zone.position[2] + offsetZ,
       ],
       velocity: [0, 0, 0],
       scale: 0,
       opacity: 0,
-      birthTime: time + i * 0.1,
+      birthTime: time + i * 0.08,
     });
   });
   
   return nodes;
 };
 
-// Генерация связей между виджетами
 const generateWidgetEdges = (time: number, depth: number): UniverseEdge[] => {
   const widgets = getWidgetsForDepth(depth);
   const edges: UniverseEdge[] = [];
@@ -300,7 +624,7 @@ const generateWidgetEdges = (time: number, depth: number): UniverseEdge[] => {
               from: i,
               to: targetIndex,
               opacity: 0,
-              birthTime: time + i * 0.1 + idx * 0.05 + 0.3,
+              birthTime: time + i * 0.08 + idx * 0.03 + 0.2,
               processName: `${widget.title} → ${widgets[targetIndex].title}`,
             });
           }
@@ -312,135 +636,151 @@ const generateWidgetEdges = (time: number, depth: number): UniverseEdge[] => {
   return edges;
 };
 
-// 3D контур мозга
+// 3D контур мозга с полными полушариями
 const BrainOutline = ({ opacity, time }: { opacity: number; time: number }) => {
-  const brainPoints = useMemo(() => {
+  const leftHemisphere = useMemo(() => {
     const points: THREE.Vector3[] = [];
-    
-    // Левое полушарие
-    for (let i = 0; i <= 32; i++) {
-      const t = (i / 32) * Math.PI;
-      const x = -0.15 - Math.sin(t) * 0.18;
-      const y = Math.cos(t) * 0.25;
-      const z = Math.sin(t * 2) * 0.08;
+    // Левое полушарие - полный контур
+    for (let i = 0; i <= 48; i++) {
+      const t = (i / 48) * Math.PI * 2;
+      const r = 0.28 + Math.sin(t * 3) * 0.04;
+      const x = -0.14 - Math.cos(t) * r * 0.6;
+      const y = Math.sin(t) * r * 0.9;
+      const z = Math.sin(t * 2) * 0.1;
       points.push(new THREE.Vector3(x, y, z));
     }
-    
     return points;
   }, []);
   
-  const brainPointsRight = useMemo(() => {
+  const rightHemisphere = useMemo(() => {
     const points: THREE.Vector3[] = [];
-    
-    // Правое полушарие
-    for (let i = 0; i <= 32; i++) {
-      const t = (i / 32) * Math.PI;
-      const x = 0.15 + Math.sin(t) * 0.18;
-      const y = Math.cos(t) * 0.25;
-      const z = Math.sin(t * 2) * 0.08;
+    // Правое полушарие - полный контур
+    for (let i = 0; i <= 48; i++) {
+      const t = (i / 48) * Math.PI * 2;
+      const r = 0.28 + Math.sin(t * 3) * 0.04;
+      const x = 0.14 + Math.cos(t) * r * 0.6;
+      const y = Math.sin(t) * r * 0.9;
+      const z = Math.sin(t * 2) * 0.1;
       points.push(new THREE.Vector3(x, y, z));
     }
-    
     return points;
   }, []);
 
-  const breathe = 1 + Math.sin(time * 0.3) * 0.02;
+  const centralFissure = useMemo(() => {
+    const points: THREE.Vector3[] = [];
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20;
+      points.push(new THREE.Vector3(0, 0.35 - t * 0.5, 0.15 * Math.sin(t * Math.PI)));
+    }
+    return points;
+  }, []);
+
+  const breathe = 1 + Math.sin(time * 0.25) * 0.015;
 
   return (
     <group scale={breathe}>
-      {/* Левое полушарие контур */}
+      {/* Левое полушарие */}
+      <Line points={leftHemisphere} color="#FF6B9D" lineWidth={1.5} transparent opacity={opacity * 0.2} />
+      {/* Правое полушарие */}
+      <Line points={rightHemisphere} color="#58C4DD" lineWidth={1.5} transparent opacity={opacity * 0.2} />
+      {/* Центральная борозда */}
+      <Line points={centralFissure} color="#F39C12" lineWidth={2} transparent opacity={opacity * 0.25} />
+      
+      {/* Мозолистое тело - широкая полоса */}
       <Line
-        points={brainPoints}
+        points={[
+          new THREE.Vector3(-0.2, 0.2, 0),
+          new THREE.Vector3(-0.1, 0.22, 0),
+          new THREE.Vector3(0, 0.24, 0),
+          new THREE.Vector3(0.1, 0.22, 0),
+          new THREE.Vector3(0.2, 0.2, 0),
+        ]}
+        color="#F39C12"
+        lineWidth={4}
+        transparent
+        opacity={opacity * 0.3}
+      />
+      
+      {/* Латеральные борозды */}
+      <Line
+        points={[
+          new THREE.Vector3(-0.35, 0.1, 0.1),
+          new THREE.Vector3(-0.25, 0.05, 0.08),
+          new THREE.Vector3(-0.15, 0.02, 0.06),
+        ]}
         color="#FF6B9D"
         lineWidth={1}
         transparent
         opacity={opacity * 0.15}
       />
-      
-      {/* Правое полушарие контур */}
       <Line
-        points={brainPointsRight}
+        points={[
+          new THREE.Vector3(0.35, 0.1, 0.1),
+          new THREE.Vector3(0.25, 0.05, 0.08),
+          new THREE.Vector3(0.15, 0.02, 0.06),
+        ]}
         color="#58C4DD"
         lineWidth={1}
         transparent
         opacity={opacity * 0.15}
       />
-      
-      {/* Центральная борозда */}
-      <Line
-        points={[
-          new THREE.Vector3(0, 0.35, 0.1),
-          new THREE.Vector3(0, 0.1, 0.15),
-          new THREE.Vector3(0, -0.1, 0.05),
-        ]}
-        color="#F39C12"
-        lineWidth={2}
-        transparent
-        opacity={opacity * 0.2}
-      />
-      
-      {/* Мозолистое тело */}
-      <Line
-        points={[
-          new THREE.Vector3(-0.15, 0.15, 0),
-          new THREE.Vector3(0, 0.18, 0),
-          new THREE.Vector3(0.15, 0.15, 0),
-        ]}
-        color="#F39C12"
-        lineWidth={3}
-        transparent
-        opacity={opacity * 0.25}
-      />
     </group>
   );
 };
 
-// Зона мозга с пульсацией
+// Зона мозга
 const BrainZone = ({ 
   zone, 
+  zoneKey,
   opacity, 
   time,
-  isHighlighted
+  isHighlighted,
+  isInActiveChain
 }: { 
   zone: typeof BRAIN_ANATOMY[keyof typeof BRAIN_ANATOMY];
+  zoneKey: string;
   opacity: number;
   time: number;
   isHighlighted: boolean;
+  isInActiveChain: boolean;
 }) => {
-  const pulse = 1 + Math.sin(time * 0.8 + zone.position[0] * 5) * 0.1;
-  const highlightScale = isHighlighted ? 1.3 : 1;
+  const pulse = 1 + Math.sin(time * 0.6 + zone.position[0] * 5) * 0.08;
+  const highlightScale = isHighlighted ? 1.4 : isInActiveChain ? 1.2 : 1;
+  const dimmed = !isHighlighted && !isInActiveChain;
   
   return (
     <group position={zone.position}>
       {/* Ореол зоны */}
-      <Sphere args={[zone.size * pulse * highlightScale, 20, 20]}>
+      <Sphere args={[zone.size * pulse * highlightScale, 16, 16]}>
         <meshBasicMaterial 
           color={zone.color}
           transparent 
-          opacity={opacity * (isHighlighted ? 0.25 : 0.08)}
+          opacity={opacity * (isHighlighted ? 0.35 : isInActiveChain ? 0.2 : 0.06) * (dimmed ? 0.5 : 1)}
         />
       </Sphere>
       
       {/* Ядро */}
-      <Sphere args={[zone.size * 0.4 * highlightScale, 12, 12]}>
+      <Sphere args={[zone.size * 0.35 * highlightScale, 10, 10]}>
         <meshBasicMaterial 
           color={zone.color}
           transparent 
-          opacity={opacity * (isHighlighted ? 0.6 : 0.2)}
+          opacity={opacity * (isHighlighted ? 0.7 : isInActiveChain ? 0.4 : 0.15) * (dimmed ? 0.5 : 1)}
         />
       </Sphere>
       
-      {/* Название зоны */}
-      <Billboard follow={true} position={[0, zone.size + 0.02, 0]}>
-        <Text
-          fontSize={0.018}
-          color={zone.color}
-          anchorX="center"
-          fillOpacity={opacity * (isHighlighted ? 0.9 : 0.4)}
-        >
-          {zone.shortName}
-        </Text>
-      </Billboard>
+      {/* Название зоны (показывать только при подсветке) */}
+      {(isHighlighted || isInActiveChain) && (
+        <Billboard follow={true} position={[0, zone.size + 0.015, 0]}>
+          <Text
+            fontSize={0.014}
+            color={zone.color}
+            anchorX="center"
+            fillOpacity={opacity * (isHighlighted ? 1 : 0.7)}
+          >
+            {zone.shortName}
+          </Text>
+        </Billboard>
+      )}
     </group>
   );
 };
@@ -454,7 +794,8 @@ const NeuralPathway = ({
   opacity, 
   time,
   index,
-  isHighlighted
+  isHighlighted,
+  isInActiveChain
 }: { 
   from: [number, number, number];
   to: [number, number, number];
@@ -464,6 +805,7 @@ const NeuralPathway = ({
   time: number;
   index: number;
   isHighlighted: boolean;
+  isInActiveChain: boolean;
 }) => {
   const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...from);
@@ -475,102 +817,72 @@ const NeuralPathway = ({
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
       .normalize();
     
-    const curveAmount = distance * 0.4;
-    const yLift = 0.03 + (index % 3) * 0.015;
+    const curveAmount = distance * 0.35;
+    const yLift = 0.02 + (index % 3) * 0.01;
     
     const mid = startVec.clone().lerp(endVec, 0.5);
     mid.add(perpendicular.clone().multiplyScalar(curveAmount * (index % 2 === 0 ? 1 : -1)));
     mid.y += yLift;
     
     const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
-    const curvePoints = bezierCurve.getPoints(40);
+    const curvePoints = bezierCurve.getPoints(30);
     
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [from, to, index]);
 
-  // Множественные импульсы
-  const impulseCount = isHighlighted ? 5 : 3;
-  const highlightMultiplier = isHighlighted ? 3 : 1;
+  const dimmed = !isHighlighted && !isInActiveChain;
+  const impulseCount = isHighlighted ? 4 : isInActiveChain ? 2 : 1;
+  const speed = isHighlighted ? 0.4 : 0.2;
   
   return (
     <group>
       {/* Аксон */}
       <Line
         points={points}
-        color={pathColor}
-        lineWidth={isHighlighted ? 2 : 0.6}
+        color={isHighlighted ? '#FFFFFF' : pathColor}
+        lineWidth={isHighlighted ? 2 : isInActiveChain ? 1.2 : 0.4}
         transparent
-        opacity={opacity * (isHighlighted ? 0.8 : 0.2)}
+        opacity={opacity * (dimmed ? 0.08 : isHighlighted ? 0.9 : 0.5)}
       />
       
-      {/* Миелиновое свечение */}
-      <Line
-        points={points}
-        color={pathColor}
-        lineWidth={isHighlighted ? 6 : 2}
-        transparent
-        opacity={opacity * (isHighlighted ? 0.25 : 0.05)}
-      />
-      
-      {/* Дополнительное свечение при подсветке */}
-      {isHighlighted && (
+      {/* Свечение */}
+      {(isHighlighted || isInActiveChain) && (
         <Line
           points={points}
-          color="#FFFFFF"
-          lineWidth={4}
+          color={pathColor}
+          lineWidth={isHighlighted ? 5 : 3}
           transparent
-          opacity={opacity * 0.15}
+          opacity={opacity * (isHighlighted ? 0.3 : 0.15)}
         />
       )}
       
       {/* Импульсы */}
-      {Array.from({ length: impulseCount }).map((_, i) => {
-        const speed = (0.25 + (index % 4) * 0.05) * highlightMultiplier;
+      {!dimmed && Array.from({ length: impulseCount }).map((_, i) => {
         const offset = i / impulseCount;
-        const t = ((time * speed + offset + index * 0.1) % 1);
+        const t = ((time * speed + offset + index * 0.08) % 1);
         const pos = curve.getPoint(t);
-        const impulseOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.8);
-        const impulseSize = isHighlighted ? 0.012 : 0.008;
+        const impulseOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.6);
+        const size = isHighlighted ? 0.008 : 0.005;
         
         return (
-          <group key={i}>
-            <Sphere args={[impulseSize, 10, 10]} position={[pos.x, pos.y, pos.z]}>
-              <meshBasicMaterial 
-                color={isHighlighted ? '#FFFFFF' : pathColor}
-                transparent 
-                opacity={impulseOpacity}
-              />
-            </Sphere>
-            <Sphere args={[impulseSize * 2, 8, 8]} position={[pos.x, pos.y, pos.z]}>
-              <meshBasicMaterial 
-                color={pathColor}
-                transparent 
-                opacity={impulseOpacity * 0.4}
-              />
-            </Sphere>
-          </group>
+          <Sphere key={i} args={[size, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+            <meshBasicMaterial 
+              color={isHighlighted ? '#FFFFFF' : pathColor}
+              transparent 
+              opacity={impulseOpacity}
+            />
+          </Sphere>
         );
       })}
       
       {/* Название процесса */}
-      <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.025, midPoint.z]}>
-        <Text
-          fontSize={isHighlighted ? 0.016 : 0.012}
-          color={isHighlighted ? '#FFFFFF' : pathColor}
-          anchorX="center"
-          fillOpacity={opacity * (isHighlighted ? 1 : 0.5)}
-        >
-          {process}
-        </Text>
-      </Billboard>
-      
-      {/* Синаптические терминали */}
-      <Sphere args={[isHighlighted ? 0.01 : 0.006, 8, 8]} position={from}>
-        <meshBasicMaterial color={pathColor} transparent opacity={opacity * (isHighlighted ? 0.9 : 0.5)} />
-      </Sphere>
-      <Sphere args={[isHighlighted ? 0.01 : 0.006, 8, 8]} position={to}>
-        <meshBasicMaterial color={pathColor} transparent opacity={opacity * (isHighlighted ? 0.9 : 0.5)} />
-      </Sphere>
+      {isHighlighted && (
+        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.02, midPoint.z]}>
+          <Text fontSize={0.012} color="#FFFFFF" anchorX="center" fillOpacity={opacity * 0.9}>
+            {process}
+          </Text>
+        </Billboard>
+      )}
     </group>
   );
 };
@@ -584,7 +896,9 @@ const WidgetConnection = ({
   palette,
   time,
   index,
-  isHighlighted
+  isHighlighted,
+  isInActiveChain,
+  chainColor
 }: { 
   start: [number, number, number];
   end: [number, number, number];
@@ -594,6 +908,8 @@ const WidgetConnection = ({
   time: number;
   index: number;
   isHighlighted: boolean;
+  isInActiveChain: boolean;
+  chainColor?: string;
 }) => {
   const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...start);
@@ -605,73 +921,59 @@ const WidgetConnection = ({
       .crossVectors(direction, new THREE.Vector3(0, 1, 0))
       .normalize();
     
-    const curveAmount = distance * 0.25;
+    const curveAmount = distance * 0.2;
     
     const mid = startVec.clone().lerp(endVec, 0.5);
     mid.add(perpendicular.clone().multiplyScalar(curveAmount * (index % 2 === 0 ? 1 : -1)));
-    mid.z += 0.05;
+    mid.z += 0.04;
     
     const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
-    const curvePoints = bezierCurve.getPoints(30);
+    const curvePoints = bezierCurve.getPoints(24);
     
     return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [start, end, index]);
 
-  const speed = isHighlighted ? 0.8 : 0.4;
-  const pulseT = ((time * speed + index * 0.2) % 1);
-  const pulsePos = curve.getPoint(pulseT);
-  const pulseOpacity = Math.sin(pulseT * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.7);
+  const dimmed = !isHighlighted && !isInActiveChain;
+  const speed = isHighlighted ? 0.6 : 0.3;
+  const color = chainColor || palette.primary;
 
   return (
     <group>
       <Line
         points={points}
-        color={isHighlighted ? '#FFFFFF' : palette.primary}
-        lineWidth={isHighlighted ? 3 : 1.2}
+        color={isHighlighted ? '#FFFFFF' : isInActiveChain ? color : palette.primary}
+        lineWidth={isHighlighted ? 2.5 : isInActiveChain ? 1.5 : 0.8}
         transparent
-        opacity={opacity * (isHighlighted ? 0.9 : 0.4)}
+        opacity={opacity * (dimmed ? 0.1 : isHighlighted ? 1 : 0.6)}
       />
       
-      {/* Дополнительное свечение при подсветке */}
-      {isHighlighted && (
+      {(isHighlighted || isInActiveChain) && (
         <Line
           points={points}
-          color={palette.accent}
-          lineWidth={6}
+          color={color}
+          lineWidth={isHighlighted ? 5 : 3}
           transparent
-          opacity={opacity * 0.3}
+          opacity={opacity * (isHighlighted ? 0.35 : 0.2)}
         />
       )}
       
-      {/* Название процесса при подсветке */}
       {isHighlighted && (
-        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.03, midPoint.z]}>
-          <Text
-            fontSize={0.014}
-            color="#FFFFFF"
-            anchorX="center"
-            fillOpacity={opacity * 0.9}
-          >
+        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.025, midPoint.z]}>
+          <Text fontSize={0.01} color="#FFFFFF" anchorX="center" fillOpacity={opacity * 0.85}>
             {processName}
           </Text>
         </Billboard>
       )}
       
-      {/* Пульсирующие сигналы */}
-      {Array.from({ length: isHighlighted ? 3 : 1 }).map((_, i) => {
-        const t = ((time * speed + index * 0.2 + i * 0.33) % 1);
+      {!dimmed && Array.from({ length: isHighlighted ? 2 : 1 }).map((_, i) => {
+        const t = ((time * speed + index * 0.15 + i * 0.5) % 1);
         const pos = curve.getPoint(t);
-        const pOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.7);
+        const pOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1 : 0.5);
         
         return (
-          <group key={i}>
-            <Sphere args={[isHighlighted ? 0.016 : 0.012, 10, 10]} position={[pos.x, pos.y, pos.z]}>
-              <meshBasicMaterial color={isHighlighted ? '#FFFFFF' : palette.accent} transparent opacity={pOpacity} />
-            </Sphere>
-            <Sphere args={[isHighlighted ? 0.032 : 0.024, 8, 8]} position={[pos.x, pos.y, pos.z]}>
-              <meshBasicMaterial color={palette.glow} transparent opacity={pOpacity * 0.4} />
-            </Sphere>
-          </group>
+          <Sphere key={i} args={[isHighlighted ? 0.01 : 0.006, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+            <meshBasicMaterial color={isHighlighted ? '#FFFFFF' : color} transparent opacity={pOpacity} />
+          </Sphere>
         );
       })}
     </group>
@@ -691,7 +993,7 @@ export const FractalUniverse = ({
   const [edges, setEdges] = useState<UniverseEdge[]>([]);
   const [time, setTime] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
-  const [hoveredZone, setHoveredZone] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<number | null>(null);
   const initialized = useRef(false);
 
   const palette = DEPTH_PALETTES[depth % DEPTH_PALETTES.length];
@@ -709,25 +1011,29 @@ export const FractalUniverse = ({
     }
 
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.08) * 0.1;
+      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.06) * 0.08;
     }
   });
 
   const animatedNodes = nodes.map((node) => {
     const age = time - node.birthTime;
-    const progress = Math.min(1, Math.max(0, age / 0.6));
+    const progress = Math.min(1, Math.max(0, age / 0.5));
     const eased = 1 - Math.pow(1 - progress, 3);
     return { ...node, scale: eased, opacity: eased * universeOpacity };
   });
 
   const animatedEdges = edges.map((edge) => {
     const age = time - edge.birthTime;
-    const progress = Math.min(1, Math.max(0, age / 0.5));
+    const progress = Math.min(1, Math.max(0, age / 0.4));
     const eased = 1 - Math.pow(1 - progress, 3);
     return { ...edge, opacity: eased * universeOpacity };
   });
 
-  const handleNodeClick = useCallback((nodePosition: [number, number, number]) => {
+  const handleNodeClick = useCallback((nodeId: number) => {
+    setSelectedNode(prev => prev === nodeId ? null : nodeId);
+  }, []);
+
+  const handleDiveIn = useCallback((nodePosition: [number, number, number]) => {
     const worldPos: [number, number, number] = [
       position[0] + nodePosition[0] * universeScale,
       position[1] + nodePosition[1] * universeScale,
@@ -736,19 +1042,33 @@ export const FractalUniverse = ({
     onDiveIn(worldPos, depth + 1);
   }, [depth, position, universeScale, onDiveIn]);
 
-  // Найти все связанные зоны и пути для подсветки (MUST be before conditional return)
-  const getHighlightedData = useMemo(() => {
-    if (hoveredNode === null) return { zones: [], pathways: [], widgetIds: [], edgeIds: [] };
+  // Активный узел для подсветки (наведённый или выбранный)
+  const activeNode = hoveredNode ?? selectedNode;
+
+  // Найти все связанные элементы для подсветки
+  const highlightData = useMemo(() => {
+    if (activeNode === null) return { zones: [], pathways: [], widgetIds: [], edgeIds: [], chain: null };
     
-    const widget = widgets[hoveredNode];
-    if (!widget) return { zones: [], pathways: [], widgetIds: [], edgeIds: [] };
+    const widget = widgets[activeNode];
+    if (!widget) return { zones: [], pathways: [], widgetIds: [], edgeIds: [], chain: null };
+    
+    const chain = widget.chain;
+    const chainInfo = WIDGET_CHAINS[chain as keyof typeof WIDGET_CHAINS];
     
     const zones = new Set<string>([widget.zone]);
     const pathways = new Set<number>();
-    const widgetIds = new Set<number>([hoveredNode]);
+    const widgetIds = new Set<number>([activeNode]);
     const edgeIds = new Set<number>();
     
-    // Найти все связанные виджеты
+    // Найти все виджеты в той же цепи
+    widgets.forEach((w, i) => {
+      if (w.chain === chain) {
+        widgetIds.add(i);
+        zones.add(w.zone);
+      }
+    });
+    
+    // Найти связанные виджеты через connects
     if (widget.connects) {
       widget.connects.forEach(targetId => {
         const targetIndex = widgets.findIndex(w => w.id === targetId);
@@ -773,7 +1093,9 @@ export const FractalUniverse = ({
     // Найти нейронные пути между выделенными зонами
     const zoneArray = Array.from(zones);
     NEURAL_PATHWAYS_FULL.forEach((pathway, i) => {
-      if (zoneArray.includes(pathway.from) || zoneArray.includes(pathway.to)) {
+      if (zoneArray.includes(pathway.from) && zoneArray.includes(pathway.to)) {
+        pathways.add(i);
+      } else if (zoneArray.includes(pathway.from) || zoneArray.includes(pathway.to)) {
         pathways.add(i);
         zones.add(pathway.from);
         zones.add(pathway.to);
@@ -782,7 +1104,7 @@ export const FractalUniverse = ({
     
     // Найти связи между виджетами
     edges.forEach((edge, i) => {
-      if (widgetIds.has(edge.from) || widgetIds.has(edge.to)) {
+      if (widgetIds.has(edge.from) && widgetIds.has(edge.to)) {
         edgeIds.add(i);
       }
     });
@@ -791,28 +1113,18 @@ export const FractalUniverse = ({
       zones: Array.from(zones), 
       pathways: Array.from(pathways),
       widgetIds: Array.from(widgetIds),
-      edgeIds: Array.from(edgeIds)
+      edgeIds: Array.from(edgeIds),
+      chain: chainInfo
     };
-  }, [hoveredNode, widgets, edges]);
-  
-  const highlightedZones = getHighlightedData.zones;
-  const highlightedPathways = getHighlightedData.pathways;
-  const highlightedWidgets = getHighlightedData.widgetIds;
-  const highlightedEdges = getHighlightedData.edgeIds;
+  }, [activeNode, widgets, edges]);
+
+  const isAnyActive = activeNode !== null;
 
   if (!isActive) return null;
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
-      <Stars
-        radius={2}
-        depth={1}
-        count={50}
-        factor={0.1}
-        saturation={0}
-        fade
-        speed={0.02}
-      />
+      <Stars radius={2.5} depth={1.5} count={80} factor={0.08} saturation={0} fade speed={0.015} />
 
       {/* Контур мозга */}
       <BrainOutline opacity={universeOpacity} time={time} />
@@ -822,9 +1134,11 @@ export const FractalUniverse = ({
         <BrainZone
           key={key}
           zone={zone}
-          opacity={universeOpacity}
+          zoneKey={key}
+          opacity={universeOpacity * (isAnyActive && !highlightData.zones.includes(key) ? 0.4 : 1)}
           time={time}
-          isHighlighted={highlightedZones.includes(key)}
+          isHighlighted={highlightData.zones.includes(key) && activeNode !== null}
+          isInActiveChain={highlightData.zones.includes(key)}
         />
       ))}
 
@@ -834,8 +1148,7 @@ export const FractalUniverse = ({
         const toZone = BRAIN_ANATOMY[pathway.to as keyof typeof BRAIN_ANATOMY];
         if (!fromZone || !toZone) return null;
         
-        const isHighlighted = highlightedPathways.includes(i);
-        const dimmed = hoveredNode !== null && !isHighlighted;
+        const isHighlighted = highlightData.pathways.includes(i);
         
         return (
           <NeuralPathway
@@ -844,10 +1157,11 @@ export const FractalUniverse = ({
             to={toZone.position}
             process={pathway.process}
             pathColor={pathway.color}
-            opacity={universeOpacity * (dimmed ? 0.15 : 0.6)}
+            opacity={universeOpacity}
             time={time}
             index={i}
-            isHighlighted={isHighlighted}
+            isHighlighted={isHighlighted && activeNode !== null}
+            isInActiveChain={isHighlighted}
           />
         );
       })}
@@ -858,8 +1172,7 @@ export const FractalUniverse = ({
         const endNode = animatedNodes.find(n => n.id === edge.to);
         if (!startNode || !endNode) return null;
 
-        const isHighlighted = highlightedEdges.includes(i);
-        const dimmed = hoveredNode !== null && !isHighlighted;
+        const isHighlighted = highlightData.edgeIds.includes(i);
 
         return (
           <WidgetConnection
@@ -867,16 +1180,18 @@ export const FractalUniverse = ({
             start={startNode.position}
             end={endNode.position}
             processName={edge.processName}
-            opacity={edge.opacity * (dimmed ? 0.2 : 1)}
+            opacity={edge.opacity * (isAnyActive && !isHighlighted ? 0.3 : 1)}
             palette={palette}
             time={time}
             index={i}
-            isHighlighted={isHighlighted}
+            isHighlighted={isHighlighted && activeNode !== null}
+            isInActiveChain={isHighlighted}
+            chainColor={highlightData.chain?.color}
           />
         );
       })}
 
-      {/* Виджеты когнитивных процессов */}
+      {/* Виджеты когнитивных процессов - меньший размер */}
       {animatedNodes.map((node) => {
         const widget = widgets[node.id];
         if (!widget) return null;
@@ -885,93 +1200,95 @@ export const FractalUniverse = ({
         if (!zone) return null;
         
         const isHovered = hoveredNode === node.id;
-        const isConnected = highlightedWidgets.includes(node.id);
-        const dimmed = hoveredNode !== null && !isConnected;
-        const breathe = 1 + Math.sin(time * 0.5 + node.id * 1.2) * 0.015;
-        const hoverScale = isHovered ? 1.15 : isConnected ? 1.05 : 1;
+        const isSelected = selectedNode === node.id;
+        const isInChain = highlightData.widgetIds.includes(node.id);
+        const dimmed = isAnyActive && !isInChain;
+        const breathe = 1 + Math.sin(time * 0.4 + node.id * 1.5) * 0.012;
+        const hoverScale = isHovered ? 1.12 : isSelected ? 1.08 : isInChain ? 1.04 : 1;
         
-        const widgetWidth = 0.22;
-        const widgetHeight = 0.13;
-        const cornerRadius = 0.025;
+        // Меньший размер виджетов
+        const widgetWidth = 0.12;
+        const widgetHeight = 0.07;
+        const cornerRadius = 0.015;
+        
+        const chainInfo = WIDGET_CHAINS[widget.chain as keyof typeof WIDGET_CHAINS];
         
         return (
-          <Billboard
-            key={`widget-${node.id}`}
-            follow={true}
-          >
+          <Billboard key={`widget-${node.id}`} follow={true}>
             <group 
               position={node.position}
               scale={node.scale * breathe * hoverScale}
             >
               {/* Линия к зоне мозга */}
-                {/* Линия к зоне мозга */}
-                <Line
-                  points={[
-                    [0, 0, 0],
-                    [
-                      zone.position[0] - node.position[0],
+              <Line
+                points={[
+                  [0, 0, 0],
+                  [
+                    zone.position[0] - node.position[0],
                     zone.position[1] - node.position[1],
-                      zone.position[2] - node.position[2]
-                    ]
-                  ]}
-                  color={isConnected ? '#FFFFFF' : zone.color}
-                  lineWidth={isConnected ? 1.5 : 0.8}
-                  transparent
-                  opacity={node.opacity * (dimmed ? 0.05 : isConnected ? 0.5 : 0.2)}
-                />
+                    zone.position[2] - node.position[2]
+                  ]
+                ]}
+                color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
+                lineWidth={isInChain ? 1 : 0.5}
+                transparent
+                opacity={node.opacity * (dimmed ? 0.08 : isInChain ? 0.6 : 0.25)}
+              />
                 
               {/* Свечение */}
               <RoundedBox
-                args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.003]}
-                radius={cornerRadius + 0.006}
+                args={[widgetWidth + 0.015, widgetHeight + 0.015, 0.002]}
+                radius={cornerRadius + 0.004}
                 smoothness={4}
               >
                 <meshBasicMaterial 
-                  color={isConnected ? '#FFFFFF' : zone.color}
+                  color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
                   transparent 
-                  opacity={node.opacity * (dimmed ? 0.08 : isConnected ? 0.5 : 0.25)}
+                  opacity={node.opacity * (dimmed ? 0.05 : isSelected ? 0.6 : isInChain ? 0.4 : 0.2)}
                 />
               </RoundedBox>
               
-              {/* Дополнительное свечение для связанных виджетов */}
-              {isConnected && !isHovered && (
+              {/* Пульсация для выбранных */}
+              {(isSelected || (isInChain && !isHovered)) && (
                 <RoundedBox
-                  args={[widgetWidth + 0.04, widgetHeight + 0.04, 0.002]}
-                  radius={cornerRadius + 0.01}
-                  smoothness={4}
+                  args={[widgetWidth + 0.025, widgetHeight + 0.025, 0.001]}
+                  radius={cornerRadius + 0.006}
+                  smoothness={3}
                 >
                   <meshBasicMaterial 
-                    color={zone.color}
+                    color={chainInfo?.color || zone.color}
                     transparent 
-                    opacity={node.opacity * 0.3 * (1 + Math.sin(time * 3) * 0.3)}
+                    opacity={node.opacity * 0.25 * (1 + Math.sin(time * 2.5) * 0.4)}
                   />
                 </RoundedBox>
               )}
               
               {/* Фон виджета */}
               <RoundedBox
-                args={[widgetWidth, widgetHeight, 0.018]}
+                args={[widgetWidth, widgetHeight, 0.012]}
                 radius={cornerRadius}
                 smoothness={4}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleNodeClick(node.position);
+                  handleNodeClick(node.id);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleDiveIn(node.position);
                 }}
                 onPointerOver={(e) => {
                   e.stopPropagation();
                   setHoveredNode(node.id);
-                  setHoveredZone(widget.zone);
                   document.body.style.cursor = 'pointer';
                 }}
                 onPointerOut={(e) => {
                   e.stopPropagation();
                   setHoveredNode(null);
-                  setHoveredZone(null);
                   document.body.style.cursor = 'default';
                 }}
               >
                 <meshBasicMaterial 
-                  color={dimmed ? '#0A0A0B' : '#1A1A1C'}
+                  color={dimmed ? '#080809' : '#12121A'}
                   transparent 
                   opacity={node.opacity * 0.95}
                 />
@@ -979,71 +1296,59 @@ export const FractalUniverse = ({
               
               {/* Индикатор зоны */}
               <Sphere 
-                args={[0.01, 8, 8]} 
-                position={[widgetWidth / 2 - 0.018, widgetHeight / 2 - 0.018, 0.012]}
+                args={[0.006, 6, 6]} 
+                position={[widgetWidth / 2 - 0.012, widgetHeight / 2 - 0.012, 0.008]}
               >
-                <meshBasicMaterial color={zone.color} transparent opacity={node.opacity * 0.9} />
+                <meshBasicMaterial color={zone.color} transparent opacity={node.opacity * 0.85} />
               </Sphere>
               
               {/* Иконка */}
               <Text
-                position={[-0.06, 0.008, 0.012]}
-                fontSize={0.045}
-                color={zone.color}
+                position={[-0.032, 0, 0.008]}
+                fontSize={0.028}
+                color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity}
+                fillOpacity={node.opacity * (dimmed ? 0.5 : 1)}
               >
                 {widget.icon}
               </Text>
               
               {/* Название */}
               <Text
-                position={[0.035, 0.025, 0.012]}
-                fontSize={0.026}
-                color={isHovered ? '#FFFFFF' : '#F0F0F2'}
+                position={[0.022, 0.012, 0.008]}
+                fontSize={0.016}
+                color={isHovered || isSelected ? '#FFFFFF' : isInChain ? '#F0F0F2' : '#C0C0C5'}
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity}
+                fillOpacity={node.opacity * (dimmed ? 0.5 : 1)}
               >
                 {widget.title}
               </Text>
               
               {/* Подзаголовок */}
               <Text
-                position={[0.035, -0.005, 0.012]}
-                fontSize={0.014}
+                position={[0.022, -0.008, 0.008]}
+                fontSize={0.009}
                 color="#8E8E93"
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity * 0.85}
+                fillOpacity={node.opacity * 0.7 * (dimmed ? 0.5 : 1)}
               >
                 {widget.subtitle}
               </Text>
               
-              {/* Зона */}
-              <Text
-                position={[0.035, -0.032, 0.012]}
-                fontSize={0.01}
-                color={zone.color}
-                anchorX="center"
-                anchorY="middle"
-                fillOpacity={node.opacity * 0.6}
-              >
-                {zone.shortName}
-              </Text>
-              
-              {/* Hover эффект */}
-              {isHovered && (
+              {/* Hover/Select эффект */}
+              {(isHovered || isSelected) && (
                 <RoundedBox
-                  args={[widgetWidth + 0.008, widgetHeight + 0.008, 0.002]}
-                  radius={cornerRadius + 0.003}
+                  args={[widgetWidth + 0.006, widgetHeight + 0.006, 0.001]}
+                  radius={cornerRadius + 0.002}
                   smoothness={3}
                 >
                   <meshBasicMaterial 
-                    color={zone.color}
+                    color={chainInfo?.color || zone.color}
                     transparent 
-                    opacity={node.opacity * 0.45}
+                    opacity={node.opacity * (isSelected ? 0.5 : 0.4)}
                   />
                 </RoundedBox>
               )}
@@ -1052,24 +1357,47 @@ export const FractalUniverse = ({
         );
       })}
 
+      {/* Информация о цепи */}
+      {highlightData.chain && (
+        <Billboard follow={true} position={[0, -0.42, 0]}>
+          <Text
+            fontSize={0.018}
+            color={highlightData.chain.color}
+            anchorX="center"
+            fillOpacity={universeOpacity * 0.9}
+          >
+            {highlightData.chain.name}
+          </Text>
+          <Text
+            fontSize={0.012}
+            color="#8E8E93"
+            anchorX="center"
+            position={[0, -0.022, 0]}
+            fillOpacity={universeOpacity * 0.7}
+          >
+            {highlightData.chain.description}
+          </Text>
+        </Billboard>
+      )}
+
       {/* Заголовок уровня */}
-      <Billboard follow={true} position={[0, -0.4, 0]}>
+      <Billboard follow={true} position={[0, -0.5, 0]}>
         <Text
-          fontSize={0.02}
+          fontSize={0.016}
           color={palette.primary}
           anchorX="center"
-          fillOpacity={universeOpacity * 0.6}
+          fillOpacity={universeOpacity * 0.5}
         >
           {depth === 0 ? 'Базовые процессы' : depth === 1 ? 'Высшие функции' : 'Интеграция'}
         </Text>
         <Text
-          fontSize={0.014}
+          fontSize={0.01}
           color={palette.secondary}
           anchorX="center"
-          position={[0, -0.025, 0]}
-          fillOpacity={universeOpacity * 0.4}
+          position={[0, -0.018, 0]}
+          fillOpacity={universeOpacity * 0.35}
         >
-          Уровень {depth + 1} • Нажмите на виджет для погружения
+          Клик — выбрать цепь • Двойной клик — погрузиться
         </Text>
       </Billboard>
     </group>
