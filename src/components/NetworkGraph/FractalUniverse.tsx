@@ -453,7 +453,8 @@ const NeuralPathway = ({
   pathColor,
   opacity, 
   time,
-  index
+  index,
+  isHighlighted
 }: { 
   from: [number, number, number];
   to: [number, number, number];
@@ -462,6 +463,7 @@ const NeuralPathway = ({
   opacity: number;
   time: number;
   index: number;
+  isHighlighted: boolean;
 }) => {
   const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...from);
@@ -487,7 +489,8 @@ const NeuralPathway = ({
   }, [from, to, index]);
 
   // Множественные импульсы
-  const impulseCount = 3;
+  const impulseCount = isHighlighted ? 5 : 3;
+  const highlightMultiplier = isHighlighted ? 3 : 1;
   
   return (
     <group>
@@ -495,42 +498,54 @@ const NeuralPathway = ({
       <Line
         points={points}
         color={pathColor}
-        lineWidth={0.6}
+        lineWidth={isHighlighted ? 2 : 0.6}
         transparent
-        opacity={opacity * 0.2}
+        opacity={opacity * (isHighlighted ? 0.8 : 0.2)}
       />
       
       {/* Миелиновое свечение */}
       <Line
         points={points}
         color={pathColor}
-        lineWidth={2}
+        lineWidth={isHighlighted ? 6 : 2}
         transparent
-        opacity={opacity * 0.05}
+        opacity={opacity * (isHighlighted ? 0.25 : 0.05)}
       />
+      
+      {/* Дополнительное свечение при подсветке */}
+      {isHighlighted && (
+        <Line
+          points={points}
+          color="#FFFFFF"
+          lineWidth={4}
+          transparent
+          opacity={opacity * 0.15}
+        />
+      )}
       
       {/* Импульсы */}
       {Array.from({ length: impulseCount }).map((_, i) => {
-        const speed = 0.25 + (index % 4) * 0.05;
+        const speed = (0.25 + (index % 4) * 0.05) * highlightMultiplier;
         const offset = i / impulseCount;
         const t = ((time * speed + offset + index * 0.1) % 1);
         const pos = curve.getPoint(t);
-        const impulseOpacity = Math.sin(t * Math.PI) * opacity * 0.8;
+        const impulseOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.8);
+        const impulseSize = isHighlighted ? 0.012 : 0.008;
         
         return (
           <group key={i}>
-            <Sphere args={[0.008, 10, 10]} position={[pos.x, pos.y, pos.z]}>
+            <Sphere args={[impulseSize, 10, 10]} position={[pos.x, pos.y, pos.z]}>
               <meshBasicMaterial 
-                color={pathColor}
+                color={isHighlighted ? '#FFFFFF' : pathColor}
                 transparent 
                 opacity={impulseOpacity}
               />
             </Sphere>
-            <Sphere args={[0.016, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+            <Sphere args={[impulseSize * 2, 8, 8]} position={[pos.x, pos.y, pos.z]}>
               <meshBasicMaterial 
                 color={pathColor}
                 transparent 
-                opacity={impulseOpacity * 0.3}
+                opacity={impulseOpacity * 0.4}
               />
             </Sphere>
           </group>
@@ -540,21 +555,21 @@ const NeuralPathway = ({
       {/* Название процесса */}
       <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.025, midPoint.z]}>
         <Text
-          fontSize={0.012}
-          color={pathColor}
+          fontSize={isHighlighted ? 0.016 : 0.012}
+          color={isHighlighted ? '#FFFFFF' : pathColor}
           anchorX="center"
-          fillOpacity={opacity * 0.5}
+          fillOpacity={opacity * (isHighlighted ? 1 : 0.5)}
         >
           {process}
         </Text>
       </Billboard>
       
       {/* Синаптические терминали */}
-      <Sphere args={[0.006, 8, 8]} position={from}>
-        <meshBasicMaterial color={pathColor} transparent opacity={opacity * 0.5} />
+      <Sphere args={[isHighlighted ? 0.01 : 0.006, 8, 8]} position={from}>
+        <meshBasicMaterial color={pathColor} transparent opacity={opacity * (isHighlighted ? 0.9 : 0.5)} />
       </Sphere>
-      <Sphere args={[0.006, 8, 8]} position={to}>
-        <meshBasicMaterial color={pathColor} transparent opacity={opacity * 0.5} />
+      <Sphere args={[isHighlighted ? 0.01 : 0.006, 8, 8]} position={to}>
+        <meshBasicMaterial color={pathColor} transparent opacity={opacity * (isHighlighted ? 0.9 : 0.5)} />
       </Sphere>
     </group>
   );
@@ -568,7 +583,8 @@ const WidgetConnection = ({
   opacity, 
   palette,
   time,
-  index
+  index,
+  isHighlighted
 }: { 
   start: [number, number, number];
   end: [number, number, number];
@@ -577,8 +593,9 @@ const WidgetConnection = ({
   palette: typeof DEPTH_PALETTES[0];
   time: number;
   index: number;
+  isHighlighted: boolean;
 }) => {
-  const { curve, points } = useMemo(() => {
+  const { curve, points, midPoint } = useMemo(() => {
     const startVec = new THREE.Vector3(...start);
     const endVec = new THREE.Vector3(...end);
     const distance = startVec.distanceTo(endVec);
@@ -597,30 +614,66 @@ const WidgetConnection = ({
     const bezierCurve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
     const curvePoints = bezierCurve.getPoints(30);
     
-    return { curve: bezierCurve, points: curvePoints };
+    return { curve: bezierCurve, points: curvePoints, midPoint: mid };
   }, [start, end, index]);
 
-  const pulseT = ((time * 0.4 + index * 0.2) % 1);
+  const speed = isHighlighted ? 0.8 : 0.4;
+  const pulseT = ((time * speed + index * 0.2) % 1);
   const pulsePos = curve.getPoint(pulseT);
-  const pulseOpacity = Math.sin(pulseT * Math.PI) * opacity * 0.7;
+  const pulseOpacity = Math.sin(pulseT * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.7);
 
   return (
     <group>
       <Line
         points={points}
-        color={palette.primary}
-        lineWidth={1.2}
+        color={isHighlighted ? '#FFFFFF' : palette.primary}
+        lineWidth={isHighlighted ? 3 : 1.2}
         transparent
-        opacity={opacity * 0.4}
+        opacity={opacity * (isHighlighted ? 0.9 : 0.4)}
       />
       
-      {/* Пульсирующий сигнал */}
-      <Sphere args={[0.012, 10, 10]} position={[pulsePos.x, pulsePos.y, pulsePos.z]}>
-        <meshBasicMaterial color={palette.accent} transparent opacity={pulseOpacity} />
-      </Sphere>
-      <Sphere args={[0.024, 8, 8]} position={[pulsePos.x, pulsePos.y, pulsePos.z]}>
-        <meshBasicMaterial color={palette.glow} transparent opacity={pulseOpacity * 0.3} />
-      </Sphere>
+      {/* Дополнительное свечение при подсветке */}
+      {isHighlighted && (
+        <Line
+          points={points}
+          color={palette.accent}
+          lineWidth={6}
+          transparent
+          opacity={opacity * 0.3}
+        />
+      )}
+      
+      {/* Название процесса при подсветке */}
+      {isHighlighted && (
+        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.03, midPoint.z]}>
+          <Text
+            fontSize={0.014}
+            color="#FFFFFF"
+            anchorX="center"
+            fillOpacity={opacity * 0.9}
+          >
+            {processName}
+          </Text>
+        </Billboard>
+      )}
+      
+      {/* Пульсирующие сигналы */}
+      {Array.from({ length: isHighlighted ? 3 : 1 }).map((_, i) => {
+        const t = ((time * speed + index * 0.2 + i * 0.33) % 1);
+        const pos = curve.getPoint(t);
+        const pOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1.2 : 0.7);
+        
+        return (
+          <group key={i}>
+            <Sphere args={[isHighlighted ? 0.016 : 0.012, 10, 10]} position={[pos.x, pos.y, pos.z]}>
+              <meshBasicMaterial color={isHighlighted ? '#FFFFFF' : palette.accent} transparent opacity={pOpacity} />
+            </Sphere>
+            <Sphere args={[isHighlighted ? 0.032 : 0.024, 8, 8]} position={[pos.x, pos.y, pos.z]}>
+              <meshBasicMaterial color={palette.glow} transparent opacity={pOpacity * 0.4} />
+            </Sphere>
+          </group>
+        );
+      })}
     </group>
   );
 };
@@ -685,15 +738,69 @@ export const FractalUniverse = ({
 
   if (!isActive) return null;
 
-  // Найти зону для подсветки
-  const getHighlightedZones = () => {
-    if (hoveredNode === null) return [];
+  // Найти все связанные зоны и пути для подсветки
+  const getHighlightedData = useMemo(() => {
+    if (hoveredNode === null) return { zones: [], pathways: [], widgetIds: [], edgeIds: [] };
+    
     const widget = widgets[hoveredNode];
-    if (!widget) return [];
-    return [widget.zone];
-  };
+    if (!widget) return { zones: [], pathways: [], widgetIds: [], edgeIds: [] };
+    
+    const zones = new Set<string>([widget.zone]);
+    const pathways = new Set<number>();
+    const widgetIds = new Set<number>([hoveredNode]);
+    const edgeIds = new Set<number>();
+    
+    // Найти все связанные виджеты
+    if (widget.connects) {
+      widget.connects.forEach(targetId => {
+        const targetIndex = widgets.findIndex(w => w.id === targetId);
+        if (targetIndex !== -1) {
+          widgetIds.add(targetIndex);
+          const targetWidget = widgets[targetIndex];
+          if (targetWidget) {
+            zones.add(targetWidget.zone);
+          }
+        }
+      });
+    }
+    
+    // Найти виджеты, которые ссылаются на текущий
+    widgets.forEach((w, i) => {
+      if (w.connects?.includes(widget.id)) {
+        widgetIds.add(i);
+        zones.add(w.zone);
+      }
+    });
+    
+    // Найти нейронные пути между выделенными зонами
+    const zoneArray = Array.from(zones);
+    NEURAL_PATHWAYS_FULL.forEach((pathway, i) => {
+      if (zoneArray.includes(pathway.from) || zoneArray.includes(pathway.to)) {
+        pathways.add(i);
+        zones.add(pathway.from);
+        zones.add(pathway.to);
+      }
+    });
+    
+    // Найти связи между виджетами
+    edges.forEach((edge, i) => {
+      if (widgetIds.has(edge.from) || widgetIds.has(edge.to)) {
+        edgeIds.add(i);
+      }
+    });
+    
+    return { 
+      zones: Array.from(zones), 
+      pathways: Array.from(pathways),
+      widgetIds: Array.from(widgetIds),
+      edgeIds: Array.from(edgeIds)
+    };
+  }, [hoveredNode, widgets, edges]);
   
-  const highlightedZones = getHighlightedZones();
+  const highlightedZones = getHighlightedData.zones;
+  const highlightedPathways = getHighlightedData.pathways;
+  const highlightedWidgets = getHighlightedData.widgetIds;
+  const highlightedEdges = getHighlightedData.edgeIds;
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
@@ -727,6 +834,9 @@ export const FractalUniverse = ({
         const toZone = BRAIN_ANATOMY[pathway.to as keyof typeof BRAIN_ANATOMY];
         if (!fromZone || !toZone) return null;
         
+        const isHighlighted = highlightedPathways.includes(i);
+        const dimmed = hoveredNode !== null && !isHighlighted;
+        
         return (
           <NeuralPathway
             key={`pathway-${i}`}
@@ -734,9 +844,10 @@ export const FractalUniverse = ({
             to={toZone.position}
             process={pathway.process}
             pathColor={pathway.color}
-            opacity={universeOpacity * 0.6}
+            opacity={universeOpacity * (dimmed ? 0.15 : 0.6)}
             time={time}
             index={i}
+            isHighlighted={isHighlighted}
           />
         );
       })}
@@ -747,16 +858,20 @@ export const FractalUniverse = ({
         const endNode = animatedNodes.find(n => n.id === edge.to);
         if (!startNode || !endNode) return null;
 
+        const isHighlighted = highlightedEdges.includes(i);
+        const dimmed = hoveredNode !== null && !isHighlighted;
+
         return (
           <WidgetConnection
             key={`widget-edge-${i}`}
             start={startNode.position}
             end={endNode.position}
             processName={edge.processName}
-            opacity={edge.opacity}
+            opacity={edge.opacity * (dimmed ? 0.2 : 1)}
             palette={palette}
             time={time}
             index={i}
+            isHighlighted={isHighlighted}
           />
         );
       })}
@@ -770,8 +885,10 @@ export const FractalUniverse = ({
         if (!zone) return null;
         
         const isHovered = hoveredNode === node.id;
+        const isConnected = highlightedWidgets.includes(node.id);
+        const dimmed = hoveredNode !== null && !isConnected;
         const breathe = 1 + Math.sin(time * 0.5 + node.id * 1.2) * 0.015;
-        const hoverScale = isHovered ? 1.1 : 1;
+        const hoverScale = isHovered ? 1.15 : isConnected ? 1.05 : 1;
         
         const widgetWidth = 0.22;
         const widgetHeight = 0.13;
@@ -787,21 +904,22 @@ export const FractalUniverse = ({
               scale={node.scale * breathe * hoverScale}
             >
               {/* Линия к зоне мозга */}
-              <Line
-                points={[
-                  [0, 0, 0],
-                  [
-                    zone.position[0] - node.position[0],
+                {/* Линия к зоне мозга */}
+                <Line
+                  points={[
+                    [0, 0, 0],
+                    [
+                      zone.position[0] - node.position[0],
                     zone.position[1] - node.position[1],
-                    zone.position[2] - node.position[2]
-                  ]
-                ]}
-                color={zone.color}
-                lineWidth={0.8}
-                transparent
-                opacity={node.opacity * 0.2}
-              />
-              
+                      zone.position[2] - node.position[2]
+                    ]
+                  ]}
+                  color={isConnected ? '#FFFFFF' : zone.color}
+                  lineWidth={isConnected ? 1.5 : 0.8}
+                  transparent
+                  opacity={node.opacity * (dimmed ? 0.05 : isConnected ? 0.5 : 0.2)}
+                />
+                
               {/* Свечение */}
               <RoundedBox
                 args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.003]}
@@ -809,11 +927,26 @@ export const FractalUniverse = ({
                 smoothness={4}
               >
                 <meshBasicMaterial 
-                  color={zone.color}
+                  color={isConnected ? '#FFFFFF' : zone.color}
                   transparent 
-                  opacity={node.opacity * 0.25}
+                  opacity={node.opacity * (dimmed ? 0.08 : isConnected ? 0.5 : 0.25)}
                 />
               </RoundedBox>
+              
+              {/* Дополнительное свечение для связанных виджетов */}
+              {isConnected && !isHovered && (
+                <RoundedBox
+                  args={[widgetWidth + 0.04, widgetHeight + 0.04, 0.002]}
+                  radius={cornerRadius + 0.01}
+                  smoothness={4}
+                >
+                  <meshBasicMaterial 
+                    color={zone.color}
+                    transparent 
+                    opacity={node.opacity * 0.3 * (1 + Math.sin(time * 3) * 0.3)}
+                  />
+                </RoundedBox>
+              )}
               
               {/* Фон виджета */}
               <RoundedBox
@@ -824,19 +957,21 @@ export const FractalUniverse = ({
                   e.stopPropagation();
                   handleNodeClick(node.position);
                 }}
-                onPointerOver={() => {
+                onPointerOver={(e) => {
+                  e.stopPropagation();
                   setHoveredNode(node.id);
                   setHoveredZone(widget.zone);
                   document.body.style.cursor = 'pointer';
                 }}
-                onPointerOut={() => {
+                onPointerOut={(e) => {
+                  e.stopPropagation();
                   setHoveredNode(null);
                   setHoveredZone(null);
                   document.body.style.cursor = 'default';
                 }}
               >
                 <meshBasicMaterial 
-                  color="#1A1A1C"
+                  color={dimmed ? '#0A0A0B' : '#1A1A1C'}
                   transparent 
                   opacity={node.opacity * 0.95}
                 />
