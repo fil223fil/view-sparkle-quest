@@ -736,9 +736,7 @@ export const FractalUniverse = ({
     onDiveIn(worldPos, depth + 1);
   }, [depth, position, universeScale, onDiveIn]);
 
-  if (!isActive) return null;
-
-  // Найти все связанные зоны и пути для подсветки
+  // Найти все связанные зоны и пути для подсветки (MUST be before conditional return)
   const getHighlightedData = useMemo(() => {
     if (hoveredNode === null) return { zones: [], pathways: [], widgetIds: [], edgeIds: [] };
     
@@ -801,6 +799,8 @@ export const FractalUniverse = ({
   const highlightedPathways = getHighlightedData.pathways;
   const highlightedWidgets = getHighlightedData.widgetIds;
   const highlightedEdges = getHighlightedData.edgeIds;
+
+  if (!isActive) return null;
 
   return (
     <group ref={groupRef} position={position} scale={universeScale}>
