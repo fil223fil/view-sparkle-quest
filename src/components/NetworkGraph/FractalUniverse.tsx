@@ -396,73 +396,86 @@ const BRAIN_ANATOMY = {
   },
 };
 
-// Расширенная карта виджетов с цепями взаимосвязей
+// Приоритеты для виджетов (влияют на размер)
+type Priority = 'critical' | 'high' | 'medium' | 'low';
+
+const PRIORITY_SCALES = {
+  critical: 1.35,
+  high: 1.15,
+  medium: 1.0,
+  low: 0.85,
+};
+
+// Иконки для хлебных крошек (процессы)
+const BREADCRUMB_ICONS = ['◉', '⚡', '🎯', '🔬', '∞'];
+
+// Расширенная карта виджетов с цепями взаимосвязей и приоритетами
 const COGNITIVE_WIDGETS = {
   basic: [
     { id: 'think', icon: '💭', title: 'Мысль', subtitle: 'Когнитив', zone: 'prefrontal_left', 
-      connects: ['decide', 'analyze', 'memory'], chain: 'executive' },
+      connects: ['decide', 'analyze', 'memory'], chain: 'executive', priority: 'critical' as Priority, infoLoad: 0.85 },
     { id: 'decide', icon: '🎯', title: 'Решение', subtitle: 'Выбор', zone: 'frontal_left', 
-      connects: ['action', 'plan'], chain: 'executive' },
+      connects: ['action', 'plan'], chain: 'executive', priority: 'critical' as Priority, infoLoad: 0.92 },
     { id: 'analyze', icon: '🔍', title: 'Анализ', subtitle: 'Данные', zone: 'parietal_left', 
-      connects: ['memory', 'pattern'], chain: 'cognitive' },
+      connects: ['memory', 'pattern'], chain: 'cognitive', priority: 'high' as Priority, infoLoad: 0.78 },
     { id: 'action', icon: '⚡', title: 'Действие', subtitle: 'Мотор', zone: 'motor_left', 
-      connects: ['feedback', 'coord'], chain: 'motor' },
+      connects: ['feedback', 'coord'], chain: 'motor', priority: 'high' as Priority, infoLoad: 0.65 },
     { id: 'speak', icon: '🗣️', title: 'Речь', subtitle: 'Брока', zone: 'broca', 
-      connects: ['think', 'understand'], chain: 'language' },
+      connects: ['think', 'understand'], chain: 'language', priority: 'high' as Priority, infoLoad: 0.72 },
     { id: 'see', icon: '👁️', title: 'Зрение', subtitle: 'V1', zone: 'occipital_left', 
-      connects: ['recognize', 'space'], chain: 'visual' },
+      connects: ['recognize', 'space'], chain: 'visual', priority: 'medium' as Priority, infoLoad: 0.88 },
     { id: 'feel', icon: '❤️', title: 'Эмоция', subtitle: 'Амигдала', zone: 'amygdala_left', 
-      connects: ['memory', 'decide', 'body'], chain: 'limbic' },
+      connects: ['memory', 'decide', 'body'], chain: 'limbic', priority: 'high' as Priority, infoLoad: 0.55 },
     { id: 'memory', icon: '📚', title: 'Память', subtitle: 'Гиппокамп', zone: 'hippocampus_left', 
-      connects: ['learn', 'recall'], chain: 'memory' },
+      connects: ['learn', 'recall'], chain: 'memory', priority: 'critical' as Priority, infoLoad: 0.95 },
     { id: 'hear', icon: '👂', title: 'Слух', subtitle: 'Аудио', zone: 'auditory_left', 
-      connects: ['speak', 'music'], chain: 'auditory' },
+      connects: ['speak', 'music'], chain: 'auditory', priority: 'medium' as Priority, infoLoad: 0.62 },
     { id: 'body', icon: '🫀', title: 'Тело', subtitle: 'Интероцепция', zone: 'insula_left', 
-      connects: ['feel', 'regulate'], chain: 'interoception' },
+      connects: ['feel', 'regulate'], chain: 'interoception', priority: 'low' as Priority, infoLoad: 0.48 },
   ],
   advanced: [
     { id: 'plan', icon: '📋', title: 'План', subtitle: 'Стратегия', zone: 'prefrontal_right', 
-      connects: ['goal', 'sequence', 'monitor'], chain: 'executive' },
+      connects: ['goal', 'sequence', 'monitor'], chain: 'executive', priority: 'critical' as Priority, infoLoad: 0.88 },
     { id: 'focus', icon: '🎯', title: 'Внимание', subtitle: 'Фокус', zone: 'dorsolateral_right', 
-      connects: ['filter', 'priority'], chain: 'attention' },
+      connects: ['filter', 'priority'], chain: 'attention', priority: 'critical' as Priority, infoLoad: 0.82 },
     { id: 'create', icon: '✨', title: 'Творчество', subtitle: 'Идеи', zone: 'temporal_right', 
-      connects: ['imagine', 'combine'], chain: 'creative' },
+      connects: ['imagine', 'combine'], chain: 'creative', priority: 'high' as Priority, infoLoad: 0.68 },
     { id: 'space', icon: '🗺️', title: 'Простр.', subtitle: 'Навигация', zone: 'parietal_right', 
-      connects: ['navigate', 'map'], chain: 'spatial' },
+      connects: ['navigate', 'map'], chain: 'spatial', priority: 'medium' as Priority, infoLoad: 0.75 },
     { id: 'faces', icon: '😊', title: 'Лица', subtitle: 'Узнавание', zone: 'fusiform_right', 
-      connects: ['social', 'emotion'], chain: 'social' },
+      connects: ['social', 'emotion'], chain: 'social', priority: 'medium' as Priority, infoLoad: 0.58 },
     { id: 'music', icon: '🎵', title: 'Музыка', subtitle: 'Мелодия', zone: 'auditory_right', 
-      connects: ['rhythm', 'emotion'], chain: 'auditory' },
+      connects: ['rhythm', 'emotion'], chain: 'auditory', priority: 'low' as Priority, infoLoad: 0.45 },
     { id: 'coord', icon: '🤝', title: 'Коорд.', subtitle: 'Синхрон', zone: 'motor_right', 
-      connects: ['timing', 'balance'], chain: 'motor' },
+      connects: ['timing', 'balance'], chain: 'motor', priority: 'medium' as Priority, infoLoad: 0.52 },
     { id: 'balance', icon: '⚖️', title: 'Баланс', subtitle: 'Равновесие', zone: 'cerebellum_right', 
-      connects: ['posture', 'move'], chain: 'cerebellar' },
+      connects: ['posture', 'move'], chain: 'cerebellar', priority: 'low' as Priority, infoLoad: 0.38 },
     { id: 'empathy', icon: '💕', title: 'Эмпатия', subtitle: 'Понимание', zone: 'insula_right', 
-      connects: ['social', 'feel'], chain: 'social' },
+      connects: ['social', 'feel'], chain: 'social', priority: 'high' as Priority, infoLoad: 0.72 },
     { id: 'monitor', icon: '🔔', title: 'Контроль', subtitle: 'Ошибки', zone: 'anterior_cingulate', 
-      connects: ['focus', 'decide'], chain: 'executive' },
+      connects: ['focus', 'decide'], chain: 'executive', priority: 'high' as Priority, infoLoad: 0.78 },
   ],
   integration: [
     { id: 'integrate', icon: '🔗', title: 'Интегр.', subtitle: 'Связь', zone: 'corpus_callosum', 
-      connects: ['left', 'right', 'sync'], chain: 'integration' },
+      connects: ['left', 'right', 'sync'], chain: 'integration', priority: 'critical' as Priority, infoLoad: 0.98 },
     { id: 'self', icon: '🌟', title: 'Я', subtitle: 'Сознание', zone: 'posterior_cingulate', 
-      connects: ['reflect', 'narrative'], chain: 'default' },
+      connects: ['reflect', 'narrative'], chain: 'default', priority: 'critical' as Priority, infoLoad: 0.90 },
     { id: 'regulate', icon: '🎛️', title: 'Регуляция', subtitle: 'Гомеостаз', zone: 'hypothalamus', 
-      connects: ['hormone', 'state', 'stress'], chain: 'autonomic' },
+      connects: ['hormone', 'state', 'stress'], chain: 'autonomic', priority: 'high' as Priority, infoLoad: 0.65 },
     { id: 'survive', icon: '💓', title: 'Жизнь', subtitle: 'Витальные', zone: 'brainstem', 
-      connects: ['breathe', 'heart', 'alert'], chain: 'autonomic' },
+      connects: ['breathe', 'heart', 'alert'], chain: 'autonomic', priority: 'critical' as Priority, infoLoad: 1.0 },
     { id: 'habit', icon: '🔄', title: 'Привычка', subtitle: 'Автомат', zone: 'basal_ganglia', 
-      connects: ['reward', 'routine'], chain: 'basal' },
+      connects: ['reward', 'routine'], chain: 'basal', priority: 'medium' as Priority, infoLoad: 0.55 },
     { id: 'relay', icon: '📡', title: 'Реле', subtitle: 'Сигналы', zone: 'thalamus', 
-      connects: ['sense', 'cortex', 'attention'], chain: 'thalamic' },
+      connects: ['sense', 'cortex', 'attention'], chain: 'thalamic', priority: 'high' as Priority, infoLoad: 0.85 },
     { id: 'learn', icon: '📖', title: 'Обучение', subtitle: 'Пластичн.', zone: 'hippocampus_right', 
-      connects: ['encode', 'consolidate'], chain: 'memory' },
+      connects: ['encode', 'consolidate'], chain: 'memory', priority: 'high' as Priority, infoLoad: 0.78 },
     { id: 'emotion', icon: '😢', title: 'Чувства', subtitle: 'Валентность', zone: 'amygdala_right', 
-      connects: ['social', 'memory', 'fear'], chain: 'limbic' },
+      connects: ['social', 'memory', 'fear'], chain: 'limbic', priority: 'medium' as Priority, infoLoad: 0.60 },
     { id: 'timing', icon: '⏱️', title: 'Тайминг', subtitle: 'Ритм', zone: 'cerebellum_left', 
-      connects: ['sequence', 'predict'], chain: 'cerebellar' },
+      connects: ['sequence', 'predict'], chain: 'cerebellar', priority: 'low' as Priority, infoLoad: 0.42 },
     { id: 'understand', icon: '💡', title: 'Понимание', subtitle: 'Вернике', zone: 'wernicke', 
-      connects: ['speak', 'read', 'semantic'], chain: 'language' },
+      connects: ['speak', 'read', 'semantic'], chain: 'language', priority: 'high' as Priority, infoLoad: 0.82 },
   ],
 };
 
@@ -728,14 +741,15 @@ const BrainOutline = ({ opacity, time }: { opacity: number; time: number }) => {
   );
 };
 
-// Зона мозга
+// Зона мозга с режимом размытия
 const BrainZone = ({ 
   zone, 
   zoneKey,
   opacity, 
   time,
   isHighlighted,
-  isInActiveChain
+  isInActiveChain,
+  isBlurred
 }: { 
   zone: typeof BRAIN_ANATOMY[keyof typeof BRAIN_ANATOMY];
   zoneKey: string;
@@ -743,10 +757,11 @@ const BrainZone = ({
   time: number;
   isHighlighted: boolean;
   isInActiveChain: boolean;
+  isBlurred: boolean;
 }) => {
   const pulse = 1 + Math.sin(time * 0.6 + zone.position[0] * 5) * 0.08;
   const highlightScale = isHighlighted ? 1.4 : isInActiveChain ? 1.2 : 1;
-  const dimmed = !isHighlighted && !isInActiveChain;
+  const blurFactor = isBlurred ? 0.25 : 1;
   
   return (
     <group position={zone.position}>
@@ -755,7 +770,7 @@ const BrainZone = ({
         <meshBasicMaterial 
           color={zone.color}
           transparent 
-          opacity={opacity * (isHighlighted ? 0.35 : isInActiveChain ? 0.2 : 0.06) * (dimmed ? 0.5 : 1)}
+          opacity={opacity * (isHighlighted ? 0.35 : isInActiveChain ? 0.2 : 0.06) * blurFactor}
         />
       </Sphere>
       
@@ -764,12 +779,12 @@ const BrainZone = ({
         <meshBasicMaterial 
           color={zone.color}
           transparent 
-          opacity={opacity * (isHighlighted ? 0.7 : isInActiveChain ? 0.4 : 0.15) * (dimmed ? 0.5 : 1)}
+          opacity={opacity * (isHighlighted ? 0.7 : isInActiveChain ? 0.4 : 0.15) * blurFactor}
         />
       </Sphere>
       
       {/* Название зоны (показывать только при подсветке) */}
-      {(isHighlighted || isInActiveChain) && (
+      {(isHighlighted || isInActiveChain) && !isBlurred && (
         <Billboard follow={true} position={[0, zone.size + 0.015, 0]}>
           <Text
             fontSize={0.014}
@@ -781,6 +796,264 @@ const BrainZone = ({
           </Text>
         </Billboard>
       )}
+    </group>
+  );
+};
+
+// Мини-виджет при наведении (появляется вокруг основного виджета)
+const MiniWidget = ({ 
+  widget,
+  index,
+  total,
+  parentPosition,
+  opacity,
+  time,
+  chainColor,
+  onClick
+}: { 
+  widget: { id: string; icon: string; title: string };
+  index: number;
+  total: number;
+  parentPosition: [number, number, number];
+  opacity: number;
+  time: number;
+  chainColor: string;
+  onClick: () => void;
+}) => {
+  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
+  const radius = 0.08;
+  const appearProgress = Math.min(1, (time * 3) % 1 + index * 0.15);
+  
+  const x = parentPosition[0] + Math.cos(angle) * radius * appearProgress;
+  const y = parentPosition[1] + Math.sin(angle) * radius * appearProgress;
+  const z = parentPosition[2] + 0.02;
+  
+  const pulse = 1 + Math.sin(time * 3 + index) * 0.1;
+  
+  return (
+    <Billboard follow={true}>
+      <group 
+        position={[x, y, z]} 
+        scale={pulse * appearProgress}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'default'; }}
+      >
+        {/* Фон мини-виджета */}
+        <RoundedBox args={[0.045, 0.035, 0.008]} radius={0.008} smoothness={3}>
+          <meshBasicMaterial color="#12121A" transparent opacity={opacity * 0.95 * appearProgress} />
+        </RoundedBox>
+        
+        {/* Свечение */}
+        <RoundedBox args={[0.05, 0.04, 0.004]} radius={0.01} smoothness={2}>
+          <meshBasicMaterial color={chainColor} transparent opacity={opacity * 0.3 * appearProgress} />
+        </RoundedBox>
+        
+        {/* Иконка */}
+        <Text
+          position={[0, 0.002, 0.006]}
+          fontSize={0.018}
+          color={chainColor}
+          anchorX="center"
+          anchorY="middle"
+          fillOpacity={opacity * appearProgress}
+        >
+          {widget.icon}
+        </Text>
+        
+        {/* Название (маленькое) */}
+        <Text
+          position={[0, -0.012, 0.006]}
+          fontSize={0.006}
+          color="#FFFFFF"
+          anchorX="center"
+          fillOpacity={opacity * 0.8 * appearProgress}
+        >
+          {widget.title}
+        </Text>
+      </group>
+    </Billboard>
+  );
+};
+
+// Хлебные крошки процессов (дуга снизу)
+const ProcessBreadcrumbs = ({ 
+  activeProcesses,
+  opacity,
+  chainColor
+}: { 
+  activeProcesses: string[];
+  opacity: number;
+  chainColor: string;
+}) => {
+  const arcRadius = 0.35;
+  const arcY = -0.38;
+  const startAngle = -Math.PI * 0.4;
+  const endAngle = Math.PI * 0.4;
+  
+  return (
+    <group>
+      {/* Дуга */}
+      <Line
+        points={Array.from({ length: 30 }).map((_, i) => {
+          const t = i / 29;
+          const angle = startAngle + (endAngle - startAngle) * t;
+          return new THREE.Vector3(
+            Math.sin(angle) * arcRadius,
+            arcY + Math.cos(angle) * 0.05,
+            0
+          );
+        })}
+        color={chainColor}
+        lineWidth={1}
+        transparent
+        opacity={opacity * 0.3}
+      />
+      
+      {/* Иконки процессов */}
+      {BREADCRUMB_ICONS.slice(0, Math.min(5, activeProcesses.length + 1)).map((icon, i) => {
+        const t = (i + 0.5) / BREADCRUMB_ICONS.length;
+        const angle = startAngle + (endAngle - startAngle) * t;
+        const x = Math.sin(angle) * arcRadius;
+        const y = arcY + Math.cos(angle) * 0.05;
+        const isActive = i < activeProcesses.length;
+        
+        return (
+          <Billboard key={i} follow={true} position={[x, y, 0]}>
+            <Text
+              fontSize={0.022}
+              color={isActive ? chainColor : '#4A4A4A'}
+              anchorX="center"
+              fillOpacity={opacity * (isActive ? 1 : 0.4)}
+            >
+              {icon}
+            </Text>
+            {isActive && activeProcesses[i] && (
+              <Text
+                position={[0, -0.018, 0]}
+                fontSize={0.008}
+                color={chainColor}
+                anchorX="center"
+                fillOpacity={opacity * 0.7}
+              >
+                {activeProcesses[i].slice(0, 8)}
+              </Text>
+            )}
+          </Billboard>
+        );
+      })}
+    </group>
+  );
+};
+
+// Индикатор загрузки информации (полоска внизу виджета)
+const InfoLoadBar = ({ 
+  loadProgress, 
+  width, 
+  position, 
+  color, 
+  opacity,
+  time
+}: { 
+  loadProgress: number;
+  width: number;
+  position: [number, number, number];
+  color: string;
+  opacity: number;
+  time: number;
+}) => {
+  const barHeight = 0.004;
+  const animatedProgress = loadProgress + Math.sin(time * 2) * 0.02;
+  const clampedProgress = Math.max(0, Math.min(1, animatedProgress));
+  
+  return (
+    <group position={position}>
+      {/* Фон полоски */}
+      <RoundedBox 
+        args={[width - 0.01, barHeight, 0.002]} 
+        radius={0.001} 
+        smoothness={2}
+      >
+        <meshBasicMaterial color="#2A2A2A" transparent opacity={opacity * 0.6} />
+      </RoundedBox>
+      
+      {/* Заполненная часть */}
+      <RoundedBox 
+        args={[(width - 0.01) * clampedProgress, barHeight, 0.003]} 
+        radius={0.001} 
+        smoothness={2}
+        position={[-(width - 0.01) * (1 - clampedProgress) / 2, 0, 0.001]}
+      >
+        <meshBasicMaterial color={color} transparent opacity={opacity * 0.9} />
+      </RoundedBox>
+      
+      {/* Свечение при высокой загрузке */}
+      {clampedProgress > 0.8 && (
+        <RoundedBox 
+          args={[(width - 0.01) * clampedProgress, barHeight + 0.002, 0.001]} 
+          radius={0.002} 
+          smoothness={2}
+          position={[-(width - 0.01) * (1 - clampedProgress) / 2, 0, -0.001]}
+        >
+          <meshBasicMaterial color={color} transparent opacity={opacity * 0.3 * (1 + Math.sin(time * 4) * 0.3)} />
+        </RoundedBox>
+      )}
+    </group>
+  );
+};
+
+// Подсветка потока данных
+const DataFlowHighlight = ({ 
+  path,
+  color,
+  opacity,
+  time,
+  intensity
+}: { 
+  path: THREE.Vector3[];
+  color: string;
+  opacity: number;
+  time: number;
+  intensity: number;
+}) => {
+  const pulseCount = Math.floor(intensity * 5) + 2;
+  
+  return (
+    <group>
+      {/* Яркий путь */}
+      <Line
+        points={path}
+        color="#FFFFFF"
+        lineWidth={3}
+        transparent
+        opacity={opacity * 0.8}
+      />
+      
+      {/* Свечение */}
+      <Line
+        points={path}
+        color={color}
+        lineWidth={8}
+        transparent
+        opacity={opacity * 0.3}
+      />
+      
+      {/* Множественные импульсы */}
+      {Array.from({ length: pulseCount }).map((_, i) => {
+        const t = ((time * 0.8 + i / pulseCount) % 1);
+        const idx = Math.floor(t * (path.length - 1));
+        const pos = path[Math.min(idx, path.length - 1)];
+        const pulseFade = Math.sin(t * Math.PI);
+        
+        return (
+          <Sphere key={i} args={[0.012, 10, 10]} position={[pos.x, pos.y, pos.z]}>
+            <meshBasicMaterial color="#FFFFFF" transparent opacity={opacity * pulseFade} />
+          </Sphere>
+        );
+      })}
     </group>
   );
 };
@@ -1109,12 +1382,23 @@ export const FractalUniverse = ({
       }
     });
     
+    // Собрать процессы для хлебных крошек
+    const processes: string[] = [];
+    if (widget) {
+      processes.push(widget.title);
+      widget.connects?.slice(0, 4).forEach(c => {
+        const connectedWidget = widgets.find(w => w.id === c);
+        if (connectedWidget) processes.push(connectedWidget.title);
+      });
+    }
+    
     return { 
       zones: Array.from(zones), 
       pathways: Array.from(pathways),
       widgetIds: Array.from(widgetIds),
       edgeIds: Array.from(edgeIds),
-      chain: chainInfo
+      chain: chainInfo,
+      processes
     };
   }, [activeNode, widgets, edges]);
 
@@ -1129,18 +1413,24 @@ export const FractalUniverse = ({
       {/* Контур мозга */}
       <BrainOutline opacity={universeOpacity} time={time} />
 
-      {/* Зоны мозга */}
-      {Object.entries(BRAIN_ANATOMY).map(([key, zone]) => (
-        <BrainZone
-          key={key}
-          zone={zone}
-          zoneKey={key}
-          opacity={universeOpacity * (isAnyActive && !highlightData.zones.includes(key) ? 0.4 : 1)}
-          time={time}
-          isHighlighted={highlightData.zones.includes(key) && activeNode !== null}
-          isInActiveChain={highlightData.zones.includes(key)}
-        />
-      ))}
+      {/* Зоны мозга с режимом размытия */}
+      {Object.entries(BRAIN_ANATOMY).map(([key, zone]) => {
+        const isInHighlight = highlightData.zones.includes(key);
+        const isBlurred = isAnyActive && !isInHighlight;
+        
+        return (
+          <BrainZone
+            key={key}
+            zone={zone}
+            zoneKey={key}
+            opacity={universeOpacity}
+            time={time}
+            isHighlighted={isInHighlight && activeNode !== null}
+            isInActiveChain={isInHighlight}
+            isBlurred={isBlurred}
+          />
+        );
+      })}
 
       {/* Нейронные пути между зонами */}
       {NEURAL_PATHWAYS_FULL.map((pathway, i) => {
@@ -1191,7 +1481,39 @@ export const FractalUniverse = ({
         );
       })}
 
-      {/* Виджеты когнитивных процессов - меньший размер */}
+      {/* Подсветка потока данных при активном виджете */}
+      {isAnyActive && highlightData.pathways.length > 0 && (
+        <>
+          {highlightData.pathways.slice(0, 3).map((pathwayIdx) => {
+            const pathway = NEURAL_PATHWAYS_FULL[pathwayIdx];
+            if (!pathway) return null;
+            const fromZone = BRAIN_ANATOMY[pathway.from as keyof typeof BRAIN_ANATOMY];
+            const toZone = BRAIN_ANATOMY[pathway.to as keyof typeof BRAIN_ANATOMY];
+            if (!fromZone || !toZone) return null;
+            
+            const startVec = new THREE.Vector3(...fromZone.position);
+            const endVec = new THREE.Vector3(...toZone.position);
+            const mid = startVec.clone().lerp(endVec, 0.5);
+            mid.y += 0.03;
+            
+            const curve = new THREE.QuadraticBezierCurve3(startVec, mid, endVec);
+            const points = curve.getPoints(20);
+            
+            return (
+              <DataFlowHighlight
+                key={`flow-${pathwayIdx}`}
+                path={points}
+                color={highlightData.chain?.color || palette.primary}
+                opacity={universeOpacity * 0.7}
+                time={time}
+                intensity={0.8}
+              />
+            );
+          })}
+        </>
+      )}
+
+      {/* Виджеты когнитивных процессов с Priority sizing и Info load bar */}
       {animatedNodes.map((node) => {
         const widget = widgets[node.id];
         if (!widget) return null;
@@ -1202,22 +1524,31 @@ export const FractalUniverse = ({
         const isHovered = hoveredNode === node.id;
         const isSelected = selectedNode === node.id;
         const isInChain = highlightData.widgetIds.includes(node.id);
-        const dimmed = isAnyActive && !isInChain;
+        const isBlurred = isAnyActive && !isInChain;
         const breathe = 1 + Math.sin(time * 0.4 + node.id * 1.5) * 0.012;
         const hoverScale = isHovered ? 1.12 : isSelected ? 1.08 : isInChain ? 1.04 : 1;
         
-        // Меньший размер виджетов
-        const widgetWidth = 0.12;
-        const widgetHeight = 0.07;
-        const cornerRadius = 0.015;
+        // Priority sizing - размер зависит от приоритета
+        const priorityScale = PRIORITY_SCALES[widget.priority as Priority] || 1;
+        const baseWidth = 0.10;
+        const baseHeight = 0.06;
+        const widgetWidth = baseWidth * priorityScale;
+        const widgetHeight = baseHeight * priorityScale;
+        const cornerRadius = 0.012 * priorityScale;
         
         const chainInfo = WIDGET_CHAINS[widget.chain as keyof typeof WIDGET_CHAINS];
+        const blurOpacity = isBlurred ? 0.25 : 1;
+        
+        // Связанные виджеты для мини-виджетов при наведении
+        const connectedWidgets = isHovered && widget.connects 
+          ? widget.connects.map(id => widgets.find(w => w.id === id)).filter(Boolean).slice(0, 5)
+          : [];
         
         return (
           <Billboard key={`widget-${node.id}`} follow={true}>
             <group 
               position={node.position}
-              scale={node.scale * breathe * hoverScale}
+              scale={node.scale * breathe * hoverScale * priorityScale}
             >
               {/* Линия к зоне мозга */}
               <Line
@@ -1232,27 +1563,27 @@ export const FractalUniverse = ({
                 color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
                 lineWidth={isInChain ? 1 : 0.5}
                 transparent
-                opacity={node.opacity * (dimmed ? 0.08 : isInChain ? 0.6 : 0.25)}
+                opacity={node.opacity * (isBlurred ? 0.08 : isInChain ? 0.6 : 0.25) * blurOpacity}
               />
                 
               {/* Свечение */}
               <RoundedBox
-                args={[widgetWidth + 0.015, widgetHeight + 0.015, 0.002]}
-                radius={cornerRadius + 0.004}
+                args={[widgetWidth + 0.012, widgetHeight + 0.012, 0.002]}
+                radius={cornerRadius + 0.003}
                 smoothness={4}
               >
                 <meshBasicMaterial 
                   color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
                   transparent 
-                  opacity={node.opacity * (dimmed ? 0.05 : isSelected ? 0.6 : isInChain ? 0.4 : 0.2)}
+                  opacity={node.opacity * (isBlurred ? 0.05 : isSelected ? 0.6 : isInChain ? 0.4 : 0.2) * blurOpacity}
                 />
               </RoundedBox>
               
               {/* Пульсация для выбранных */}
-              {(isSelected || (isInChain && !isHovered)) && (
+              {(isSelected || (isInChain && !isHovered)) && !isBlurred && (
                 <RoundedBox
-                  args={[widgetWidth + 0.025, widgetHeight + 0.025, 0.001]}
-                  radius={cornerRadius + 0.006}
+                  args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.001]}
+                  radius={cornerRadius + 0.005}
                   smoothness={3}
                 >
                   <meshBasicMaterial 
@@ -1265,7 +1596,7 @@ export const FractalUniverse = ({
               
               {/* Фон виджета */}
               <RoundedBox
-                args={[widgetWidth, widgetHeight, 0.012]}
+                args={[widgetWidth, widgetHeight, 0.01]}
                 radius={cornerRadius}
                 smoothness={4}
                 onClick={(e) => {
@@ -1288,60 +1619,88 @@ export const FractalUniverse = ({
                 }}
               >
                 <meshBasicMaterial 
-                  color={dimmed ? '#080809' : '#12121A'}
+                  color={isBlurred ? '#060608' : '#12121A'}
                   transparent 
-                  opacity={node.opacity * 0.95}
+                  opacity={node.opacity * 0.95 * blurOpacity}
+                />
+              </RoundedBox>
+              
+              {/* Индикатор приоритета (цветная полоска сверху) */}
+              <RoundedBox
+                args={[widgetWidth - 0.01, 0.004, 0.011]}
+                radius={0.001}
+                smoothness={2}
+                position={[0, widgetHeight / 2 - 0.004, 0.001]}
+              >
+                <meshBasicMaterial 
+                  color={widget.priority === 'critical' ? '#FF6B9D' : 
+                         widget.priority === 'high' ? '#F39C12' : 
+                         widget.priority === 'medium' ? '#58C4DD' : '#4A4A4A'}
+                  transparent 
+                  opacity={node.opacity * 0.9 * blurOpacity}
                 />
               </RoundedBox>
               
               {/* Индикатор зоны */}
               <Sphere 
-                args={[0.006, 6, 6]} 
-                position={[widgetWidth / 2 - 0.012, widgetHeight / 2 - 0.012, 0.008]}
+                args={[0.005, 6, 6]} 
+                position={[widgetWidth / 2 - 0.01, widgetHeight / 2 - 0.01, 0.007]}
               >
-                <meshBasicMaterial color={zone.color} transparent opacity={node.opacity * 0.85} />
+                <meshBasicMaterial color={zone.color} transparent opacity={node.opacity * 0.85 * blurOpacity} />
               </Sphere>
               
               {/* Иконка */}
               <Text
-                position={[-0.032, 0, 0.008]}
-                fontSize={0.028}
+                position={[-widgetWidth / 4, 0.004, 0.007]}
+                fontSize={0.022 * priorityScale}
                 color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity * (dimmed ? 0.5 : 1)}
+                fillOpacity={node.opacity * blurOpacity}
               >
                 {widget.icon}
               </Text>
               
               {/* Название */}
               <Text
-                position={[0.022, 0.012, 0.008]}
-                fontSize={0.016}
+                position={[widgetWidth / 6, 0.008, 0.007]}
+                fontSize={0.012 * priorityScale}
                 color={isHovered || isSelected ? '#FFFFFF' : isInChain ? '#F0F0F2' : '#C0C0C5'}
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity * (dimmed ? 0.5 : 1)}
+                fillOpacity={node.opacity * blurOpacity}
               >
                 {widget.title}
               </Text>
               
               {/* Подзаголовок */}
               <Text
-                position={[0.022, -0.008, 0.008]}
-                fontSize={0.009}
+                position={[widgetWidth / 6, -0.006, 0.007]}
+                fontSize={0.007 * priorityScale}
                 color="#8E8E93"
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity * 0.7 * (dimmed ? 0.5 : 1)}
+                fillOpacity={node.opacity * 0.7 * blurOpacity}
               >
                 {widget.subtitle}
               </Text>
               
+              {/* Info Load Bar - полоска загрузки информации */}
+              {!isBlurred && (
+                <InfoLoadBar
+                  loadProgress={widget.infoLoad}
+                  width={widgetWidth}
+                  position={[0, -widgetHeight / 2 + 0.006, 0.007]}
+                  color={chainInfo?.color || zone.color}
+                  opacity={node.opacity * 0.8}
+                  time={time}
+                />
+              )}
+              
               {/* Hover/Select эффект */}
-              {(isHovered || isSelected) && (
+              {(isHovered || isSelected) && !isBlurred && (
                 <RoundedBox
-                  args={[widgetWidth + 0.006, widgetHeight + 0.006, 0.001]}
+                  args={[widgetWidth + 0.005, widgetHeight + 0.005, 0.001]}
                   radius={cornerRadius + 0.002}
                   smoothness={3}
                 >
@@ -1353,13 +1712,50 @@ export const FractalUniverse = ({
                 </RoundedBox>
               )}
             </group>
+            
+            {/* Мини-виджеты при наведении */}
+            {isHovered && connectedWidgets.length > 0 && (
+              <>
+                {connectedWidgets.map((connWidget, idx) => {
+                  if (!connWidget) return null;
+                  const targetIdx = widgets.findIndex(w => w.id === connWidget.id);
+                  return (
+                    <MiniWidget
+                      key={`mini-${connWidget.id}`}
+                      widget={connWidget}
+                      index={idx}
+                      total={connectedWidgets.length}
+                      parentPosition={node.position}
+                      opacity={node.opacity}
+                      time={time}
+                      chainColor={chainInfo?.color || zone.color}
+                      onClick={() => {
+                        if (targetIdx !== -1) {
+                          setHoveredNode(null);
+                          setSelectedNode(targetIdx);
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </>
+            )}
           </Billboard>
         );
       })}
 
+      {/* Хлебные крошки процессов */}
+      {isAnyActive && highlightData.chain && (
+        <ProcessBreadcrumbs
+          activeProcesses={highlightData.processes}
+          opacity={universeOpacity}
+          chainColor={highlightData.chain.color}
+        />
+      )}
+
       {/* Информация о цепи */}
       {highlightData.chain && (
-        <Billboard follow={true} position={[0, -0.42, 0]}>
+        <Billboard follow={true} position={[0, -0.46, 0]}>
           <Text
             fontSize={0.018}
             color={highlightData.chain.color}
