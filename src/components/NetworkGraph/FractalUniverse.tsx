@@ -800,8 +800,165 @@ const BrainZone = ({
   );
 };
 
-// Мини-виджет при наведении (появляется вокруг основного виджета)
-const MiniWidget = ({ 
+// iOS 26 стиль иконка приложения (для мини-процессов)
+const IOSAppIcon = ({
+  icon,
+  label,
+  position,
+  size,
+  color,
+  opacity,
+  time,
+  index,
+  isAnimated,
+  onClick
+}: {
+  icon: string;
+  label: string;
+  position: [number, number, number];
+  size: number;
+  color: string;
+  opacity: number;
+  time: number;
+  index: number;
+  isAnimated?: boolean;
+  onClick?: () => void;
+}) => {
+  const bounce = isAnimated ? 1 + Math.sin(time * 4 + index * 0.5) * 0.08 : 1;
+  const iconSize = size * 0.024;
+  
+  return (
+    <group 
+      position={position} 
+      scale={bounce}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
+      onPointerOver={() => { if (onClick) document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = 'default'; }}
+    >
+      {/* iOS rounded square background */}
+      <RoundedBox args={[iconSize, iconSize, iconSize * 0.3]} radius={iconSize * 0.22} smoothness={4}>
+        <meshBasicMaterial color={color} transparent opacity={opacity * 0.9} />
+      </RoundedBox>
+      
+      {/* Glassmorphism shine */}
+      <RoundedBox 
+        args={[iconSize * 0.9, iconSize * 0.35, iconSize * 0.31]} 
+        radius={iconSize * 0.15} 
+        smoothness={3}
+        position={[0, iconSize * 0.18, iconSize * 0.01]}
+      >
+        <meshBasicMaterial color="#FFFFFF" transparent opacity={opacity * 0.25} />
+      </RoundedBox>
+      
+      {/* Icon emoji */}
+      <Text
+        position={[0, 0, iconSize * 0.16]}
+        fontSize={iconSize * 0.55}
+        color="#FFFFFF"
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={opacity}
+      >
+        {icon}
+      </Text>
+      
+      {/* Label */}
+      <Text
+        position={[0, -iconSize * 0.7, 0]}
+        fontSize={iconSize * 0.22}
+        color="#FFFFFF"
+        anchorX="center"
+        fillOpacity={opacity * 0.8}
+      >
+        {label.slice(0, 6)}
+      </Text>
+    </group>
+  );
+};
+
+// iOS 26 мини-виджет (вложенный в основной виджет)
+const IOSMiniWidgetInner = ({
+  icon,
+  value,
+  label,
+  position,
+  size,
+  color,
+  opacity,
+  time
+}: {
+  icon: string;
+  value: string;
+  label: string;
+  position: [number, number, number];
+  size: number;
+  color: string;
+  opacity: number;
+  time: number;
+}) => {
+  const pulse = 1 + Math.sin(time * 2) * 0.03;
+  const w = size * 0.035;
+  const h = size * 0.025;
+  
+  return (
+    <group position={position} scale={pulse}>
+      {/* Mini widget background */}
+      <RoundedBox args={[w, h, 0.003]} radius={w * 0.15} smoothness={3}>
+        <meshBasicMaterial color="#1C1C1E" transparent opacity={opacity * 0.85} />
+      </RoundedBox>
+      
+      {/* Accent bar */}
+      <RoundedBox 
+        args={[w * 0.08, h * 0.7, 0.004]} 
+        radius={0.001} 
+        smoothness={2}
+        position={[-w * 0.42, 0, 0.001]}
+      >
+        <meshBasicMaterial color={color} transparent opacity={opacity * 0.9} />
+      </RoundedBox>
+      
+      {/* Icon */}
+      <Text
+        position={[-w * 0.25, 0, 0.003]}
+        fontSize={h * 0.5}
+        color={color}
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={opacity}
+      >
+        {icon}
+      </Text>
+      
+      {/* Value */}
+      <Text
+        position={[w * 0.1, h * 0.15, 0.003]}
+        fontSize={h * 0.35}
+        color="#FFFFFF"
+        anchorX="center"
+        fillOpacity={opacity}
+      >
+        {value}
+      </Text>
+      
+      {/* Label */}
+      <Text
+        position={[w * 0.1, -h * 0.2, 0.003]}
+        fontSize={h * 0.22}
+        color="#8E8E93"
+        anchorX="center"
+        fillOpacity={opacity * 0.7}
+      >
+        {label}
+      </Text>
+    </group>
+  );
+};
+
+// iOS 26 мини-виджет при наведении (появляется вокруг основного виджета)
+const IOSHoverMiniWidget = ({ 
   widget,
   index,
   total,
@@ -821,20 +978,24 @@ const MiniWidget = ({
   onClick: () => void;
 }) => {
   const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-  const radius = 0.08;
-  const appearProgress = Math.min(1, (time * 3) % 1 + index * 0.15);
+  const radius = 0.10;
+  const appearProgress = Math.min(1, time * 2 - index * 0.1);
+  const clampedProgress = Math.max(0, Math.min(1, appearProgress));
   
-  const x = parentPosition[0] + Math.cos(angle) * radius * appearProgress;
-  const y = parentPosition[1] + Math.sin(angle) * radius * appearProgress;
-  const z = parentPosition[2] + 0.02;
+  const x = parentPosition[0] + Math.cos(angle) * radius * clampedProgress;
+  const y = parentPosition[1] + Math.sin(angle) * radius * clampedProgress;
+  const z = parentPosition[2] + 0.025;
   
-  const pulse = 1 + Math.sin(time * 3 + index) * 0.1;
+  const bounce = 1 + Math.sin(time * 3 + index) * 0.06;
+  const iconSize = 0.032;
+  
+  if (clampedProgress <= 0) return null;
   
   return (
     <Billboard follow={true}>
       <group 
         position={[x, y, z]} 
-        scale={pulse * appearProgress}
+        scale={bounce * clampedProgress}
         onClick={(e) => {
           e.stopPropagation();
           onClick();
@@ -842,37 +1003,110 @@ const MiniWidget = ({
         onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = 'default'; }}
       >
-        {/* Фон мини-виджета */}
-        <RoundedBox args={[0.045, 0.035, 0.008]} radius={0.008} smoothness={3}>
-          <meshBasicMaterial color="#12121A" transparent opacity={opacity * 0.95 * appearProgress} />
+        {/* iOS rounded square background with glassmorphism */}
+        <RoundedBox args={[iconSize, iconSize, iconSize * 0.25]} radius={iconSize * 0.22} smoothness={4}>
+          <meshBasicMaterial color={chainColor} transparent opacity={opacity * 0.85 * clampedProgress} />
         </RoundedBox>
         
-        {/* Свечение */}
-        <RoundedBox args={[0.05, 0.04, 0.004]} radius={0.01} smoothness={2}>
-          <meshBasicMaterial color={chainColor} transparent opacity={opacity * 0.3 * appearProgress} />
+        {/* Shine effect */}
+        <RoundedBox 
+          args={[iconSize * 0.85, iconSize * 0.3, iconSize * 0.26]} 
+          radius={iconSize * 0.12} 
+          smoothness={3}
+          position={[0, iconSize * 0.2, iconSize * 0.01]}
+        >
+          <meshBasicMaterial color="#FFFFFF" transparent opacity={opacity * 0.3 * clampedProgress} />
         </RoundedBox>
         
-        {/* Иконка */}
+        {/* Outer glow */}
+        <RoundedBox args={[iconSize * 1.15, iconSize * 1.15, iconSize * 0.1]} radius={iconSize * 0.26} smoothness={3}>
+          <meshBasicMaterial color={chainColor} transparent opacity={opacity * 0.25 * clampedProgress} />
+        </RoundedBox>
+        
+        {/* Icon emoji */}
         <Text
-          position={[0, 0.002, 0.006]}
-          fontSize={0.018}
-          color={chainColor}
+          position={[0, 0, iconSize * 0.13]}
+          fontSize={iconSize * 0.5}
+          color="#FFFFFF"
           anchorX="center"
           anchorY="middle"
-          fillOpacity={opacity * appearProgress}
+          fillOpacity={opacity * clampedProgress}
         >
           {widget.icon}
         </Text>
         
-        {/* Название (маленькое) */}
+        {/* Label below */}
         <Text
-          position={[0, -0.012, 0.006]}
-          fontSize={0.006}
+          position={[0, -iconSize * 0.7, 0]}
+          fontSize={0.008}
           color="#FFFFFF"
           anchorX="center"
-          fillOpacity={opacity * 0.8 * appearProgress}
+          fillOpacity={opacity * 0.85 * clampedProgress}
         >
-          {widget.title}
+          {widget.title.slice(0, 7)}
+        </Text>
+      </group>
+    </Billboard>
+  );
+};
+
+// iOS 26 анимированная иконка процесса (движется по связи)
+const IOSProcessIcon = ({
+  icon,
+  curve,
+  time,
+  speed,
+  index,
+  color,
+  opacity
+}: {
+  icon: string;
+  curve: THREE.QuadraticBezierCurve3;
+  time: number;
+  speed: number;
+  index: number;
+  color: string;
+  opacity: number;
+}) => {
+  const t = ((time * speed + index * 0.33) % 1);
+  const pos = curve.getPoint(t);
+  const fadeOpacity = Math.sin(t * Math.PI) * opacity;
+  const iconSize = 0.018;
+  const bounce = 1 + Math.sin(time * 5 + index) * 0.1;
+  
+  return (
+    <Billboard follow={true}>
+      <group position={[pos.x, pos.y, pos.z]} scale={bounce}>
+        {/* iOS rounded square */}
+        <RoundedBox args={[iconSize, iconSize, iconSize * 0.3]} radius={iconSize * 0.22} smoothness={4}>
+          <meshBasicMaterial color={color} transparent opacity={fadeOpacity * 0.9} />
+        </RoundedBox>
+        
+        {/* Shine */}
+        <RoundedBox 
+          args={[iconSize * 0.8, iconSize * 0.28, iconSize * 0.31]} 
+          radius={iconSize * 0.1} 
+          smoothness={2}
+          position={[0, iconSize * 0.2, iconSize * 0.01]}
+        >
+          <meshBasicMaterial color="#FFFFFF" transparent opacity={fadeOpacity * 0.35} />
+        </RoundedBox>
+        
+        {/* Glow trail */}
+        <RoundedBox args={[iconSize * 1.3, iconSize * 1.3, iconSize * 0.1]} radius={iconSize * 0.3} smoothness={2}>
+          <meshBasicMaterial color={color} transparent opacity={fadeOpacity * 0.3} />
+        </RoundedBox>
+        
+        {/* Icon */}
+        <Text
+          position={[0, 0, iconSize * 0.16]}
+          fontSize={iconSize * 0.55}
+          color="#FFFFFF"
+          anchorX="center"
+          anchorY="middle"
+          fillOpacity={fadeOpacity}
+        >
+          {icon}
         </Text>
       </group>
     </Billboard>
@@ -1160,11 +1394,12 @@ const NeuralPathway = ({
   );
 };
 
-// Связь между виджетами
+// Связь между виджетами с iOS иконками процессов
 const WidgetConnection = ({ 
   start, 
   end, 
   processName,
+  processIcon,
   opacity, 
   palette,
   time,
@@ -1176,6 +1411,7 @@ const WidgetConnection = ({
   start: [number, number, number];
   end: [number, number, number];
   processName: string;
+  processIcon?: string;
   opacity: number;
   palette: typeof DEPTH_PALETTES[0];
   time: number;
@@ -1207,48 +1443,57 @@ const WidgetConnection = ({
   }, [start, end, index]);
 
   const dimmed = !isHighlighted && !isInActiveChain;
-  const speed = isHighlighted ? 0.6 : 0.3;
+  const speed = isHighlighted ? 0.5 : 0.25;
   const color = chainColor || palette.primary;
+  const iconCount = isHighlighted ? 3 : isInActiveChain ? 2 : 1;
+  
+  // Иконки для разных типов процессов
+  const icon = processIcon || ['⚡', '🔗', '💫', '✨', '🌟'][index % 5];
 
   return (
     <group>
+      {/* Линия связи */}
       <Line
         points={points}
         color={isHighlighted ? '#FFFFFF' : isInActiveChain ? color : palette.primary}
-        lineWidth={isHighlighted ? 2.5 : isInActiveChain ? 1.5 : 0.8}
+        lineWidth={isHighlighted ? 2.5 : isInActiveChain ? 1.5 : 0.6}
         transparent
-        opacity={opacity * (dimmed ? 0.1 : isHighlighted ? 1 : 0.6)}
+        opacity={opacity * (dimmed ? 0.08 : isHighlighted ? 0.9 : 0.5)}
       />
       
+      {/* Свечение при активности */}
       {(isHighlighted || isInActiveChain) && (
         <Line
           points={points}
           color={color}
-          lineWidth={isHighlighted ? 5 : 3}
+          lineWidth={isHighlighted ? 6 : 3}
           transparent
-          opacity={opacity * (isHighlighted ? 0.35 : 0.2)}
+          opacity={opacity * (isHighlighted ? 0.3 : 0.15)}
         />
       )}
       
+      {/* Название процесса */}
       {isHighlighted && (
-        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.025, midPoint.z]}>
-          <Text fontSize={0.01} color="#FFFFFF" anchorX="center" fillOpacity={opacity * 0.85}>
+        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.03, midPoint.z]}>
+          <Text fontSize={0.01} color="#FFFFFF" anchorX="center" fillOpacity={opacity * 0.9}>
             {processName}
           </Text>
         </Billboard>
       )}
       
-      {!dimmed && Array.from({ length: isHighlighted ? 2 : 1 }).map((_, i) => {
-        const t = ((time * speed + index * 0.15 + i * 0.5) % 1);
-        const pos = curve.getPoint(t);
-        const pOpacity = Math.sin(t * Math.PI) * opacity * (isHighlighted ? 1 : 0.5);
-        
-        return (
-          <Sphere key={i} args={[isHighlighted ? 0.01 : 0.006, 8, 8]} position={[pos.x, pos.y, pos.z]}>
-            <meshBasicMaterial color={isHighlighted ? '#FFFFFF' : color} transparent opacity={pOpacity} />
-          </Sphere>
-        );
-      })}
+      {/* iOS иконки-процессы вместо сфер */}
+      {!dimmed && Array.from({ length: iconCount }).map((_, i) => (
+        <IOSProcessIcon
+          key={i}
+          icon={icon}
+          curve={curve}
+          time={time}
+          speed={speed}
+          index={i}
+          color={isHighlighted ? '#FFFFFF' : color}
+          opacity={opacity * (isHighlighted ? 1 : 0.7)}
+        />
+      ))}
     </group>
   );
 };
@@ -1513,7 +1758,7 @@ export const FractalUniverse = ({
         </>
       )}
 
-      {/* Виджеты когнитивных процессов с Priority sizing и Info load bar */}
+      {/* iOS 26 стиль виджеты когнитивных процессов */}
       {animatedNodes.map((node) => {
         const widget = widgets[node.id];
         if (!widget) return null;
@@ -1525,80 +1770,83 @@ export const FractalUniverse = ({
         const isSelected = selectedNode === node.id;
         const isInChain = highlightData.widgetIds.includes(node.id);
         const isBlurred = isAnyActive && !isInChain;
-        const breathe = 1 + Math.sin(time * 0.4 + node.id * 1.5) * 0.012;
-        const hoverScale = isHovered ? 1.12 : isSelected ? 1.08 : isInChain ? 1.04 : 1;
+        const breathe = 1 + Math.sin(time * 0.4 + node.id * 1.5) * 0.015;
+        const hoverScale = isHovered ? 1.08 : isSelected ? 1.05 : isInChain ? 1.02 : 1;
         
-        // Priority sizing - размер зависит от приоритета
+        // Priority sizing - размер зависит от приоритета (iOS widget sizes)
         const priorityScale = PRIORITY_SCALES[widget.priority as Priority] || 1;
-        const baseWidth = 0.10;
-        const baseHeight = 0.06;
-        const widgetWidth = baseWidth * priorityScale;
-        const widgetHeight = baseHeight * priorityScale;
-        const cornerRadius = 0.012 * priorityScale;
+        // iOS 26 widget proportions (более квадратные)
+        const baseSize = 0.08;
+        const widgetSize = baseSize * priorityScale;
+        const cornerRadius = widgetSize * 0.22; // iOS standard corner radius ratio
         
         const chainInfo = WIDGET_CHAINS[widget.chain as keyof typeof WIDGET_CHAINS];
-        const blurOpacity = isBlurred ? 0.25 : 1;
+        const blurOpacity = isBlurred ? 0.2 : 1;
+        const widgetColor = chainInfo?.color || zone.color;
         
         // Связанные виджеты для мини-виджетов при наведении
         const connectedWidgets = isHovered && widget.connects 
           ? widget.connects.map(id => widgets.find(w => w.id === id)).filter(Boolean).slice(0, 5)
           : [];
         
+        // Вложенные мини-иконки (4 угла внутри виджета)
+        const innerIcons = widget.connects?.slice(0, 4) || [];
+        
         return (
           <Billboard key={`widget-${node.id}`} follow={true}>
             <group 
               position={node.position}
-              scale={node.scale * breathe * hoverScale * priorityScale}
+              scale={node.scale * breathe * hoverScale}
             >
               {/* Линия к зоне мозга */}
               <Line
                 points={[
-                  [0, 0, 0],
+                  [0, -widgetSize * 0.5, 0],
                   [
                     zone.position[0] - node.position[0],
                     zone.position[1] - node.position[1],
                     zone.position[2] - node.position[2]
                   ]
                 ]}
-                color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
-                lineWidth={isInChain ? 1 : 0.5}
+                color={widgetColor}
+                lineWidth={isInChain ? 1.5 : 0.5}
                 transparent
-                opacity={node.opacity * (isBlurred ? 0.08 : isInChain ? 0.6 : 0.25) * blurOpacity}
+                opacity={node.opacity * (isBlurred ? 0.05 : isInChain ? 0.5 : 0.2) * blurOpacity}
               />
-                
-              {/* Свечение */}
+              
+              {/* iOS 26 Outer glow */}
               <RoundedBox
-                args={[widgetWidth + 0.012, widgetHeight + 0.012, 0.002]}
-                radius={cornerRadius + 0.003}
+                args={[widgetSize * 1.12, widgetSize * 1.12, 0.002]}
+                radius={cornerRadius * 1.1}
                 smoothness={4}
               >
                 <meshBasicMaterial 
-                  color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
+                  color={widgetColor}
                   transparent 
-                  opacity={node.opacity * (isBlurred ? 0.05 : isSelected ? 0.6 : isInChain ? 0.4 : 0.2) * blurOpacity}
+                  opacity={node.opacity * (isSelected ? 0.5 : isHovered ? 0.4 : isInChain ? 0.25 : 0.1) * blurOpacity}
                 />
               </RoundedBox>
               
-              {/* Пульсация для выбранных */}
-              {(isSelected || (isInChain && !isHovered)) && !isBlurred && (
+              {/* Pulsing ring for selected */}
+              {(isSelected || isInChain) && !isBlurred && (
                 <RoundedBox
-                  args={[widgetWidth + 0.02, widgetHeight + 0.02, 0.001]}
-                  radius={cornerRadius + 0.005}
+                  args={[widgetSize * 1.2, widgetSize * 1.2, 0.001]}
+                  radius={cornerRadius * 1.15}
                   smoothness={3}
                 >
                   <meshBasicMaterial 
-                    color={chainInfo?.color || zone.color}
+                    color={widgetColor}
                     transparent 
-                    opacity={node.opacity * 0.25 * (1 + Math.sin(time * 2.5) * 0.4)}
+                    opacity={node.opacity * 0.2 * (1 + Math.sin(time * 2.5) * 0.4)}
                   />
                 </RoundedBox>
               )}
               
-              {/* Фон виджета */}
+              {/* iOS 26 Main widget background - glassmorphism */}
               <RoundedBox
-                args={[widgetWidth, widgetHeight, 0.01]}
+                args={[widgetSize, widgetSize, widgetSize * 0.15]}
                 radius={cornerRadius}
-                smoothness={4}
+                smoothness={5}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleNodeClick(node.id);
@@ -1619,41 +1867,47 @@ export const FractalUniverse = ({
                 }}
               >
                 <meshBasicMaterial 
-                  color={isBlurred ? '#060608' : '#12121A'}
+                  color={isBlurred ? '#0A0A0C' : '#1C1C1E'}
+                  transparent 
+                  opacity={node.opacity * 0.92 * blurOpacity}
+                />
+              </RoundedBox>
+              
+              {/* iOS shine effect (glassmorphism top highlight) */}
+              <RoundedBox
+                args={[widgetSize * 0.85, widgetSize * 0.25, widgetSize * 0.151]}
+                radius={cornerRadius * 0.6}
+                smoothness={3}
+                position={[0, widgetSize * 0.25, widgetSize * 0.01]}
+              >
+                <meshBasicMaterial 
+                  color="#FFFFFF"
+                  transparent 
+                  opacity={node.opacity * 0.08 * blurOpacity}
+                />
+              </RoundedBox>
+              
+              {/* Priority indicator (colored accent line) */}
+              <RoundedBox
+                args={[widgetSize * 0.7, widgetSize * 0.025, widgetSize * 0.152]}
+                radius={0.002}
+                smoothness={2}
+                position={[0, widgetSize * 0.42, 0.001]}
+              >
+                <meshBasicMaterial 
+                  color={widget.priority === 'critical' ? '#FF6B9D' : 
+                         widget.priority === 'high' ? '#F39C12' : 
+                         widget.priority === 'medium' ? '#58C4DD' : '#48484A'}
                   transparent 
                   opacity={node.opacity * 0.95 * blurOpacity}
                 />
               </RoundedBox>
               
-              {/* Индикатор приоритета (цветная полоска сверху) */}
-              <RoundedBox
-                args={[widgetWidth - 0.01, 0.004, 0.011]}
-                radius={0.001}
-                smoothness={2}
-                position={[0, widgetHeight / 2 - 0.004, 0.001]}
-              >
-                <meshBasicMaterial 
-                  color={widget.priority === 'critical' ? '#FF6B9D' : 
-                         widget.priority === 'high' ? '#F39C12' : 
-                         widget.priority === 'medium' ? '#58C4DD' : '#4A4A4A'}
-                  transparent 
-                  opacity={node.opacity * 0.9 * blurOpacity}
-                />
-              </RoundedBox>
-              
-              {/* Индикатор зоны */}
-              <Sphere 
-                args={[0.005, 6, 6]} 
-                position={[widgetWidth / 2 - 0.01, widgetHeight / 2 - 0.01, 0.007]}
-              >
-                <meshBasicMaterial color={zone.color} transparent opacity={node.opacity * 0.85 * blurOpacity} />
-              </Sphere>
-              
-              {/* Иконка */}
+              {/* Main icon (большая иконка в центре-верху) */}
               <Text
-                position={[-widgetWidth / 4, 0.004, 0.007]}
-                fontSize={0.022 * priorityScale}
-                color={isInChain ? (chainInfo?.color || zone.color) : zone.color}
+                position={[0, widgetSize * 0.12, widgetSize * 0.08]}
+                fontSize={widgetSize * 0.35}
+                color={widgetColor}
                 anchorX="center"
                 anchorY="middle"
                 fillOpacity={node.opacity * blurOpacity}
@@ -1661,66 +1915,115 @@ export const FractalUniverse = ({
                 {widget.icon}
               </Text>
               
-              {/* Название */}
+              {/* Title */}
               <Text
-                position={[widgetWidth / 6, 0.008, 0.007]}
-                fontSize={0.012 * priorityScale}
-                color={isHovered || isSelected ? '#FFFFFF' : isInChain ? '#F0F0F2' : '#C0C0C5'}
+                position={[0, -widgetSize * 0.15, widgetSize * 0.08]}
+                fontSize={widgetSize * 0.11}
+                color={isHovered || isSelected ? '#FFFFFF' : isInChain ? '#F0F0F2' : '#E5E5E7'}
                 anchorX="center"
                 anchorY="middle"
                 fillOpacity={node.opacity * blurOpacity}
+                font={undefined}
               >
                 {widget.title}
               </Text>
               
-              {/* Подзаголовок */}
+              {/* Subtitle */}
               <Text
-                position={[widgetWidth / 6, -0.006, 0.007]}
-                fontSize={0.007 * priorityScale}
+                position={[0, -widgetSize * 0.28, widgetSize * 0.08]}
+                fontSize={widgetSize * 0.07}
                 color="#8E8E93"
                 anchorX="center"
                 anchorY="middle"
-                fillOpacity={node.opacity * 0.7 * blurOpacity}
+                fillOpacity={node.opacity * 0.8 * blurOpacity}
               >
                 {widget.subtitle}
               </Text>
               
-              {/* Info Load Bar - полоска загрузки информации */}
-              {!isBlurred && (
-                <InfoLoadBar
-                  loadProgress={widget.infoLoad}
-                  width={widgetWidth}
-                  position={[0, -widgetHeight / 2 + 0.006, 0.007]}
-                  color={chainInfo?.color || zone.color}
-                  opacity={node.opacity * 0.8}
-                  time={time}
-                />
+              {/* Вложенные мини-иконки приложений (iOS app grid style) */}
+              {!isBlurred && innerIcons.length > 0 && (
+                <>
+                  {innerIcons.map((connId, idx) => {
+                    const connWidget = widgets.find(w => w.id === connId);
+                    if (!connWidget) return null;
+                    
+                    const gridX = (idx % 2 === 0 ? -1 : 1) * widgetSize * 0.28;
+                    const gridY = (idx < 2 ? 1 : -1) * widgetSize * 0.32 - widgetSize * 0.02;
+                    const miniSize = widgetSize * 0.18;
+                    
+                    return (
+                      <group key={`inner-${connId}`} position={[gridX, gridY, widgetSize * 0.08]}>
+                        {/* Mini app icon background */}
+                        <RoundedBox 
+                          args={[miniSize, miniSize, miniSize * 0.3]} 
+                          radius={miniSize * 0.22} 
+                          smoothness={3}
+                        >
+                          <meshBasicMaterial 
+                            color={widgetColor} 
+                            transparent 
+                            opacity={node.opacity * 0.4 * (1 + Math.sin(time * 2 + idx) * 0.2)} 
+                          />
+                        </RoundedBox>
+                        
+                        {/* Mini icon */}
+                        <Text
+                          position={[0, 0, miniSize * 0.16]}
+                          fontSize={miniSize * 0.6}
+                          color="#FFFFFF"
+                          anchorX="center"
+                          anchorY="middle"
+                          fillOpacity={node.opacity * 0.9}
+                        >
+                          {connWidget.icon}
+                        </Text>
+                      </group>
+                    );
+                  })}
+                </>
               )}
               
-              {/* Hover/Select эффект */}
-              {(isHovered || isSelected) && !isBlurred && (
-                <RoundedBox
-                  args={[widgetWidth + 0.005, widgetHeight + 0.005, 0.001]}
-                  radius={cornerRadius + 0.002}
-                  smoothness={3}
-                >
-                  <meshBasicMaterial 
-                    color={chainInfo?.color || zone.color}
-                    transparent 
-                    opacity={node.opacity * (isSelected ? 0.5 : 0.4)}
-                  />
-                </RoundedBox>
+              {/* Info Load Bar (iOS style progress) */}
+              {!isBlurred && (
+                <group position={[0, -widgetSize * 0.40, widgetSize * 0.08]}>
+                  {/* Bar background */}
+                  <RoundedBox 
+                    args={[widgetSize * 0.7, widgetSize * 0.03, 0.002]} 
+                    radius={widgetSize * 0.01} 
+                    smoothness={2}
+                  >
+                    <meshBasicMaterial color="#3A3A3C" transparent opacity={node.opacity * 0.7} />
+                  </RoundedBox>
+                  
+                  {/* Bar fill */}
+                  <RoundedBox 
+                    args={[widgetSize * 0.7 * widget.infoLoad, widgetSize * 0.03, 0.003]} 
+                    radius={widgetSize * 0.01} 
+                    smoothness={2}
+                    position={[-widgetSize * 0.35 * (1 - widget.infoLoad), 0, 0.001]}
+                  >
+                    <meshBasicMaterial color={widgetColor} transparent opacity={node.opacity * 0.9} />
+                  </RoundedBox>
+                </group>
               )}
+              
+              {/* Zone indicator dot */}
+              <Sphere 
+                args={[widgetSize * 0.04, 8, 8]} 
+                position={[widgetSize * 0.38, widgetSize * 0.38, widgetSize * 0.08]}
+              >
+                <meshBasicMaterial color={zone.color} transparent opacity={node.opacity * 0.9 * blurOpacity} />
+              </Sphere>
             </group>
             
-            {/* Мини-виджеты при наведении */}
+            {/* iOS 26 мини-виджеты при наведении */}
             {isHovered && connectedWidgets.length > 0 && (
               <>
                 {connectedWidgets.map((connWidget, idx) => {
                   if (!connWidget) return null;
                   const targetIdx = widgets.findIndex(w => w.id === connWidget.id);
                   return (
-                    <MiniWidget
+                    <IOSHoverMiniWidget
                       key={`mini-${connWidget.id}`}
                       widget={connWidget}
                       index={idx}
