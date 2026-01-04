@@ -1,6 +1,6 @@
-import { useRef, useState, useCallback, useMemo } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere, Stars, Text, Line, RoundedBox, Billboard } from '@react-three/drei';
+import { Text, RoundedBox, Billboard, QuadraticBezierLine } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface FractalUniverseProps {
@@ -12,627 +12,309 @@ interface FractalUniverseProps {
   isActive: boolean;
 }
 
-type Priority = 'critical' | 'high' | 'medium' | 'low';
-
-const PRIORITY_SCALES = {
-  critical: 1.25,
-  high: 1.1,
-  medium: 1.0,
-  low: 0.85,
-};
-
-// Логические стопки виджетов (как листья на ветвях)
-const WIDGET_STACKS = {
-  cognition: {
-    name: 'Познание',
-    color: '#FF6B9D',
-    position: [0.4, 0.5, 0.3] as [number, number, number],
-    branchAngle: 0.3,
-    widgets: [
-      { id: 'think', icon: '💭', title: 'Мысль', priority: 'critical' as Priority, infoLoad: 0.92 },
-      { id: 'analyze', icon: '🔍', title: 'Анализ', priority: 'high' as Priority, infoLoad: 0.85 },
-      { id: 'logic', icon: '🧩', title: 'Логика', priority: 'medium' as Priority, infoLoad: 0.72 },
-      { id: 'create', icon: '✨', title: 'Творч.', priority: 'medium' as Priority, infoLoad: 0.68 },
-    ],
-  },
-  memory: {
-    name: 'Память',
-    color: '#1ABC9C',
-    position: [-0.35, 0.55, 0.25] as [number, number, number],
-    branchAngle: -0.4,
-    widgets: [
-      { id: 'remember', icon: '📚', title: 'Память', priority: 'critical' as Priority, infoLoad: 0.95 },
-      { id: 'episodic', icon: '📖', title: 'Эпизод.', priority: 'high' as Priority, infoLoad: 0.78 },
-      { id: 'semantic', icon: '📝', title: 'Семант.', priority: 'medium' as Priority, infoLoad: 0.65 },
-    ],
-  },
-  emotion: {
-    name: 'Эмоции',
-    color: '#E91E63',
-    position: [0.5, 0.2, -0.35] as [number, number, number],
-    branchAngle: 0.6,
-    widgets: [
-      { id: 'feel', icon: '❤️', title: 'Чувства', priority: 'critical' as Priority, infoLoad: 0.88 },
-      { id: 'joy', icon: '😊', title: 'Радость', priority: 'medium' as Priority, infoLoad: 0.62 },
-      { id: 'fear', icon: '😰', title: 'Страх', priority: 'medium' as Priority, infoLoad: 0.55 },
-      { id: 'love', icon: '💕', title: 'Любовь', priority: 'high' as Priority, infoLoad: 0.75 },
-    ],
-  },
-  perception: {
-    name: 'Восприятие',
-    color: '#58C4DD',
-    position: [-0.45, 0.3, -0.3] as [number, number, number],
-    branchAngle: -0.5,
-    widgets: [
-      { id: 'see', icon: '👁️', title: 'Зрение', priority: 'high' as Priority, infoLoad: 0.82 },
-      { id: 'hear', icon: '👂', title: 'Слух', priority: 'medium' as Priority, infoLoad: 0.68 },
-      { id: 'touch', icon: '✋', title: 'Осязан.', priority: 'low' as Priority, infoLoad: 0.45 },
-    ],
-  },
-  action: {
-    name: 'Действие',
-    color: '#F39C12',
-    position: [0.3, 0.65, -0.15] as [number, number, number],
-    branchAngle: 0.2,
-    widgets: [
-      { id: 'move', icon: '⚡', title: 'Движен.', priority: 'high' as Priority, infoLoad: 0.78 },
-      { id: 'speak', icon: '🗣️', title: 'Речь', priority: 'high' as Priority, infoLoad: 0.85 },
-      { id: 'habit', icon: '🔄', title: 'Привыч.', priority: 'low' as Priority, infoLoad: 0.48 },
-    ],
-  },
-  attention: {
-    name: 'Внимание',
-    color: '#9B59B6',
-    position: [-0.25, 0.7, 0.35] as [number, number, number],
-    branchAngle: -0.25,
-    widgets: [
-      { id: 'focus', icon: '🎯', title: 'Фокус', priority: 'critical' as Priority, infoLoad: 0.9 },
-      { id: 'filter', icon: '🔬', title: 'Фильтр', priority: 'medium' as Priority, infoLoad: 0.58 },
-    ],
-  },
-  social: {
-    name: 'Социум',
-    color: '#FF69B4',
-    position: [0.15, 0.4, 0.45] as [number, number, number],
-    branchAngle: 0.15,
-    widgets: [
-      { id: 'empathy', icon: '🤝', title: 'Эмпатия', priority: 'high' as Priority, infoLoad: 0.8 },
-      { id: 'faces', icon: '😀', title: 'Лица', priority: 'medium' as Priority, infoLoad: 0.65 },
-      { id: 'mirror', icon: '🪞', title: 'Зеркало', priority: 'low' as Priority, infoLoad: 0.42 },
-    ],
-  },
-  self: {
-    name: 'Самость',
-    color: '#FFD700',
-    position: [0, 0.85, 0] as [number, number, number],
-    branchAngle: 0,
-    widgets: [
-      { id: 'conscious', icon: '🌟', title: 'Сознание', priority: 'critical' as Priority, infoLoad: 1.0 },
-      { id: 'self', icon: '🔮', title: 'Я', priority: 'critical' as Priority, infoLoad: 0.95 },
-    ],
-  },
-};
-
-// Связи между стопками (ветви между группами)
-const STACK_CONNECTIONS = [
-  { from: 'self', to: 'cognition', process: 'Осознание мысли' },
-  { from: 'self', to: 'emotion', process: 'Осознание чувств' },
-  { from: 'self', to: 'attention', process: 'Направление внимания' },
-  { from: 'cognition', to: 'memory', process: 'Сохранение' },
-  { from: 'cognition', to: 'action', process: 'Решение → действие' },
-  { from: 'emotion', to: 'memory', process: 'Эмоц. память' },
-  { from: 'emotion', to: 'social', process: 'Эмпатия' },
-  { from: 'perception', to: 'cognition', process: 'Обработка' },
-  { from: 'perception', to: 'emotion', process: 'Реакция' },
-  { from: 'attention', to: 'perception', process: 'Фильтрация' },
-  { from: 'attention', to: 'cognition', process: 'Концентрация' },
-  { from: 'social', to: 'emotion', process: 'Резонанс' },
-  { from: 'action', to: 'perception', process: 'Обратная связь' },
-];
-
-const DEPTH_PALETTES = [
-  { primary: '#00FFAA', secondary: '#00AA77', glow: '#00FFCC', trunk: '#4A2800' },
-  { primary: '#FF6B9D', secondary: '#CC4477', glow: '#FF8FB8', trunk: '#3D1A00' },
-  { primary: '#58C4DD', secondary: '#3399BB', glow: '#78D4ED', trunk: '#2A1A00' },
-];
-
-// Биолюминесцентная частица (как в Аватаре)
-const BioParticle = ({ 
-  position, 
-  color, 
-  opacity, 
-  time, 
-  index 
-}: { 
-  position: [number, number, number]; 
-  color: string; 
-  opacity: number; 
-  time: number; 
-  index: number;
-}) => {
-  const floatY = Math.sin(time * 0.8 + index * 2) * 0.03;
-  const floatX = Math.cos(time * 0.5 + index * 1.5) * 0.02;
-  const pulse = 0.5 + Math.sin(time * 2 + index * 3) * 0.5;
+// Виджеты для изометрического вида
+const WIDGETS = [
+  // Центральный виджет
+  { id: 'focus', x: 0, y: 0, z: 0, width: 2.2, height: 1.4, type: 'main', title: 'Стратегическое планирование Q3', subtitle: 'Долгосрочное планирование целей команды', icon: '🎯', color: 'rgba(255,255,255,0.95)', gradient: ['#FFFFFF', '#F0F4F8'] },
   
-  return (
-    <Sphere 
-      args={[0.004 + pulse * 0.002, 6, 6]} 
-      position={[position[0] + floatX, position[1] + floatY, position[2]]}
-    >
-      <meshBasicMaterial 
-        color={color} 
-        transparent 
-        opacity={opacity * pulse * 0.8} 
-      />
-    </Sphere>
-  );
-};
+  // Верхний левый кластер
+  { id: 'calendar', x: -3.5, y: 1.8, z: 0, width: 1.3, height: 1.3, type: 'calendar', title: 'Calendar', icon: '📅', color: '#FFFFFF', gradient: ['#FF6B6B', '#EE5A5A'] },
+  { id: 'reminder', x: -4.8, y: 0.8, z: 0, width: 1, height: 0.7, type: 'small', title: 'Reminder', icon: '🔔', color: '#FFFFFF', gradient: ['#FFB347', '#FFA500'] },
+  { id: 'notes', x: -5.2, y: -0.3, z: 0, width: 0.9, height: 0.9, type: 'small', title: 'Notes', icon: '📝', color: '#FFFFFF', gradient: ['#87CEEB', '#6BB3D9'] },
+  
+  // Верхний правый кластер  
+  { id: 'stats', x: 2.8, y: 2.2, z: 0, width: 1.4, height: 1, type: 'chart', title: 'Analytics', icon: '📊', color: '#FFFFFF', gradient: ['#4ECDC4', '#45B7AA'] },
+  { id: 'progress', x: 4.2, y: 1.5, z: 0, width: 1.1, height: 1.1, type: 'progress', title: 'Progress', icon: '📈', color: '#FFFFFF', gradient: ['#96CEB4', '#7AB89A'] },
+  { id: 'creative', x: 4.5, y: 0.3, z: 0, width: 1.2, height: 0.9, type: 'gradient', title: 'Creative pad', icon: '🎨', color: '#FFFFFF', gradient: ['#FF6B9D', '#C44569'] },
+  
+  // Средний левый кластер
+  { id: 'tasks', x: -3, y: 0.2, z: 0, width: 1.3, height: 1, type: 'list', title: 'Tasks', subtitle: 'Daily goals', icon: '✅', color: '#FFFFFF', gradient: ['#FFEAA7', '#FDCB6E'] },
+  { id: 'research', x: -3.8, y: -1.2, z: 0, width: 1.2, height: 1.1, type: 'list', title: 'Research', icon: '🔍', color: '#FFFFFF', gradient: ['#DFE6E9', '#B2BEC3'] },
+  
+  // Средний правый кластер
+  { id: 'content', x: 3.2, y: -0.5, z: 0, width: 1.1, height: 0.9, type: 'small', title: 'Content ideas', icon: '💡', color: '#FFFFFF', gradient: ['#C9A227', '#A68523'] },
+  { id: 'search', x: 4.8, y: -0.8, z: 0, width: 1.3, height: 1.2, type: 'list', title: 'Search', icon: '🔎', color: '#FFFFFF', gradient: ['#FFFFFF', '#F8F9FA'] },
+  
+  // Нижний кластер
+  { id: 'code', x: 1.2, y: -2, z: 0, width: 1.6, height: 1.2, type: 'code', title: 'Code', icon: '💻', color: '#1E1E1E', gradient: ['#2D2D2D', '#1E1E1E'] },
+  { id: 'snippets', x: -1, y: -2.3, z: 0, width: 1.2, height: 0.9, type: 'dark', title: 'Snippets', icon: '📋', color: '#2D2D2D', gradient: ['#3D3D3D', '#2D2D2D'] },
+  { id: 'researchNotes', x: 3.5, y: -2, z: 0, width: 1.4, height: 1.1, type: 'notes', title: 'Research notes', icon: '📒', color: '#FFFFFF', gradient: ['#FFFACD', '#FFF8B3'] },
+  
+  // Дополнительные виджеты
+  { id: 'profile', x: -4.5, y: -2.2, z: 0, width: 0.7, height: 0.7, type: 'avatar', title: 'Profile', icon: '👤', color: '#FFFFFF', gradient: ['#E8D5B7', '#D4C4A8'] },
+  { id: 'settings', x: -2.5, y: -1.5, z: 0, width: 0.8, height: 0.8, type: 'small', title: 'Settings', icon: '⚙️', color: '#FFFFFF', gradient: ['#A8E6CF', '#7DD3B5'] },
+  { id: 'stickies', x: 5.2, y: -2.2, z: 0, width: 1, height: 0.8, type: 'sticky', title: 'Quick notes', icon: '📌', color: '#FFFACD', gradient: ['#FFFACD', '#FFF59D'] },
+];
 
-// Ствол дерева (Avatar style - органический, светящийся)
-const TreeTrunk = ({ opacity, time, palette }: { opacity: number; time: number; palette: typeof DEPTH_PALETTES[0] }) => {
-  // Главный ствол - органическая кривая
-  const mainTrunk = useMemo(() => {
-    const points: THREE.Vector3[] = [];
-    for (let i = 0; i <= 40; i++) {
-      const t = i / 40;
-      const y = -0.6 + t * 1.2;
-      // Органический изгиб ствола
-      const twist = Math.sin(t * Math.PI * 2) * 0.03 * (1 - t);
-      const x = twist + Math.sin(t * 5) * 0.01;
-      const z = Math.cos(t * 3) * 0.02 * (1 - t * 0.5);
-      points.push(new THREE.Vector3(x, y, z));
-    }
-    return points;
-  }, []);
+// Связи между виджетами (стрелки)
+const CONNECTIONS = [
+  // От центра к ключевым виджетам
+  { from: 'focus', to: 'calendar', color: '#00BFA5' },
+  { from: 'focus', to: 'stats', color: '#00BFA5' },
+  { from: 'focus', to: 'code', color: '#7C4DFF' },
+  { from: 'focus', to: 'tasks', color: '#00BFA5' },
+  { from: 'focus', to: 'content', color: '#FFB300' },
+  
+  // Между виджетами
+  { from: 'calendar', to: 'reminder', color: '#00BFA5' },
+  { from: 'calendar', to: 'tasks', color: '#00BFA5' },
+  { from: 'stats', to: 'progress', color: '#00BFA5' },
+  { from: 'stats', to: 'creative', color: '#FF6B9D' },
+  { from: 'tasks', to: 'research', color: '#00BFA5' },
+  { from: 'research', to: 'notes', color: '#00BFA5' },
+  { from: 'code', to: 'snippets', color: '#7C4DFF' },
+  { from: 'code', to: 'researchNotes', color: '#7C4DFF' },
+  { from: 'content', to: 'search', color: '#FFB300' },
+  { from: 'search', to: 'stickies', color: '#FFB300' },
+  { from: 'creative', to: 'search', color: '#FF6B9D' },
+  { from: 'snippets', to: 'profile', color: '#7C4DFF' },
+  { from: 'research', to: 'settings', color: '#00BFA5' },
+];
 
-  // Внутренние светящиеся каналы
-  const innerGlow = useMemo(() => {
-    const points: THREE.Vector3[] = [];
-    for (let i = 0; i <= 30; i++) {
-      const t = i / 30;
-      const y = -0.5 + t * 1.1;
-      const x = Math.sin(t * Math.PI * 3 + 0.5) * 0.015;
-      const z = Math.cos(t * Math.PI * 2) * 0.01;
-      points.push(new THREE.Vector3(x, y, z));
-    }
-    return points;
-  }, []);
-
-  const pulse = 1 + Math.sin(time * 0.5) * 0.1;
-
-  return (
-    <group>
-      {/* Внешняя кора */}
-      <Line points={mainTrunk} color={palette.trunk} lineWidth={18} transparent opacity={opacity * 0.7} />
-      <Line points={mainTrunk} color="#2D1600" lineWidth={14} transparent opacity={opacity * 0.5} />
-      
-      {/* Биолюминесцентные каналы */}
-      <Line points={innerGlow} color={palette.glow} lineWidth={4} transparent opacity={opacity * 0.6 * pulse} />
-      <Line points={innerGlow} color={palette.primary} lineWidth={8} transparent opacity={opacity * 0.2 * pulse} />
-      
-      {/* Корни */}
-      {[
-        { angle: -0.5, length: 0.25 },
-        { angle: 0.5, length: 0.2 },
-        { angle: -0.2, length: 0.3 },
-        { angle: 0.3, length: 0.22 },
-        { angle: 0, length: 0.18 },
-      ].map((root, i) => {
-        const rootPoints = [
-          new THREE.Vector3(0, -0.55, 0),
-          new THREE.Vector3(
-            Math.sin(root.angle) * root.length,
-            -0.65 - Math.abs(Math.sin(root.angle)) * 0.1,
-            Math.cos(root.angle) * root.length * 0.4
-          ),
-        ];
-        return (
-          <group key={i}>
-            <Line points={rootPoints} color={palette.trunk} lineWidth={6 - i * 0.5} transparent opacity={opacity * 0.5} />
-            <Line points={rootPoints} color={palette.glow} lineWidth={2} transparent opacity={opacity * 0.15 * pulse} />
-          </group>
-        );
-      })}
-    </group>
-  );
-};
-
-// Ветвь к стопке виджетов (органическая 3D кривая)
-const Branch = ({ 
-  start, 
-  end, 
-  color, 
-  opacity, 
-  time, 
-  index, 
-  isHighlighted,
-  isActive,
-  processName
-}: { 
-  start: [number, number, number];
-  end: [number, number, number];
-  color: string;
-  opacity: number;
-  time: number;
-  index: number;
-  isHighlighted: boolean;
-  isActive: boolean;
-  processName?: string;
-}) => {
-  const { points, midPoint } = useMemo(() => {
-    const startVec = new THREE.Vector3(...start);
-    const endVec = new THREE.Vector3(...end);
-    
-    // Множественные контрольные точки для органичной формы
-    const distance = startVec.distanceTo(endVec);
-    const segments = 20;
-    const pts: THREE.Vector3[] = [];
-    
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const p = startVec.clone().lerp(endVec, t);
-      
-      // Органические изгибы
-      const wobble = Math.sin(t * Math.PI) * distance * 0.15;
-      const twist = Math.sin(t * Math.PI * 2 + index) * 0.05;
-      
-      p.x += wobble * Math.cos(index * 1.5) + twist;
-      p.y += Math.sin(t * Math.PI) * 0.08;
-      p.z += wobble * Math.sin(index * 1.5) + twist * 0.5;
-      
-      pts.push(p);
-    }
-    
-    const mid = pts[Math.floor(pts.length / 2)];
-    return { points: pts, midPoint: mid };
-  }, [start, end, index]);
-
-  const pulse = 1 + Math.sin(time * 1.5 + index) * 0.3;
-  const dimmed = !isHighlighted && !isActive;
-
-  return (
-    <group>
-      {/* Основная ветвь */}
-      <Line
-        points={points}
-        color={isHighlighted ? '#FFFFFF' : color}
-        lineWidth={isHighlighted ? 5 : isActive ? 3 : 1.5}
-        transparent
-        opacity={opacity * (dimmed ? 0.15 : isHighlighted ? 0.95 : 0.55)}
-      />
-      
-      {/* Биолюминесцентное свечение */}
-      {(isHighlighted || isActive) && (
-        <Line
-          points={points}
-          color={color}
-          lineWidth={isHighlighted ? 14 : 8}
-          transparent
-          opacity={opacity * (isHighlighted ? 0.4 : 0.2) * pulse}
-        />
-      )}
-      
-      {/* Световые импульсы вдоль ветви */}
-      {!dimmed && Array.from({ length: isHighlighted ? 4 : 2 }).map((_, i) => {
-        const t = ((time * 0.3 + i * 0.25 + index * 0.1) % 1);
-        const pointIdx = Math.floor(t * (points.length - 1));
-        const pos = points[Math.min(pointIdx, points.length - 1)];
-        const fadeOpacity = Math.sin(t * Math.PI) * opacity;
-        
-        return (
-          <Sphere key={i} args={[isHighlighted ? 0.015 : 0.008, 8, 8]} position={[pos.x, pos.y, pos.z]}>
-            <meshBasicMaterial 
-              color={isHighlighted ? '#FFFFFF' : color}
-              transparent 
-              opacity={fadeOpacity * (isHighlighted ? 1 : 0.6)}
-            />
-          </Sphere>
-        );
-      })}
-      
-      {/* Название процесса */}
-      {isHighlighted && processName && (
-        <Billboard follow={true} position={[midPoint.x, midPoint.y + 0.04, midPoint.z]}>
-          <Text fontSize={0.018} color="#FFFFFF" anchorX="center" fillOpacity={opacity * 0.95}>
-            {processName}
-          </Text>
-        </Billboard>
-      )}
-    </group>
-  );
-};
-
-// Виджет-лист (iOS 26 стиль)
-const LeafWidget = ({
+// iOS виджет компонент
+const IOSWidget = ({
   widget,
-  position,
-  stackColor,
   opacity,
   time,
   isHovered,
   isSelected,
-  isInActiveStack,
-  isBlurred,
   onHover,
   onSelect,
-  onDiveIn,
-  index
 }: {
-  widget: { id: string; icon: string; title: string; priority: Priority; infoLoad: number };
-  position: [number, number, number];
-  stackColor: string;
+  widget: typeof WIDGETS[0];
   opacity: number;
   time: number;
   isHovered: boolean;
   isSelected: boolean;
-  isInActiveStack: boolean;
-  isBlurred: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
-  onDiveIn: (pos: [number, number, number]) => void;
-  index: number;
 }) => {
-  // Анимация покачивания листа
-  const sway = Math.sin(time * 0.8 + index * 1.2) * 0.02;
-  const breathe = 1 + Math.sin(time * 0.6 + index * 0.8) * 0.03;
-  const hoverScale = isHovered ? 1.15 : isSelected ? 1.1 : isInActiveStack ? 1.04 : 1;
+  const scale = isHovered ? 1.05 : isSelected ? 1.03 : 1;
+  const lift = isHovered ? 0.15 : isSelected ? 0.1 : 0;
+  const cornerRadius = Math.min(widget.width, widget.height) * 0.15;
   
-  const priorityScale = PRIORITY_SCALES[widget.priority] || 1;
-  const baseSize = 0.065;
-  const widgetSize = baseSize * priorityScale;
-  const cornerRadius = widgetSize * 0.25;
-  
-  const blurOpacity = isBlurred ? 0.18 : 1;
+  // Изометрическая проекция
+  const isoX = widget.x * 0.8;
+  const isoY = widget.y * 0.6 + lift;
+  const isoZ = widget.x * 0.2 + widget.y * 0.3;
+
+  const isDark = widget.type === 'code' || widget.type === 'dark';
+  const textColor = isDark ? '#FFFFFF' : '#1A1A1A';
+  const subtitleColor = isDark ? '#888888' : '#666666';
 
   return (
-    <Billboard follow={true}>
-      <group 
-        position={[position[0] + sway, position[1], position[2] + sway * 0.5]}
-        scale={breathe * hoverScale}
+    <group position={[isoX, isoY, isoZ]} scale={scale}>
+      {/* Тень */}
+      <RoundedBox
+        args={[widget.width, widget.height, 0.02]}
+        radius={cornerRadius}
+        smoothness={4}
+        position={[0.08, -0.08, -0.1]}
       >
-        {/* Биолюминесцентное свечение */}
-        <RoundedBox
-          args={[widgetSize * 1.3, widgetSize * 1.3, 0.002]}
-          radius={cornerRadius * 1.3}
-          smoothness={4}
-        >
-          <meshBasicMaterial 
-            color={stackColor}
-            transparent 
-            opacity={opacity * (isSelected ? 0.5 : isHovered ? 0.4 : isInActiveStack ? 0.25 : 0.1) * blurOpacity}
-          />
-        </RoundedBox>
-        
-        {/* Пульсирующий ореол */}
-        {(isSelected || isInActiveStack) && !isBlurred && (
-          <RoundedBox
-            args={[widgetSize * 1.45, widgetSize * 1.45, 0.001]}
-            radius={cornerRadius * 1.4}
-            smoothness={3}
-          >
-            <meshBasicMaterial 
-              color={stackColor}
-              transparent 
-              opacity={opacity * 0.2 * (1 + Math.sin(time * 3) * 0.5)}
-            />
-          </RoundedBox>
-        )}
-        
-        {/* Основной фон виджета */}
-        <RoundedBox
-          args={[widgetSize, widgetSize, widgetSize * 0.2]}
-          radius={cornerRadius}
-          smoothness={5}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(widget.id);
-          }}
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            onDiveIn(position);
-          }}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            onHover(widget.id);
-            document.body.style.cursor = 'pointer';
-          }}
-          onPointerOut={(e) => {
-            e.stopPropagation();
-            onHover(null);
-            document.body.style.cursor = 'default';
-          }}
-        >
-          <meshBasicMaterial 
-            color={isBlurred ? '#0A0A0C' : '#1A1A1C'}
-            transparent 
-            opacity={opacity * 0.92 * blurOpacity}
-          />
-        </RoundedBox>
-        
-        {/* Стеклянный блик */}
-        <RoundedBox
-          args={[widgetSize * 0.8, widgetSize * 0.2, widgetSize * 0.21]}
-          radius={cornerRadius * 0.4}
-          smoothness={3}
-          position={[0, widgetSize * 0.28, widgetSize * 0.01]}
-        >
-          <meshBasicMaterial 
-            color="#FFFFFF"
-            transparent 
-            opacity={opacity * 0.12 * blurOpacity}
-          />
-        </RoundedBox>
-        
-        {/* Приоритетная линия */}
-        <RoundedBox
-          args={[widgetSize * 0.6, widgetSize * 0.02, widgetSize * 0.21]}
-          radius={0.002}
-          smoothness={2}
-          position={[0, widgetSize * 0.44, 0]}
-        >
-          <meshBasicMaterial 
-            color={widget.priority === 'critical' ? '#FF6B9D' : 
-                   widget.priority === 'high' ? '#F39C12' : 
-                   widget.priority === 'medium' ? '#58C4DD' : '#48484A'}
-            transparent 
-            opacity={opacity * 0.95 * blurOpacity}
-          />
-        </RoundedBox>
-        
+        <meshBasicMaterial color="#000000" transparent opacity={opacity * 0.15} />
+      </RoundedBox>
+      
+      {/* Фон виджета с градиентом */}
+      <RoundedBox
+        args={[widget.width, widget.height, 0.08]}
+        radius={cornerRadius}
+        smoothness={4}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(widget.id);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHover(widget.id);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          onHover(null);
+          document.body.style.cursor = 'default';
+        }}
+      >
+        <meshBasicMaterial 
+          color={widget.gradient[0]} 
+          transparent 
+          opacity={opacity * 0.98}
+        />
+      </RoundedBox>
+      
+      {/* Блик сверху для глубины */}
+      <RoundedBox
+        args={[widget.width * 0.9, widget.height * 0.15, 0.09]}
+        radius={cornerRadius * 0.5}
+        smoothness={3}
+        position={[0, widget.height * 0.35, 0.01]}
+      >
+        <meshBasicMaterial color="#FFFFFF" transparent opacity={opacity * (isDark ? 0.05 : 0.25)} />
+      </RoundedBox>
+
+      {/* Контент виджета */}
+      <Billboard follow={true} position={[0, 0, 0.1]}>
         {/* Иконка */}
         <Text
-          position={[0, widgetSize * 0.08, widgetSize * 0.11]}
-          fontSize={widgetSize * 0.42}
-          color={stackColor}
+          position={[0, widget.height * 0.15, 0]}
+          fontSize={Math.min(widget.width, widget.height) * 0.25}
           anchorX="center"
           anchorY="middle"
-          fillOpacity={opacity * blurOpacity}
+          fillOpacity={opacity}
         >
           {widget.icon}
         </Text>
         
-        {/* Название */}
+        {/* Заголовок */}
         <Text
-          position={[0, -widgetSize * 0.22, widgetSize * 0.11]}
-          fontSize={widgetSize * 0.13}
-          color={isHovered || isSelected ? '#FFFFFF' : '#E5E5E7'}
+          position={[0, -widget.height * 0.15, 0]}
+          fontSize={Math.min(widget.width, widget.height) * 0.1}
+          color={textColor}
           anchorX="center"
           anchorY="middle"
-          fillOpacity={opacity * blurOpacity}
+          fillOpacity={opacity * 0.9}
+          maxWidth={widget.width * 0.85}
         >
           {widget.title}
         </Text>
         
-        {/* Прогресс-бар */}
-        {!isBlurred && (
-          <group position={[0, -widgetSize * 0.38, widgetSize * 0.11]}>
-            <RoundedBox 
-              args={[widgetSize * 0.65, widgetSize * 0.025, 0.002]} 
-              radius={widgetSize * 0.008} 
-              smoothness={2}
-            >
-              <meshBasicMaterial color="#3A3A3C" transparent opacity={opacity * 0.6} />
-            </RoundedBox>
-            <RoundedBox 
-              args={[widgetSize * 0.65 * widget.infoLoad, widgetSize * 0.025, 0.003]} 
-              radius={widgetSize * 0.008} 
-              smoothness={2}
-              position={[-widgetSize * 0.325 * (1 - widget.infoLoad), 0, 0.001]}
-            >
-              <meshBasicMaterial color={stackColor} transparent opacity={opacity * 0.85} />
-            </RoundedBox>
-          </group>
+        {/* Подзаголовок */}
+        {widget.subtitle && (
+          <Text
+            position={[0, -widget.height * 0.32, 0]}
+            fontSize={Math.min(widget.width, widget.height) * 0.06}
+            color={subtitleColor}
+            anchorX="center"
+            anchorY="middle"
+            fillOpacity={opacity * 0.7}
+            maxWidth={widget.width * 0.8}
+          >
+            {widget.subtitle}
+          </Text>
         )}
-      </group>
-    </Billboard>
+      </Billboard>
+
+      {/* Дополнительные элементы для разных типов */}
+      {widget.type === 'chart' && (
+        <group position={[0, -widget.height * 0.05, 0.05]}>
+          {[0, 1, 2, 3].map((i) => (
+            <RoundedBox
+              key={i}
+              args={[0.15, 0.1 + Math.random() * 0.3, 0.02]}
+              radius={0.02}
+              position={[-0.3 + i * 0.2, -0.1, 0]}
+            >
+              <meshBasicMaterial 
+                color={['#4ECDC4', '#45B7AA', '#38A89D', '#2B9A8E'][i]} 
+                transparent 
+                opacity={opacity * 0.8}
+              />
+            </RoundedBox>
+          ))}
+        </group>
+      )}
+
+      {widget.type === 'progress' && (
+        <group position={[0, -0.1, 0.05]}>
+          <RoundedBox args={[0.8, 0.1, 0.02]} radius={0.02} position={[0, 0, 0]}>
+            <meshBasicMaterial color="#E0E0E0" transparent opacity={opacity * 0.6} />
+          </RoundedBox>
+          <RoundedBox args={[0.5, 0.1, 0.03]} radius={0.02} position={[-0.15, 0, 0.01]}>
+            <meshBasicMaterial color="#4ECDC4" transparent opacity={opacity * 0.9} />
+          </RoundedBox>
+        </group>
+      )}
+
+      {/* Свечение при выделении */}
+      {(isHovered || isSelected) && (
+        <RoundedBox
+          args={[widget.width + 0.15, widget.height + 0.15, 0.01]}
+          radius={cornerRadius + 0.03}
+          smoothness={3}
+          position={[0, 0, -0.05]}
+        >
+          <meshBasicMaterial 
+            color={widget.gradient[0]} 
+            transparent 
+            opacity={opacity * (1 + Math.sin(time * 4) * 0.3) * 0.3}
+          />
+        </RoundedBox>
+      )}
+    </group>
   );
 };
 
-// Стопка виджетов (группа листьев на конце ветви)
-const WidgetStack = ({
-  stack,
-  stackKey,
+// Изогнутая стрелка-связь
+const CurvedArrow = ({
+  fromWidget,
+  toWidget,
+  color,
   opacity,
   time,
-  hoveredWidget,
-  selectedWidget,
-  activeStackKey,
-  onHoverWidget,
-  onSelectWidget,
-  onDiveIn,
-  palette
+  isHighlighted,
 }: {
-  stack: typeof WIDGET_STACKS[keyof typeof WIDGET_STACKS];
-  stackKey: string;
+  fromWidget: typeof WIDGETS[0];
+  toWidget: typeof WIDGETS[0];
+  color: string;
   opacity: number;
   time: number;
-  hoveredWidget: string | null;
-  selectedWidget: string | null;
-  activeStackKey: string | null;
-  onHoverWidget: (id: string | null) => void;
-  onSelectWidget: (id: string) => void;
-  onDiveIn: (pos: [number, number, number]) => void;
-  palette: typeof DEPTH_PALETTES[0];
+  isHighlighted: boolean;
 }) => {
-  const isActiveStack = activeStackKey === stackKey;
-  const isAnyActive = activeStackKey !== null;
+  // Изометрические позиции
+  const startX = fromWidget.x * 0.8;
+  const startY = fromWidget.y * 0.6;
+  const startZ = fromWidget.x * 0.2 + fromWidget.y * 0.3;
   
-  // Расположение виджетов в стопке (веером/каскадом в 3D)
-  const widgetPositions = stack.widgets.map((_, i) => {
-    const count = stack.widgets.length;
-    const angle = ((i - (count - 1) / 2) / Math.max(1, count - 1)) * 0.4;
-    const radius = 0.08 + i * 0.015;
-    const height = i * 0.05;
-    
-    return [
-      stack.position[0] + Math.sin(angle + stack.branchAngle) * radius,
-      stack.position[1] + height,
-      stack.position[2] + Math.cos(angle + stack.branchAngle) * radius * 0.5,
-    ] as [number, number, number];
-  });
+  const endX = toWidget.x * 0.8;
+  const endY = toWidget.y * 0.6;
+  const endZ = toWidget.x * 0.2 + toWidget.y * 0.3;
 
-  const sway = Math.sin(time * 0.4 + stackKey.charCodeAt(0)) * 0.01;
+  // Средняя точка с изгибом
+  const midX = (startX + endX) / 2;
+  const midY = (startY + endY) / 2 + 0.3;
+  const midZ = (startZ + endZ) / 2 + 0.2;
+
+  const start = new THREE.Vector3(startX, startY, startZ);
+  const mid = new THREE.Vector3(midX, midY, midZ);
+  const end = new THREE.Vector3(endX, endY, endZ);
+
+  // Анимация импульса
+  const pulseOpacity = isHighlighted ? 0.9 : 0.5 + Math.sin(time * 2) * 0.15;
 
   return (
-    <group position={[sway, 0, sway * 0.5]}>
-      {/* Название стопки */}
-      <Billboard follow={true} position={[stack.position[0], stack.position[1] - 0.08, stack.position[2]]}>
-        <Text
-          fontSize={0.022}
-          color={isActiveStack ? '#FFFFFF' : stack.color}
-          anchorX="center"
-          fillOpacity={opacity * (isActiveStack ? 1 : isAnyActive ? 0.3 : 0.7)}
-        >
-          {stack.name}
-        </Text>
-      </Billboard>
+    <group>
+      <QuadraticBezierLine
+        start={start}
+        mid={mid}
+        end={end}
+        color={color}
+        lineWidth={isHighlighted ? 3 : 2}
+        transparent
+        opacity={opacity * pulseOpacity}
+      />
       
-      {/* Виджеты */}
-      {stack.widgets.map((widget, i) => {
-        const pos = widgetPositions[i];
-        const isHovered = hoveredWidget === widget.id;
-        const isSelected = selectedWidget === widget.id;
-        const isBlurred = isAnyActive && !isActiveStack;
-        
-        return (
-          <LeafWidget
-            key={widget.id}
-            widget={widget}
-            position={pos}
-            stackColor={stack.color}
-            opacity={opacity}
-            time={time}
-            isHovered={isHovered}
-            isSelected={isSelected}
-            isInActiveStack={isActiveStack}
-            isBlurred={isBlurred}
-            onHover={onHoverWidget}
-            onSelect={onSelectWidget}
-            onDiveIn={onDiveIn}
-            index={i}
-          />
-        );
-      })}
-      
-      {/* Светлячки вокруг активной стопки */}
-      {isActiveStack && (
+      {/* Наконечник стрелки */}
+      <mesh position={[endX, endY, endZ]} rotation={[0, 0, Math.atan2(endY - midY, endX - midX)]}>
+        <coneGeometry args={[0.05, 0.12, 8]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity * pulseOpacity} />
+      </mesh>
+
+      {/* Движущийся импульс */}
+      {isHighlighted && (
         <>
-          {Array.from({ length: 8 }).map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2 + time * 0.3;
-            const radius = 0.12 + Math.sin(time + i) * 0.03;
-            const x = stack.position[0] + Math.cos(angle) * radius;
-            const y = stack.position[1] + Math.sin(time * 0.8 + i) * 0.04;
-            const z = stack.position[2] + Math.sin(angle) * radius * 0.6;
+          {[0, 0.33, 0.66].map((offset, i) => {
+            const t = (time * 0.5 + offset) % 1;
+            const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+            const point = curve.getPoint(t);
             
             return (
-              <BioParticle
-                key={i}
-                position={[x, y, z]}
-                color={stack.color}
-                opacity={opacity}
-                time={time}
-                index={i}
-              />
+              <mesh key={i} position={[point.x, point.y, point.z]}>
+                <sphereGeometry args={[0.06, 8, 8]} />
+                <meshBasicMaterial 
+                  color={color} 
+                  transparent 
+                  opacity={opacity * Math.sin(t * Math.PI) * 0.8}
+                />
+              </mesh>
             );
           })}
         </>
@@ -641,192 +323,123 @@ const WidgetStack = ({
   );
 };
 
-export const FractalUniverse = ({ 
-  depth, 
-  position, 
-  scale: universeScale, 
-  opacity: universeOpacity,
+export const FractalUniverse = ({
+  depth,
+  position,
+  scale,
+  opacity,
   onDiveIn,
-  isActive
+  isActive,
 }: FractalUniverseProps) => {
   const groupRef = useRef<THREE.Group>(null);
-  const [time, setTime] = useState(0);
   const [hoveredWidget, setHoveredWidget] = useState<string | null>(null);
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
+  const timeRef = useRef(0);
+  const [time, setTime] = useState(0);
 
-  const palette = DEPTH_PALETTES[depth % DEPTH_PALETTES.length];
-
-  useFrame(({ clock }) => {
-    if (isActive) {
-      setTime(clock.elapsedTime);
-    }
-
-    if (groupRef.current) {
-      // Медленное вращение дерева
-      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.05) * 0.15;
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    setTime(timeRef.current);
+    
+    if (groupRef.current && isActive) {
+      // Легкое вращение сцены
+      groupRef.current.rotation.y = Math.sin(timeRef.current * 0.1) * 0.05;
+      groupRef.current.rotation.x = -0.4 + Math.sin(timeRef.current * 0.15) * 0.02;
     }
   });
 
-  const handleHoverWidget = useCallback((id: string | null) => {
-    setHoveredWidget(id);
-  }, []);
-
-  const handleSelectWidget = useCallback((id: string) => {
-    setSelectedWidget(prev => prev === id ? null : id);
-  }, []);
-
-  const handleDiveIn = useCallback((nodePosition: [number, number, number]) => {
-    const worldPos: [number, number, number] = [
-      position[0] + nodePosition[0] * universeScale,
-      position[1] + nodePosition[1] * universeScale,
-      position[2] + nodePosition[2] * universeScale,
-    ];
-    onDiveIn(worldPos, depth + 1);
-  }, [depth, position, universeScale, onDiveIn]);
-
-  // Найти активную стопку
-  const activeStackKey = useMemo(() => {
-    const activeId = hoveredWidget ?? selectedWidget;
-    if (!activeId) return null;
+  // Подсветка связей при наведении
+  const highlightedConnections = useMemo(() => {
+    if (!hoveredWidget && !selectedWidget) return new Set<string>();
+    const active = hoveredWidget || selectedWidget;
+    const highlighted = new Set<string>();
     
-    for (const [key, stack] of Object.entries(WIDGET_STACKS)) {
-      if (stack.widgets.some(w => w.id === activeId)) {
-        return key;
+    CONNECTIONS.forEach((conn) => {
+      if (conn.from === active || conn.to === active) {
+        highlighted.add(`${conn.from}-${conn.to}`);
       }
-    }
-    return null;
+    });
+    
+    return highlighted;
   }, [hoveredWidget, selectedWidget]);
 
-  // Связи между стопками для подсветки
-  const activeConnections = useMemo(() => {
-    if (!activeStackKey) return [];
-    return STACK_CONNECTIONS.filter(
-      conn => conn.from === activeStackKey || conn.to === activeStackKey
-    );
-  }, [activeStackKey]);
-
-  if (!isActive) return null;
+  const handleSelectWidget = (id: string) => {
+    setSelectedWidget(selectedWidget === id ? null : id);
+  };
 
   return (
-    <group ref={groupRef} position={position} scale={universeScale}>
-      {/* Звёздное небо с биолюминесценцией */}
-      <Stars radius={4} depth={2.5} count={150} factor={0.08} saturation={0.3} fade speed={0.015} />
+    <group ref={groupRef} position={position} scale={scale} rotation={[-0.4, 0, 0]}>
+      {/* Фоновая плоскость */}
+      <mesh position={[0, 0, -1]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[20, 15]} />
+        <meshBasicMaterial color="#F8FAFC" transparent opacity={opacity * 0.95} />
+      </mesh>
       
-      {/* Плавающие частицы (споры как в Аватаре) */}
-      {Array.from({ length: 30 }).map((_, i) => {
-        const angle = (i / 30) * Math.PI * 2;
-        const radius = 0.6 + Math.sin(time * 0.3 + i) * 0.2;
-        const x = Math.cos(angle + time * 0.1) * radius;
-        const y = -0.3 + Math.sin(time * 0.4 + i * 0.5) * 0.4;
-        const z = Math.sin(angle + time * 0.1) * radius * 0.7;
+      {/* Сетка точек на фоне */}
+      {Array.from({ length: 15 }).map((_, i) =>
+        Array.from({ length: 12 }).map((_, j) => (
+          <mesh key={`dot-${i}-${j}`} position={[-7 + i, -5 + j * 0.9, -0.9]}>
+            <circleGeometry args={[0.015, 8]} />
+            <meshBasicMaterial color="#E2E8F0" transparent opacity={opacity * 0.5} />
+          </mesh>
+        ))
+      )}
+
+      {/* Связи (стрелки) - рендерятся под виджетами */}
+      {CONNECTIONS.map((conn) => {
+        const fromWidget = WIDGETS.find(w => w.id === conn.from);
+        const toWidget = WIDGETS.find(w => w.id === conn.to);
+        if (!fromWidget || !toWidget) return null;
+        
+        const isHighlighted = highlightedConnections.has(`${conn.from}-${conn.to}`);
         
         return (
-          <BioParticle
-            key={`spore-${i}`}
-            position={[x, y, z]}
-            color={palette.glow}
-            opacity={universeOpacity * 0.4}
+          <CurvedArrow
+            key={`${conn.from}-${conn.to}`}
+            fromWidget={fromWidget}
+            toWidget={toWidget}
+            color={conn.color}
+            opacity={opacity}
             time={time}
-            index={i}
+            isHighlighted={isHighlighted}
           />
         );
       })}
-      
-      {/* Ствол дерева */}
-      <TreeTrunk opacity={universeOpacity} time={time} palette={palette} />
-      
-      {/* Главные ветви от ствола к стопкам */}
-      {Object.entries(WIDGET_STACKS).map(([key, stack], i) => {
-        const isActive = activeStackKey === key;
-        const isConnected = activeConnections.some(c => c.from === key || c.to === key);
-        
-        return (
-          <Branch
-            key={`main-branch-${key}`}
-            start={[0, 0.4, 0]}
-            end={stack.position}
-            color={stack.color}
-            opacity={universeOpacity}
-            time={time}
-            index={i}
-            isHighlighted={isActive}
-            isActive={isConnected || isActive}
-          />
-        );
-      })}
-      
-      {/* Связи между стопками */}
-      {STACK_CONNECTIONS.map((conn, i) => {
-        const fromStack = WIDGET_STACKS[conn.from as keyof typeof WIDGET_STACKS];
-        const toStack = WIDGET_STACKS[conn.to as keyof typeof WIDGET_STACKS];
-        if (!fromStack || !toStack) return null;
-        
-        const isActive = activeConnections.includes(conn);
-        
-        return (
-          <Branch
-            key={`conn-${i}`}
-            start={fromStack.position}
-            end={toStack.position}
-            color={isActive ? '#FFFFFF' : palette.secondary}
-            opacity={universeOpacity * (activeStackKey && !isActive ? 0.15 : 0.7)}
-            time={time}
-            index={i + 100}
-            isHighlighted={isActive}
-            isActive={isActive}
-            processName={isActive ? conn.process : undefined}
-          />
-        );
-      })}
-      
-      {/* Стопки виджетов (листья) */}
-      {Object.entries(WIDGET_STACKS).map(([key, stack]) => (
-        <WidgetStack
-          key={key}
-          stack={stack}
-          stackKey={key}
-          opacity={universeOpacity}
+
+      {/* Виджеты */}
+      {WIDGETS.map((widget) => (
+        <IOSWidget
+          key={widget.id}
+          widget={widget}
+          opacity={opacity}
           time={time}
-          hoveredWidget={hoveredWidget}
-          selectedWidget={selectedWidget}
-          activeStackKey={activeStackKey}
-          onHoverWidget={handleHoverWidget}
-          onSelectWidget={handleSelectWidget}
-          onDiveIn={handleDiveIn}
-          palette={palette}
+          isHovered={hoveredWidget === widget.id}
+          isSelected={selectedWidget === widget.id}
+          onHover={setHoveredWidget}
+          onSelect={handleSelectWidget}
         />
       ))}
-      
-      {/* Название дерева */}
-      <Billboard follow={true} position={[0, 1.0, 0]}>
+
+      {/* Заголовок */}
+      <Billboard follow={true} position={[0, 4, 0]}>
         <Text
-          fontSize={0.032}
-          color={palette.glow}
+          fontSize={0.3}
+          color="#1A1A2E"
           anchorX="center"
-          fillOpacity={universeOpacity * 0.9}
+          anchorY="middle"
+          fillOpacity={opacity * 0.9}
         >
-          🌳 Древо Сознания
+          Workflow Network
         </Text>
         <Text
-          fontSize={0.014}
-          color={palette.secondary}
+          position={[0, -0.4, 0]}
+          fontSize={0.12}
+          color="#64748B"
           anchorX="center"
-          position={[0, -0.04, 0]}
-          fillOpacity={universeOpacity * 0.6}
+          anchorY="middle"
+          fillOpacity={opacity * 0.7}
         >
-          {depth === 0 ? 'Корни бытия' : depth === 1 ? 'Ветви познания' : 'Крона опыта'}
-        </Text>
-      </Billboard>
-      
-      {/* Инструкция */}
-      <Billboard follow={true} position={[0, -0.75, 0]}>
-        <Text
-          fontSize={0.012}
-          color="#6E6E73"
-          anchorX="center"
-          fillOpacity={universeOpacity * 0.5}
-        >
-          Нажми на лист • Двойной клик — погрузиться глубже
+          Наведите на виджет для просмотра связей
         </Text>
       </Billboard>
     </group>
