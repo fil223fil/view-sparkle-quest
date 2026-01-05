@@ -1,5 +1,5 @@
 // iOS 26 Style Widget Component with Glassmorphism 2.0
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { Html } from '@react-three/drei';
 import { 
   WidgetData, 
@@ -13,8 +13,10 @@ interface WidgetProps {
   isFocused: boolean;
   isRelated: boolean;
   isBlurred: boolean;
+  isDived?: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
+  onDoubleTap?: (id: string) => void;
 }
 
 // Mini-widget component for orbit display
@@ -66,10 +68,29 @@ export const Widget: React.FC<WidgetProps> = ({
   isFocused,
   isRelated,
   isBlurred,
+  isDived = false,
   onHover,
   onSelect,
+  onDoubleTap,
 }) => {
   const { id, icon, title, subtitle, priority, category, infoLoad, miniWidgets } = widget;
+  const lastTapRef = useRef<number>(0);
+
+  // Handle double-tap detection
+  const handleClick = useCallback(() => {
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapRef.current;
+    
+    if (timeSinceLastTap < 300 && onDoubleTap) {
+      // Double tap detected
+      onDoubleTap(id);
+    } else {
+      // Single tap
+      onSelect(id);
+    }
+    
+    lastTapRef.current = now;
+  }, [id, onSelect, onDoubleTap]);
   
   const scale = PRIORITY_SCALE[priority];
   const categoryStyle = CATEGORY_COLORS[category];
@@ -87,7 +108,11 @@ export const Widget: React.FC<WidgetProps> = ({
     let opacity = 1;
     let boxShadow = `0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.2)`;
 
-    if (isFocused) {
+    if (isDived) {
+      // When this widget is the dive target - extra large and glowing
+      transform = 'translate(-50%, -50%) scale(1.5)';
+      boxShadow = `0 20px 60px ${categoryStyle.glow}, 0 0 60px ${categoryStyle.glow}, 0 0 0 3px rgba(255, 255, 255, 0.5)`;
+    } else if (isFocused) {
       transform = 'translate(-50%, -50%) scale(1.3)';
       boxShadow = `0 16px 48px ${categoryStyle.glow}, 0 0 40px ${categoryStyle.glow}, 0 0 0 2px rgba(255, 255, 255, 0.4)`;
     } else if (isRelated) {
@@ -109,11 +134,11 @@ export const Widget: React.FC<WidgetProps> = ({
       WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       border: '1px solid rgba(255, 255, 255, 0.3)',
       borderRadius: '24px',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
       cursor: 'pointer',
       position: 'relative' as const,
     };
-  }, [isFocused, isRelated, isBlurred, width, height, categoryStyle]);
+  }, [isFocused, isRelated, isBlurred, isDived, width, height, categoryStyle]);
 
   // Glow color based on category
   const glowColor = useMemo(() => {
@@ -138,10 +163,10 @@ export const Widget: React.FC<WidgetProps> = ({
         style={containerStyle}
         onMouseEnter={() => onHover(id)}
         onMouseLeave={() => onHover(null)}
-        onClick={() => onSelect(id)}
+        onClick={handleClick}
         role="button"
         tabIndex={0}
-        aria-label={`${title}: ${subtitle}`}
+        aria-label={`${title}: ${subtitle}. Двойной клик для погружения.`}
       >
         {/* Gradient overlay */}
         <div
