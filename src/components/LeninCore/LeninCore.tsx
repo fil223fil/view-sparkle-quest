@@ -6,8 +6,11 @@ import { OrbitControls } from '@react-three/drei';
 import { WidgetData, ConnectionData, DepthLevel } from './types';
 import { INITIAL_WIDGETS, INITIAL_CONNECTIONS } from './data';
 import { useFocusMode } from './hooks/useFocusMode';
+import { useDiveAnimation } from './hooks/useDiveAnimation';
 import { Widget } from './components/Widget';
 import { Connection } from './components/Connection';
+import { SubWidget } from './components/SubWidget';
+import { DiveOverlay } from './components/DiveOverlay';
 import { DepthNavigation } from './components/DepthNavigation';
 import { ConnectionLegend } from './components/ConnectionLegend';
 import { Background } from './components/Background';
@@ -37,14 +40,24 @@ const SceneContent: React.FC<{
     isConnectionHighlighted,
   } = useFocusMode(widgets, connections);
 
+  const {
+    diveState,
+    handleDoubleTap,
+    handleSurface,
+    isDived,
+  } = useDiveAnimation(widgets, onDepthChange);
+
   const isFocusActive = focusState.focusedWidgetId !== null;
+  const divedWidget = diveState.divedWidgetId 
+    ? widgets.find(w => w.id === diveState.divedWidgetId) 
+    : null;
 
   return (
     <>
       <Background />
 
-      {/* Connections layer (render behind widgets) */}
-      {connections.map((connection) => (
+      {/* Connections layer (render behind widgets) - hide when diving */}
+      {!isDived && connections.map((connection) => (
         <Connection
           key={connection.id}
           connection={connection}
@@ -55,32 +68,62 @@ const SceneContent: React.FC<{
       ))}
 
       {/* Widgets layer */}
-      {widgets.map((widget) => (
-        <Widget
-          key={widget.id}
-          widget={widget}
-          isFocused={isWidgetFocused(widget.id)}
-          isRelated={isWidgetRelated(widget.id)}
-          isBlurred={isWidgetBlurred(widget.id)}
+      {widgets.map((widget) => {
+        // When diving, only show the dived widget
+        if (isDived && widget.id !== diveState.divedWidgetId) {
+          return null;
+        }
+        
+        return (
+          <Widget
+            key={widget.id}
+            widget={widget}
+            isFocused={isWidgetFocused(widget.id)}
+            isRelated={isWidgetRelated(widget.id)}
+            isBlurred={!isDived && isWidgetBlurred(widget.id)}
+            isDived={widget.id === diveState.divedWidgetId}
+            onHover={handleWidgetHover}
+            onSelect={handleWidgetSelect}
+            onDoubleTap={handleDoubleTap}
+          />
+        );
+      })}
+
+      {/* Sub-widgets layer (only visible when diving) */}
+      {isDived && divedWidget && diveState.subWidgets.map((subWidget, index) => (
+        <SubWidget
+          key={subWidget.id}
+          widget={subWidget}
+          index={index}
+          total={diveState.subWidgets.length}
+          parentPosition={divedWidget.position}
           onHover={handleWidgetHover}
-          onSelect={handleWidgetSelect}
+          onClick={handleWidgetSelect}
         />
       ))}
 
-      {/* UI Overlays */}
-      <ConnectionLegend />
+      {/* Dive mode overlay with back button */}
+      {isDived && divedWidget && (
+        <DiveOverlay
+          widgetTitle={divedWidget.title}
+          onSurface={handleSurface}
+        />
+      )}
+
+      {/* UI Overlays - hide connection legend when diving */}
+      {!isDived && <ConnectionLegend />}
       <DepthNavigation currentLevel={currentDepth} onLevelChange={onDepthChange} />
 
-      {/* Camera controls */}
+      {/* Camera controls - disable rotation when diving */}
       <OrbitControls
-        enablePan
-        enableZoom
-        enableRotate
+        enablePan={!isDived}
+        enableZoom={!isDived}
+        enableRotate={!isDived}
         minDistance={5}
         maxDistance={15}
         minPolarAngle={Math.PI / 4}
         maxPolarAngle={Math.PI / 2}
-        autoRotate={!isFocusActive}
+        autoRotate={!isFocusActive && !isDived}
         autoRotateSpeed={0.3}
       />
     </>
@@ -95,7 +138,6 @@ export const LeninCore: React.FC = () => {
 
   const handleDepthChange = useCallback((level: DepthLevel) => {
     setCurrentDepth(level);
-    // Future: Filter widgets based on depth level
   }, []);
 
   return (
@@ -133,7 +175,8 @@ export const LeninCore: React.FC = () => {
           }}
         >
           <p className="text-slate-600">
-            <span className="font-medium text-slate-800">Наведите</span> на виджет для фокусировки
+            <span className="font-medium text-slate-800">Наведите</span> для фокусировки •{' '}
+            <span className="font-medium text-slate-800">2× клик</span> для погружения
           </p>
           <p className="text-slate-500 text-xs mt-1">
             Прокрутка для масштабирования • Перетаскивание для поворота
