@@ -1,7 +1,7 @@
-import { NetworkVisualization } from '@/components/NetworkGraph/NetworkVisualization';
+import { LeninCore } from '@/components/LeninCore';
 
 const Index = () => {
-  return <NetworkVisualization />;
+  return <LeninCore />;
 };
 
 export default Index;
