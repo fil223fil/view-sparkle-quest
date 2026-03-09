@@ -15,26 +15,11 @@ export const DiveOverlay: React.FC<DiveOverlayProps> = ({ widgetTitle, onSurface
       distanceFactor={8}
       zIndexRange={[300, 200]}
     >
-      <div
-        className="flex items-center gap-4"
-        style={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          padding: '12px 20px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.5)',
-        }}
-      >
+      <div className="flex items-center gap-4 glass-liquid rounded-[24px] px-5 py-3">
         {/* Back button */}
         <button
           onClick={onSurface}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95"
-          style={{
-            background: 'rgba(0, 122, 255, 0.1)',
-            color: '#007AFF',
-            border: '1px solid rgba(0, 122, 255, 0.2)',
-          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105 active:scale-95 glass-button text-primary"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -44,21 +29,15 @@ export const DiveOverlay: React.FC<DiveOverlayProps> = ({ widgetTitle, onSurface
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Ядро Ленин</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+          <span className="text-muted-foreground font-medium">Ядро Ленин</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground opacity-50">
             <path d="M9 18l6-6-6-6" />
           </svg>
-          <span className="font-semibold text-gray-800">{widgetTitle}</span>
+          <span className="font-semibold text-foreground">{widgetTitle}</span>
         </div>
 
         {/* Depth indicator */}
-        <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-          style={{
-            background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.2), rgba(52, 199, 89, 0.1))',
-            color: '#34C759',
-          }}
-        >
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium glass-capsule text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
           <span>🔬</span>
           <span>Детали</span>
         </div>

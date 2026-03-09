@@ -85,43 +85,31 @@ export const ChatInputWidget: React.FC = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mb-3 flex items-center gap-3 rounded-2xl px-5 py-3"
-            style={{
-              background: 'rgba(15, 15, 25, 0.6)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
+            className="mb-4 flex items-center gap-3 glass-capsule rounded-full px-5 py-3 mx-auto w-fit"
           >
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: '#58C4DD' }}
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                  className="h-2 w-2 rounded-full bg-primary"
+                  animate={{ y: [0, -6, 0], scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
                 />
               ))}
             </div>
-            <span className="text-xs text-white/50">Анализирую связи...</span>
+            <span className="text-sm font-medium text-foreground tracking-wide">Анализирую...</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Quick suggestions when empty */}
       {messages.length === 0 && (
-        <div className="mb-3 flex flex-wrap justify-center gap-2">
+        <div className="mb-4 flex flex-wrap justify-center gap-3">
           {['Какая погода?', 'Мои события', 'Сколько шагов?'].map((q) => (
             <button
               key={q}
               onClick={() => setInputText(q)}
-              className="rounded-full px-3 py-1.5 text-xs transition"
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'rgba(255, 255, 255, 0.7)',
-              }}
+              className="glass-capsule rounded-full px-5 py-2.5 text-sm font-medium transition-all hover:scale-105 active:scale-95 text-foreground hover:text-primary"
             >
               {q}
             </button>
@@ -130,18 +118,9 @@ export const ChatInputWidget: React.FC = () => {
       )}
 
       {/* Input bar */}
-      <div
-        className="flex items-center gap-2 rounded-2xl px-4 py-3"
-        style={{
-          background: 'rgba(15, 15, 25, 0.7)',
-          backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 80px rgba(88, 196, 221, 0.06)',
-        }}
-      >
+      <div className="glass-liquid flex items-center gap-3 rounded-[2rem] px-5 py-3.5 w-full mx-auto shadow-2xl transition-all duration-300 focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_40px_hsla(var(--primary),0.3)]">
         <button
-          className="rounded-full p-2 transition"
-          style={{ color: 'rgba(255, 255, 255, 0.4)' }}
+          className="rounded-full p-2.5 transition-colors text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
         >
           <Mic className="h-5 w-5" />
         </button>
@@ -151,18 +130,18 @@ export const ChatInputWidget: React.FC = () => {
           onKeyDown={handleKeyDown}
           placeholder="Спроси что-нибудь..."
           disabled={isProcessing}
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+          className="flex-1 bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
         <button
           onClick={sendMessage}
           disabled={!inputText.trim() || isProcessing}
-          className="rounded-full p-2 transition disabled:opacity-30"
+          className="rounded-full p-3 transition-all disabled:opacity-30 disabled:scale-100 active:scale-95 hover:shadow-lg"
           style={{
-            background: inputText.trim() ? 'rgba(88, 196, 221, 0.8)' : 'rgba(88, 196, 221, 0.3)',
-            color: '#fff',
+            background: inputText.trim() ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+            color: inputText.trim() ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
           }}
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-5 w-5 ml-0.5" />
         </button>
       </div>
     </div>
