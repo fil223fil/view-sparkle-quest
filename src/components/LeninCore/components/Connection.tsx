@@ -236,23 +236,24 @@ export const Connection: React.FC<ConnectionProps> = ({
   isFocusActive,
 }) => {
   const [hovered, setHovered] = useState(false);
+  const fadeRef = useRef(0);
+  const prevHighlighted = useRef(isHighlighted);
+  const animatedOpacity = useRef(0);
+  const animatedLineWidth = useRef(0.4);
+
   const { from, to, type, strength = 0.5 } = connection;
   const style = CONNECTION_STYLES[type];
 
   const startWidget = widgets.find((w) => w.id === from);
   const endWidget = widgets.find((w) => w.id === to);
-  if (!startWidget || !endWidget) return null;
 
-  const startPos = new THREE.Vector3(
-    startWidget.position.x / 100,
-    -startWidget.position.y / 100,
-    startWidget.position.z / 50
-  );
-  const endPos = new THREE.Vector3(
-    endWidget.position.x / 100,
-    -endWidget.position.y / 100,
-    endWidget.position.z / 50
-  );
+  // Calculate positions (or fallback to zero if widgets not found)
+  const startPos = startWidget
+    ? new THREE.Vector3(startWidget.position.x / 100, -startWidget.position.y / 100, startWidget.position.z / 50)
+    : new THREE.Vector3();
+  const endPos = endWidget
+    ? new THREE.Vector3(endWidget.position.x / 100, -endWidget.position.y / 100, endWidget.position.z / 50)
+    : new THREE.Vector3();
 
   const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
   const distance = startPos.distanceTo(endPos);
@@ -263,15 +264,35 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const isActive = isHighlighted || hovered;
 
-  const baseOpacity = isFocusActive
+  const targetOpacity = isFocusActive
     ? isActive ? style.opacity : 0.08
     : hovered ? style.opacity * 0.9 : style.opacity * 0.5;
 
-  const lineWidth = isActive
+  const targetLineWidth = isActive
     ? 1.8 + strength * 0.5
     : 0.8;
 
+  // Retrigger fade on highlight change
+  if (isHighlighted && !prevHighlighted.current) {
+    fadeRef.current = Math.min(fadeRef.current, 0.3);
+  }
+  prevHighlighted.current = isHighlighted;
+
+  // Animate opacity/lineWidth smoothly
+  useFrame((_, delta) => {
+    const speed = 3.5;
+    fadeRef.current = Math.min(fadeRef.current + delta * 1.2, 1);
+    const fadeMul = fadeRef.current;
+    animatedOpacity.current += (targetOpacity * fadeMul - animatedOpacity.current) * Math.min(delta * speed, 1);
+    animatedLineWidth.current += (targetLineWidth - animatedLineWidth.current) * Math.min(delta * speed, 1);
+  });
+
+  // Early return AFTER all hooks
+  if (!startWidget || !endWidget) return null;
+
   const color = style.color;
+  const baseOpacity = animatedOpacity.current;
+  const lineWidth = animatedLineWidth.current;
 
   let dashSize, gapSize;
   if (style.dashArray) {
@@ -282,7 +303,7 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const showAnimation = style.animated && (isActive || !isFocusActive);
 
-  // Tooltip position — slightly above midpoint of curve
+  // Tooltip position
   const tooltipPos = new THREE.Vector3(
     0.75 * midPoint.x + 0.25 * controlPoint.x,
     0.75 * midPoint.y + 0.25 * controlPoint.y + 0.15,
@@ -291,7 +312,6 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   return (
     <group>
-      {/* Invisible hit area for hover detection */}
       <HitArea
         start={startPos}
         end={endPos}
@@ -314,7 +334,7 @@ export const Connection: React.FC<ConnectionProps> = ({
         gapSize={gapSize}
       />
 
-      {/* Soft ambient glow — highlighted or hovered */}
+      {/* Soft ambient glow */}
       {isActive && (
         <QuadraticBezierLine
           start={startPos}
@@ -363,7 +383,7 @@ export const Connection: React.FC<ConnectionProps> = ({
         />
       )}
 
-      {/* Endpoint dots on hover/highlight */}
+      {/* Endpoint dots */}
       {isActive && (
         <>
           <mesh position={startPos}>
@@ -377,7 +397,7 @@ export const Connection: React.FC<ConnectionProps> = ({
         </>
       )}
 
-      {/* Tooltip on hover */}
+      {/* Tooltip */}
       {hovered && (
         <ConnectionTooltip
           position={tooltipPos}
