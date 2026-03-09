@@ -156,47 +156,79 @@ export const LeninCore: React.FC = () => {
   const [widgets] = useState<WidgetData[]>(INITIAL_WIDGETS);
   const [connections] = useState<ConnectionData[]>(INITIAL_CONNECTIONS);
   const [currentDepth, setCurrentDepth] = useState<DepthLevel>('active');
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const handleDepthChange = useCallback((level: DepthLevel) => {
     setCurrentDepth(level);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  }, [theme, setTheme]);
+    setTheme(isDark ? 'light' : 'dark');
+  }, [isDark, setTheme]);
+
+  // Inline glass styles for header (not in .dark scope)
+  const headerGlass: React.CSSProperties = {
+    background: isDark
+      ? 'linear-gradient(135deg, rgba(30,30,40,0.6) 0%, rgba(15,15,20,0.3) 100%)'
+      : 'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.25) 100%)',
+    backdropFilter: 'blur(40px) saturate(200%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.4)',
+    boxShadow: isDark
+      ? '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05)'
+      : '0 8px 32px rgba(0,0,0,0.06), inset 0 1px 2px rgba(255,255,255,0.5)',
+  };
+
+  const pillGlass: React.CSSProperties = {
+    background: isDark
+      ? 'linear-gradient(180deg, rgba(40,40,50,0.6) 0%, rgba(20,20,25,0.4) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.35) 100%)',
+    backdropFilter: 'blur(30px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.5)',
+    boxShadow: isDark
+      ? '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.06)'
+      : '0 4px 16px rgba(0,0,0,0.06), inset 0 1px 2px rgba(255,255,255,0.5)',
+  };
+
+  const textColor = isDark ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.88)';
+  const mutedTextColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
 
   return (
-    <div className="w-full h-screen bg-transparent relative overflow-hidden font-sans text-foreground">
+    <div className="w-full h-screen relative overflow-hidden font-sans" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif' }}>
       <div className="absolute inset-0 bg-background/20 backdrop-blur-[100px] -z-10 mix-blend-overlay" />
       
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-10 p-6 pt-10">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-[1.25rem] flex items-center justify-center text-2xl glass-liquid relative overflow-hidden group cursor-pointer transition-transform duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <header className="absolute top-0 left-0 right-0 z-10 p-5 pt-[env(safe-area-inset-top,44px)]">
+        <div className="flex items-center justify-between max-w-7xl mx-auto rounded-[22px] px-5 py-3" style={headerGlass}>
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-[14px] flex items-center justify-center text-2xl relative overflow-hidden group cursor-pointer transition-transform duration-300 hover:scale-105" style={{
+              background: isDark ? 'rgba(88,196,221,0.15)' : 'rgba(88,196,221,0.12)',
+              boxShadow: isDark ? '0 4px 12px rgba(88,196,221,0.2)' : '0 4px 12px rgba(88,196,221,0.15)',
+            }}>
               🧠
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">Ядро Ленин</h1>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-80">Синхронизировано</p>
+              <h1 className="text-xl font-bold tracking-tight" style={{ color: textColor }}>Ядро Ленин</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: mutedTextColor }}>Синхронизировано</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Theme toggle */}
+          <div className="flex items-center gap-2.5">
+            {/* Theme toggle — Apple-native 44pt touch target */}
             <button
               onClick={toggleTheme}
-              className="glass-capsule w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 text-foreground"
+              className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90"
+              style={{ ...pillGlass, color: textColor }}
               aria-label="Переключить тему"
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
             </button>
 
-            <div className="glass-capsule px-5 py-2.5 rounded-full flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
-              <span className="text-sm font-medium text-foreground">Система активна</span>
+            <div className="rounded-full flex items-center gap-2.5 px-4 py-2" style={pillGlass}>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#34C759', boxShadow: '0 0 8px rgba(52,199,89,0.6)' }} />
+              <span className="text-[13px] font-semibold" style={{ color: textColor }}>Активна</span>
             </div>
           </div>
         </div>
