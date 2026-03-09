@@ -1,7 +1,6 @@
-// Connection visualization with 8 semantic types
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Line, QuadraticBezierLine } from '@react-three/drei';
+import { QuadraticBezierLine } from '@react-three/drei';
 import * as THREE from 'three';
 import { ConnectionData, WidgetData, CONNECTION_STYLES } from '../types';
 
@@ -21,7 +20,7 @@ const DataFlowParticles: React.FC<{
   strength: number;
 }> = ({ start, end, control, color, strength }) => {
   const particlesRef = useRef<THREE.Points>(null);
-  const particleCount = Math.ceil(5 * strength);
+  const particleCount = Math.max(8, Math.ceil(20 * strength));
   
   const particles = useMemo(() => {
     const positions = new Float32Array(particleCount * 3);
@@ -41,9 +40,8 @@ const DataFlowParticles: React.FC<{
     const t = clock.elapsedTime;
     
     for (let i = 0; i < particleCount; i++) {
-      const offset = (particles.offsets[i] + t * 0.3) % 1;
+      const offset = (particles.offsets[i] + t * 0.4) % 1;
       
-      // Quadratic bezier interpolation
       const mt = 1 - offset;
       const x = mt * mt * start.x + 2 * mt * offset * control.x + offset * offset * end.x;
       const y = mt * mt * start.y + 2 * mt * offset * control.y + offset * offset * end.y;
@@ -68,36 +66,66 @@ const DataFlowParticles: React.FC<{
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.08}
+        size={0.12}
         color={color}
         transparent
         opacity={0.9}
         sizeAttenuation
+        blending={THREE.AdditiveBlending}
       />
     </points>
   );
 };
 
-// Arrow head for logic chain connections
-const ArrowHead: React.FC<{
-  position: THREE.Vector3;
-  direction: THREE.Vector3;
+// Animated arrow for logic chain connections
+const AnimatedLogicArrow: React.FC<{
+  start: THREE.Vector3;
+  end: THREE.Vector3;
+  control: THREE.Vector3;
   color: string;
-}> = ({ position, direction, color }) => {
-  const rotation = useMemo(() => {
-    const euler = new THREE.Euler();
+}> = ({ start, end, control, color }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  useFrame(({ clock }) => {
+    if (!meshRef.current) return;
+    const t = (clock.elapsedTime * 0.3) % 1;
+    
+    const mt = 1 - t;
+    const x = mt * mt * start.x + 2 * mt * t * control.x + t * t * end.x;
+    const y = mt * mt * start.y + 2 * mt * t * control.y + t * t * end.y;
+    const z = mt * mt * start.z + 2 * mt * t * control.z + t * t * end.z;
+    meshRef.current.position.set(x, y, z);
+    
+    const dx = 2 * mt * (control.x - start.x) + 2 * t * (end.x - control.x);
+    const dy = 2 * mt * (control.y - start.y) + 2 * t * (end.y - control.y);
+    const dz = 2 * mt * (control.z - start.z) + 2 * t * (end.z - control.z);
+    
+    const direction = new THREE.Vector3(dx, dy, dz).normalize();
     const quaternion = new THREE.Quaternion();
-    quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
-    euler.setFromQuaternion(quaternion);
-    return euler;
-  }, [direction]);
+    quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+    meshRef.current.quaternion.copy(quaternion);
+  });
 
   return (
-    <mesh position={position} rotation={rotation}>
-      <coneGeometry args={[0.05, 0.12, 8]} />
+    <mesh ref={meshRef}>
+      <coneGeometry args={[0.08, 0.2, 8]} />
       <meshBasicMaterial color={color} transparent opacity={0.9} />
     </mesh>
   );
+};
+
+// Golden thread animation for Context Link
+const GoldenThreadLine: React.FC<any> = (props) => {
+  const lineRef = useRef<any>(null);
+  const baseOpacity = props.opacity || 0.5;
+  
+  useFrame(({ clock }) => {
+    if (lineRef.current?.material) {
+      lineRef.current.material.opacity = baseOpacity * (0.5 + Math.sin(clock.elapsedTime * 3) * 0.5);
+    }
+  });
+
+  return <QuadraticBezierLine ref={lineRef} {...props} />;
 };
 
 export const Connection: React.FC<ConnectionProps> = ({
@@ -109,13 +137,11 @@ export const Connection: React.FC<ConnectionProps> = ({
   const { from, to, type, strength = 0.5 } = connection;
   const style = CONNECTION_STYLES[type];
 
-  // Find connected widgets
   const startWidget = widgets.find((w) => w.id === from);
   const endWidget = widgets.find((w) => w.id === to);
 
   if (!startWidget || !endWidget) return null;
 
-  // Convert positions to 3D coordinates
   const startPos = new THREE.Vector3(
     startWidget.position.x / 100,
     -startWidget.position.y / 100,
@@ -127,17 +153,14 @@ export const Connection: React.FC<ConnectionProps> = ({
     endWidget.position.z / 50
   );
 
-  // Calculate control point for curved line
   const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
   const distance = startPos.distanceTo(endPos);
   const controlOffset = distance * 0.3;
   
-  // Perpendicular offset for curve
   const direction = new THREE.Vector3().subVectors(endPos, startPos).normalize();
   const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0.2);
   const controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(controlOffset));
 
-  // Calculate visual properties based on state
   const opacity = isFocusActive
     ? isHighlighted
       ? style.opacity
@@ -146,15 +169,21 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const lineWidth = isHighlighted ? (type === 'dataFlow' ? 2 + strength * 2 : 2) : 1;
   const color = style.color;
+  
+  // Parse dash array if exists
+  let dashSize, gapSize;
+  if (style.dashArray) {
+    const parts = style.dashArray.split(',');
+    dashSize = parseFloat(parts[0]) * 0.05;
+    gapSize = parseFloat(parts[1]) * 0.05;
+  }
 
-  // Arrow direction for logic chain
-  const arrowDirection = new THREE.Vector3().subVectors(endPos, controlPoint).normalize();
-  const arrowPosition = endPos.clone().sub(arrowDirection.clone().multiplyScalar(0.15));
+  const LineComponent = type === 'contextLink' ? GoldenThreadLine : QuadraticBezierLine;
 
   return (
     <group>
       {/* Main line */}
-      <QuadraticBezierLine
+      <LineComponent
         start={startPos}
         end={endPos}
         mid={controlPoint}
@@ -163,13 +192,13 @@ export const Connection: React.FC<ConnectionProps> = ({
         transparent
         opacity={opacity}
         dashed={!!style.dashArray}
-        dashScale={style.dashArray ? 10 : undefined}
-        dashSize={style.dashArray ? 0.3 : undefined}
-        gapSize={style.dashArray ? 0.15 : undefined}
+        dashScale={1}
+        dashSize={dashSize}
+        gapSize={gapSize}
       />
 
       {/* Data flow particles */}
-      {type === 'dataFlow' && isHighlighted && (
+      {type === 'dataFlow' && (isHighlighted || !isFocusActive) && (
         <DataFlowParticles
           start={startPos}
           end={endPos}
@@ -181,9 +210,10 @@ export const Connection: React.FC<ConnectionProps> = ({
 
       {/* Logic chain arrow */}
       {type === 'logicChain' && (
-        <ArrowHead
-          position={arrowPosition}
-          direction={arrowDirection}
+        <AnimatedLogicArrow
+          start={startPos}
+          end={endPos}
+          control={controlPoint}
           color={color}
         />
       )}
@@ -198,6 +228,7 @@ export const Connection: React.FC<ConnectionProps> = ({
           lineWidth={lineWidth + 4}
           transparent
           opacity={opacity * 0.3}
+          blending={THREE.AdditiveBlending}
         />
       )}
     </group>
