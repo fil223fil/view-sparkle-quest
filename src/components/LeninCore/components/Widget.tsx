@@ -340,13 +340,14 @@ const LargeWidgetContent: React.FC<{
       
       {/* Main content area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Weather specific */}
+        {/* Weather — Full Apple Style */}
         {isWeather && widgetData?.temperature !== undefined && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            {/* Current conditions */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
                 <div style={{
-                  fontSize: 56,
+                  fontSize: 64,
                   fontWeight: 200,
                   lineHeight: 1,
                   letterSpacing: '-0.03em',
@@ -358,28 +359,132 @@ const LargeWidgetContent: React.FC<{
                   fontSize: 17,
                   fontWeight: 500,
                   color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
-                  marginTop: 4,
+                  marginTop: 6,
                 }}>
                   {widgetData.condition}
                 </div>
-              </div>
-              <div style={{ fontSize: 48 }}>🌤️</div>
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-              {widgetData.items?.map((item, i) => (
-                <div key={i} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
+                <div style={{
                   fontSize: 13,
-                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  marginTop: 2,
                 }}>
-                  <span>{item.icon}</span>
-                  <span>{item.value}</span>
+                  H:{widgetData.tempHigh}° L:{widgetData.tempLow}°
                 </div>
-              ))}
+              </div>
+              <div style={{ 
+                fontSize: 56,
+                filter: 'drop-shadow(0 4px 12px rgba(255,180,0,0.3))',
+              }}>
+                {widgetData.condition?.includes('Солн') ? '☀️' : 
+                 widgetData.condition?.includes('Обл') ? '⛅' :
+                 widgetData.condition?.includes('Дожд') ? '🌧️' :
+                 widgetData.condition?.includes('Снег') ? '❄️' : '🌤️'}
+              </div>
             </div>
-          </>
+            
+            {/* Divider */}
+            <div style={{
+              height: 1,
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              marginBottom: 10,
+            }} />
+            
+            {/* Hourly forecast */}
+            {widgetData.hourlyForecast && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  marginBottom: 8,
+                }}>
+                  Прогноз по часам
+                </div>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between' }}>
+                  {widgetData.hourlyForecast.slice(0, 5).map((hour, i) => (
+                    <div key={i} style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}>
+                      <div style={{
+                        fontSize: 11,
+                        color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                      }}>
+                        {hour.time}
+                      </div>
+                      <div style={{ fontSize: 20 }}>{hour.icon}</div>
+                      <div style={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)',
+                      }}>
+                        {hour.temp}°
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Divider */}
+            <div style={{
+              height: 1,
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              marginBottom: 10,
+            }} />
+            
+            {/* Details grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              }}>
+                <span>💧</span>
+                <span>Влажность</span>
+                <span style={{ marginLeft: 'auto', fontWeight: 500 }}>{widgetData.humidity}%</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              }}>
+                <span>💨</span>
+                <span>Ветер</span>
+                <span style={{ marginLeft: 'auto', fontWeight: 500 }}>{widgetData.wind} м/с</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              }}>
+                <span>🌡️</span>
+                <span>Ощущается</span>
+                <span style={{ marginLeft: 'auto', fontWeight: 500 }}>{widgetData.feelsLike}°</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              }}>
+                <span>🌧️</span>
+                <span>Осадки</span>
+                <span style={{ marginLeft: 'auto', fontWeight: 500 }}>{widgetData.precipitation}%</span>
+              </div>
+            </div>
+          </div>
         )}
         
         {/* Health specific */}

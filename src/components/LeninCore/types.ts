@@ -45,13 +45,27 @@ export interface WidgetData {
   velocity?: { x: number; y: number; z: number };
   // Extended data for rich widget content
   widgetData?: {
+    // Weather
     temperature?: number;
+    tempHigh?: number;
+    tempLow?: number;
     condition?: string;
+    humidity?: number;
+    wind?: number;
+    feelsLike?: number;
+    precipitation?: number;
+    hourlyForecast?: { time: string; temp: number; icon: string }[];
+    // Calendar
     events?: { time: string; title: string; color: string }[];
+    // Health/Fitness
     steps?: number;
     calories?: number;
     progress?: number;
+    exerciseMinutes?: number;
+    standHours?: number;
+    // Messages/Mail
     unread?: number;
+    // Generic items
     items?: { icon: string; label: string; value: string }[];
   };
 }
