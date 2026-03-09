@@ -62,7 +62,23 @@ export const INITIAL_WIDGETS: WidgetData[] = [
   { id: 'news', icon: '📰', title: 'News', subtitle: 'Новости', priority: 'low', category: 'media', size: 'medium', infoLoad: 50, connects: ['siri'], miniWidgets: createMiniWidgets([{ icon: '📋', label: 'Лента' }]), position: pos(320, -380, 4), widgetData: { items: [{ icon: '📰', label: 'Top', value: 'Apple представила...' }] } },
 
   // ═══ UTILITIES & SERVICES ═══
-  { id: 'weather', icon: '🌤️', title: 'Weather', subtitle: 'Погода', priority: 'medium', category: 'utilities', size: 'large', infoLoad: 40, connects: ['calendar', 'siri'], miniWidgets: createMiniWidgets([{ icon: '📍', label: 'Локация' }, { icon: '🌡️', label: 'Прогноз' }]), position: pos(140, -480, 5), widgetData: { temperature: 22, condition: 'Солнечно', items: [{ icon: '💧', label: 'Влажность', value: '45%' }, { icon: '💨', label: 'Ветер', value: '3 м/с' }] } },
+  { id: 'weather', icon: '🌤️', title: 'Weather', subtitle: 'Москва', priority: 'medium', category: 'utilities', size: 'large', infoLoad: 40, connects: ['calendar', 'siri'], miniWidgets: createMiniWidgets([{ icon: '📍', label: 'Локация' }, { icon: '🌡️', label: 'Прогноз' }]), position: pos(140, -480, 5), widgetData: { 
+    temperature: 22, 
+    tempHigh: 26, 
+    tempLow: 18, 
+    condition: 'Солнечно', 
+    humidity: 45, 
+    wind: 3, 
+    feelsLike: 21, 
+    precipitation: 0,
+    hourlyForecast: [
+      { time: '12:00', temp: 22, icon: '☀️' },
+      { time: '13:00', temp: 23, icon: '🌤️' },
+      { time: '14:00', temp: 24, icon: '☀️' },
+      { time: '15:00', temp: 25, icon: '☀️' },
+      { time: '16:00', temp: 24, icon: '🌤️' },
+    ]
+  }},
   
   { id: 'maps', icon: '🗺️', title: 'Maps', subtitle: 'Карты Apple', priority: 'medium', category: 'utilities', size: 'medium', infoLoad: 55, connects: ['weather', 'siri'], miniWidgets: createMiniWidgets([{ icon: '🧭', label: 'Навигация' }, { icon: '📍', label: 'Места' }]), position: pos(-60, 500, 6) },
   
