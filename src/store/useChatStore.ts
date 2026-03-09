@@ -57,10 +57,6 @@ const QUERY_WIDGET_MAP: Record<string, string[]> = {
   интеллект: ['lmm-core', 'neural-engine', 'siri'],
   настройк: ['processing-queue', 'lmm-core'],
 };
-  памят: ['memory-bank', 'notes', 'lmm-core'],
-  мозг: ['lmm-core', 'neural-engine', 'memory-bank'],
-  анализ: ['neural-engine', 'lmm-core', 'processing-queue'],
-};
 
 export interface QueryGroup {
   id: string;
