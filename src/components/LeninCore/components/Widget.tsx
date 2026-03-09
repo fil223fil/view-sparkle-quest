@@ -10,6 +10,7 @@ import {
   MiniWidgetData,
   WidgetSize 
 } from '../types';
+import type { MorphPhase } from '../hooks/useDiveAnimation';
 
 interface WidgetProps {
   widget: WidgetData;
@@ -17,6 +18,8 @@ interface WidgetProps {
   isRelated: boolean;
   isBlurred: boolean;
   isDived?: boolean;
+  morphProgress?: number;
+  morphPhase?: MorphPhase;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
   onDoubleTap?: (id: string) => void;
@@ -902,6 +905,7 @@ const LargeWidgetContent: React.FC<{ widget: WidgetData; isDark: boolean; glowCo
 // ===== MAIN WIDGET COMPONENT =====
 export const Widget: React.FC<WidgetProps> = ({
   widget, isFocused, isRelated, isBlurred, isDived = false,
+  morphProgress = 0, morphPhase = 'idle',
   onHover, onSelect, onDoubleTap,
 }) => {
   const { id, title, subtitle, priority, category, size, infoLoad, miniWidgets } = widget;
@@ -922,9 +926,29 @@ export const Widget: React.FC<WidgetProps> = ({
   const sizeConfig = WIDGET_SIZES[size];
   const priorityScale = PRIORITY_SCALE[priority];
   const categoryStyle = CATEGORY_COLORS[category];
-  const width = sizeConfig.width * priorityScale;
-  const height = sizeConfig.height * priorityScale;
-  const borderRadius = sizeConfig.radius;
+  
+  // Morph: interpolate from current size to large size
+  const largeConfig = WIDGET_SIZES['large'];
+  const isMorphing = morphPhase === 'expanding' || morphPhase === 'collapsing' || morphPhase === 'expanded';
+  const mp = isMorphing ? morphProgress : 0;
+  
+  const baseWidth = sizeConfig.width * priorityScale;
+  const baseHeight = sizeConfig.height * priorityScale;
+  const targetWidth = largeConfig.width * 1.6;
+  const targetHeight = largeConfig.height * 1.6;
+  
+  const width = isMorphing ? baseWidth + (targetWidth - baseWidth) * mp : baseWidth;
+  const height = isMorphing ? baseHeight + (targetHeight - baseHeight) * mp : baseHeight;
+  const borderRadius = isMorphing 
+    ? sizeConfig.radius + (largeConfig.radius - sizeConfig.radius) * mp 
+    : sizeConfig.radius;
+
+  // Determine which content to show during morph
+  const showLargeContent = isMorphing && mp > 0.3;
+  const contentOpacity = isMorphing 
+    ? (mp > 0.3 ? Math.min((mp - 0.3) / 0.4, 1) : 0)
+    : 1;
+  const originalContentOpacity = isMorphing ? Math.max(1 - mp * 2, 0) : 1;
 
   const glowColor = useMemo(() => {
     switch (category) {
@@ -945,9 +969,11 @@ export const Widget: React.FC<WidgetProps> = ({
       ? `0 8px 32px 0 rgba(0,0,0,0.4), inset 0 0.5px 0 rgba(255,255,255,0.06)`
       : `0 8px 32px 0 rgba(0,0,0,0.08), inset 0 0.5px 0 rgba(255,255,255,0.5)`;
 
-    if (isDived) {
-      transform = 'translate(-50%, -50%) scale(1.4)';
-      boxShadow = `0 24px 64px ${glowColor}40, 0 0 80px ${glowColor}30`;
+    if (isDived || isMorphing) {
+      const scale = 1 + 0.4 * mp;
+      transform = `translate(-50%, -50%) scale(${scale})`;
+      const glowIntensity = Math.floor(mp * 64);
+      boxShadow = `0 ${8 + glowIntensity}px ${32 + glowIntensity}px ${glowColor}${Math.floor(mp * 40).toString(16).padStart(2, '0')}, 0 0 ${glowIntensity}px ${glowColor}${Math.floor(mp * 30).toString(16).padStart(2, '0')}`;
     } else if (isFocused) {
       transform = 'translate(-50%, -50%) scale(1.15)';
       boxShadow = `0 16px 48px ${glowColor}35, 0 0 48px ${glowColor}25`;
@@ -967,11 +993,15 @@ export const Widget: React.FC<WidgetProps> = ({
       WebkitBackdropFilter: 'blur(40px) saturate(200%)',
       border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(255,255,255,0.6)',
       borderRadius: `${borderRadius}px`, padding: '16px',
-      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      transition: isMorphing ? 'none' : 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
       cursor: 'pointer', position: 'relative' as const,
       fontFamily: '-apple-system, SF Pro Text, SF Pro Display, system-ui, sans-serif',
+      overflow: 'hidden',
     };
-  }, [isFocused, isRelated, isBlurred, isDived, width, height, borderRadius, glowColor, isDark]);
+  }, [isFocused, isRelated, isBlurred, isDived, isMorphing, width, height, borderRadius, glowColor, isDark, mp]);
+
+  // Render the effective content size based on morph state
+  const effectiveSize: WidgetSize = showLargeContent ? 'large' : size;
 
   return (
     <Html position={[widget.position.x / 100, -widget.position.y / 100, widget.position.z / 50]} center distanceFactor={8} zIndexRange={[100, 0]}>
@@ -979,17 +1009,50 @@ export const Widget: React.FC<WidgetProps> = ({
         <div style={{ position: 'absolute', inset: 0, borderRadius, background: categoryStyle.gradient, opacity: isDark ? 0.5 : 0.4, pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', inset: 0, borderRadius, background: isDark ? 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%)' : 'linear-gradient(180deg, rgba(255,255,255,0.4), transparent 40%)', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', height: '100%' }}>
-          {size === 'small' && <SmallWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
-          {size === 'medium' && <MediumWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
-          {size === 'large' && <LargeWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+        {/* Morph glow ring */}
+        {isMorphing && mp > 0 && (
+          <div style={{
+            position: 'absolute', inset: -2, borderRadius: borderRadius + 2,
+            border: `2px solid ${glowColor}`,
+            opacity: mp * 0.6,
+            boxShadow: `0 0 ${20 * mp}px ${glowColor}40, inset 0 0 ${10 * mp}px ${glowColor}20`,
+            pointerEvents: 'none',
+            transition: 'none',
+          }} />
+        )}
 
-          {priority === 'critical' && (
+        <div style={{ position: 'relative', height: '100%' }}>
+          {/* Original content fading out during morph */}
+          {isMorphing && !showLargeContent && (
+            <div style={{ opacity: originalContentOpacity, transition: 'none' }}>
+              {size === 'small' && <SmallWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+              {size === 'medium' && <MediumWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+              {size === 'large' && <LargeWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+            </div>
+          )}
+
+          {/* Large content fading in during morph */}
+          {isMorphing && showLargeContent && (
+            <div style={{ opacity: contentOpacity, transition: 'none' }}>
+              <LargeWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />
+            </div>
+          )}
+
+          {/* Normal content when not morphing */}
+          {!isMorphing && (
+            <>
+              {size === 'small' && <SmallWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+              {size === 'medium' && <MediumWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+              {size === 'large' && <LargeWidgetContent widget={widget} isDark={isDark} glowColor={glowColor} categoryStyle={categoryStyle} />}
+            </>
+          )}
+
+          {priority === 'critical' && !isMorphing && (
             <div style={{ position: 'absolute', top: 0, right: 0, width: 8, height: 8, borderRadius: 4, background: APPLE_COLORS.red, boxShadow: `0 0 8px ${APPLE_COLORS.red}80`, animation: 'pulse 2s ease-in-out infinite' }} />
           )}
         </div>
 
-        {isFocused && miniWidgets.length > 0 && (
+        {isFocused && !isMorphing && miniWidgets.length > 0 && (
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }}>
             {miniWidgets.map((mini, i) => (
               <MiniWidget key={mini.id} data={mini} index={i} total={miniWidgets.length} parentWidth={width} isDark={isDark} />
