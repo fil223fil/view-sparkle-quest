@@ -30,7 +30,29 @@ const SceneContent: React.FC<{
   connections: ConnectionData[];
   currentDepth: DepthLevel;
   onDepthChange: (level: DepthLevel) => void;
-}> = ({ widgets, connections, currentDepth, onDepthChange }) => {
+}> = ({ widgets: initialWidgets, connections, currentDepth, onDepthChange }) => {
+  const [widgets, setWidgets] = useState<WidgetData[]>(initialWidgets);
+  const { calculateForces } = usePhysicsSimulation();
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsPaused(p => !p);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useFrame(() => {
+    if (!isPaused) {
+      setWidgets((prev) => calculateForces({ widgets: prev, connections }));
+    }
+  });
+
   const {
     focusState,
     handleWidgetHover,
