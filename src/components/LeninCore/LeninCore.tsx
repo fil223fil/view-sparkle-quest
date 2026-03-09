@@ -14,6 +14,7 @@ import { SubWidget } from './components/SubWidget';
 import { DiveOverlay } from './components/DiveOverlay';
 import { DepthNavigation } from './components/DepthNavigation';
 import { Background } from './components/Background';
+import { ChatInputWidget } from './components/ChatInputWidget';
 import { DEPTH_LEVELS } from './types';
 import {
   Breadcrumb,
