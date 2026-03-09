@@ -15,6 +15,15 @@ import { DiveOverlay } from './components/DiveOverlay';
 import { DepthNavigation } from './components/DepthNavigation';
 import { ConnectionLegend } from './components/ConnectionLegend';
 import { Background } from './components/Background';
+import { DEPTH_LEVELS } from './types';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -195,8 +204,34 @@ export const LeninCore: React.FC = () => {
             🧠
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Ядро Ленин</h1>
-            <p className="text-sm text-slate-500">iOS 26 Widget Ecosystem</p>
+            <h1 className="text-xl font-bold text-slate-800 mb-1">Ядро Ленин</h1>
+            <Breadcrumb>
+              <BreadcrumbList>
+                {DEPTH_LEVELS.slice(0, DEPTH_LEVELS.findIndex((l) => l.id === currentDepth) + 1).map((level, idx, arr) => (
+                  <React.Fragment key={level.id}>
+                    <BreadcrumbItem>
+                      {idx === arr.length - 1 ? (
+                        <BreadcrumbPage className="font-medium text-sky-600 flex items-center gap-1">
+                          <span>{level.icon}</span> <span>{level.label}</span>
+                        </BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDepthChange(level.id);
+                          }}
+                          className="text-slate-500 hover:text-sky-600 flex items-center gap-1"
+                        >
+                          <span>{level.icon}</span> <span>{level.label}</span>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                    {idx < arr.length - 1 && <BreadcrumbSeparator />}
+                  </React.Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
         </div>
       </header>
