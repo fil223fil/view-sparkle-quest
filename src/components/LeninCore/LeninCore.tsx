@@ -158,7 +158,6 @@ const SceneContent: React.FC<{
       )}
 
       {/* UI Overlays */}
-      <DepthNavigation currentLevel={currentDepth} onLevelChange={onDepthChange} />
 
       {/* Camera controls - disable rotation when diving */}
       <OrbitControls
