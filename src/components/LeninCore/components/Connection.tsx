@@ -236,12 +236,20 @@ export const Connection: React.FC<ConnectionProps> = ({
   isFocusActive,
 }) => {
   const [hovered, setHovered] = useState(false);
+  const fadeRef = useRef(0); // animated opacity multiplier 0→1
+  const prevHighlighted = useRef(isHighlighted);
   const { from, to, type, strength = 0.5 } = connection;
   const style = CONNECTION_STYLES[type];
 
   const startWidget = widgets.find((w) => w.id === from);
   const endWidget = widgets.find((w) => w.id === to);
   if (!startWidget || !endWidget) return null;
+
+  // Detect highlight change to retrigger fade
+  if (isHighlighted && !prevHighlighted.current) {
+    fadeRef.current = Math.min(fadeRef.current, 0.3); // soft re-entrance
+  }
+  prevHighlighted.current = isHighlighted;
 
   const startPos = new THREE.Vector3(
     startWidget.position.x / 100,
@@ -263,11 +271,11 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const isActive = isHighlighted || hovered;
 
-  const baseOpacity = isFocusActive
+  const targetOpacity = isFocusActive
     ? isActive ? style.opacity : 0.08
     : hovered ? style.opacity * 0.9 : style.opacity * 0.5;
 
-  const lineWidth = isActive
+  const targetLineWidth = isActive
     ? 1.8 + strength * 0.5
     : 0.8;
 
