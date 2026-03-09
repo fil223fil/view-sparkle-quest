@@ -156,10 +156,15 @@ export const LeninCore: React.FC = () => {
   const [widgets] = useState<WidgetData[]>(INITIAL_WIDGETS);
   const [connections] = useState<ConnectionData[]>(INITIAL_CONNECTIONS);
   const [currentDepth, setCurrentDepth] = useState<DepthLevel>('active');
+  const { theme, setTheme } = useTheme();
 
   const handleDepthChange = useCallback((level: DepthLevel) => {
     setCurrentDepth(level);
   }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }, [theme, setTheme]);
 
   return (
     <div className="w-full h-screen bg-transparent relative overflow-hidden font-sans text-foreground">
@@ -179,9 +184,20 @@ export const LeninCore: React.FC = () => {
             </div>
           </div>
           
-          <div className="glass-capsule px-5 py-2.5 rounded-full flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
-            <span className="text-sm font-medium text-foreground">Система активна</span>
+          <div className="flex items-center gap-3">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="glass-capsule w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 text-foreground"
+              aria-label="Переключить тему"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            <div className="glass-capsule px-5 py-2.5 rounded-full flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
+              <span className="text-sm font-medium text-foreground">Система активна</span>
+            </div>
           </div>
         </div>
       </header>
