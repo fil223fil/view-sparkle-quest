@@ -13,7 +13,6 @@ import { Connection } from './components/Connection';
 import { SubWidget } from './components/SubWidget';
 import { DiveOverlay } from './components/DiveOverlay';
 import { DepthNavigation } from './components/DepthNavigation';
-import { ConnectionLegend } from './components/ConnectionLegend';
 import { Background } from './components/Background';
 import { DEPTH_LEVELS } from './types';
 import {
@@ -157,8 +156,7 @@ const SceneContent: React.FC<{
         />
       )}
 
-      {/* UI Overlays - hide connection legend when diving */}
-      {!isDived && <ConnectionLegend />}
+      {/* UI Overlays */}
       <DepthNavigation currentLevel={currentDepth} onLevelChange={onDepthChange} />
 
       {/* Camera controls - disable rotation when diving */}
