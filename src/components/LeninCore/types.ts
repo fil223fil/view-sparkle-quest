@@ -3,6 +3,8 @@
 
 export type WidgetPriority = 'critical' | 'high' | 'medium' | 'low';
 
+export type WidgetSize = 'small' | 'medium' | 'large';
+
 export type WidgetCategory = 
   | 'system' 
   | 'productivity' 
@@ -35,11 +37,23 @@ export interface WidgetData {
   subtitle: string;
   priority: WidgetPriority;
   category: WidgetCategory;
+  size: WidgetSize;
   infoLoad: number;
   connects: string[];
   miniWidgets: MiniWidgetData[];
   position: { x: number; y: number; z: number };
   velocity?: { x: number; y: number; z: number };
+  // Extended data for rich widget content
+  widgetData?: {
+    temperature?: number;
+    condition?: string;
+    events?: { time: string; title: string; color: string }[];
+    steps?: number;
+    calories?: number;
+    progress?: number;
+    unread?: number;
+    items?: { icon: string; label: string; value: string }[];
+  };
 }
 
 export interface ConnectionData {
