@@ -9,6 +9,8 @@ export const ChatInputWidget: React.FC = () => {
   const { messages, isProcessing, addMessage, setProcessing } = useChatStore();
   const [inputText, setInputText] = useState('');
 
+  const activateQueryGroup = useChatStore((s) => s.activateQueryGroup);
+
   const sendMessage = async () => {
     const text = inputText.trim();
     if (!text || isProcessing) return;
@@ -17,6 +19,9 @@ export const ChatInputWidget: React.FC = () => {
     addMessage(userMsg);
     setInputText('');
     setProcessing(true);
+
+    // Activate widget grouping based on query
+    activateQueryGroup(text);
 
     const aiResponse = await simulateAIResponse(text);
     addMessage(aiResponse);

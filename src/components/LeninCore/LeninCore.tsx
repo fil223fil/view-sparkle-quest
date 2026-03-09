@@ -12,18 +12,10 @@ import { Widget } from './components/Widget';
 import { Connection } from './components/Connection';
 import { SubWidget } from './components/SubWidget';
 import { DiveOverlay } from './components/DiveOverlay';
-
+import { ThinkingFlowConnection } from './components/ThinkingFlowConnection';
 import { Background } from './components/Background';
 import { ChatInputWidget } from './components/ChatInputWidget';
-import { DEPTH_LEVELS } from './types';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { useChatStore } from '@/store/useChatStore';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -43,51 +35,36 @@ const SceneContent: React.FC<{
   const [widgets, setWidgets] = useState<WidgetData[]>(initialWidgets);
   const { calculateForces } = usePhysicsSimulation();
   const [isPaused, setIsPaused] = useState(false);
+  const activeGroups = useChatStore((s) => s.activeGroups);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        setIsPaused(p => !p);
-      }
+      if (e.code === 'Space') { e.preventDefault(); setIsPaused(p => !p); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const {
-    focusState,
-    handleWidgetHover,
-    handleWidgetSelect,
-    isWidgetFocused,
-    isWidgetRelated,
-    isWidgetBlurred,
-    isConnectionHighlighted,
+    focusState, handleWidgetHover, handleWidgetSelect,
+    isWidgetFocused, isWidgetRelated, isWidgetBlurred, isConnectionHighlighted,
   } = useFocusMode(widgets, connections);
 
   const {
-    diveState,
-    handleDoubleTap,
-    handleSurface,
-    isDived,
+    diveState, handleDoubleTap, handleSurface, isDived,
   } = useDiveAnimation(widgets, onDepthChange);
 
   useFrame(() => {
     if (!isPaused && !isDived) {
-      setWidgets((prev) => calculateForces({ widgets: prev, connections }));
+      setWidgets((prev) => calculateForces({ widgets: prev, connections, activeGroups }));
     }
   });
 
-  // Handle Esc key to exit focus or surface
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isDived) {
-          handleSurface();
-        } else if (focusState.focusedWidgetId) {
-          handleWidgetSelect(focusState.focusedWidgetId); // toggles focus off
-        }
+        if (isDived) handleSurface();
+        else if (focusState.focusedWidgetId) handleWidgetSelect(focusState.focusedWidgetId);
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -95,15 +72,13 @@ const SceneContent: React.FC<{
   }, [isDived, focusState.focusedWidgetId, handleSurface, handleWidgetSelect]);
 
   const isFocusActive = focusState.focusedWidgetId !== null;
-  const divedWidget = diveState.divedWidgetId 
-    ? widgets.find(w => w.id === diveState.divedWidgetId) 
-    : null;
+  const divedWidget = diveState.divedWidgetId ? widgets.find(w => w.id === diveState.divedWidgetId) : null;
 
   return (
     <>
       <Background />
 
-      {/* Connections layer (render behind widgets) - hide when diving */}
+      {/* Connections layer */}
       {!isDived && connections.map((connection) => (
         <Connection
           key={connection.id}
@@ -114,20 +89,25 @@ const SceneContent: React.FC<{
         />
       ))}
 
+      {/* Thinking flow connections from queries */}
+      {!isDived && activeGroups.map((group) => (
+        <ThinkingFlowConnection key={group.id} group={group} widgets={widgets} />
+      ))}
+
       {/* Widgets layer */}
       {widgets.map((widget) => {
-        // When diving, only show the dived widget
-        if (isDived && widget.id !== diveState.divedWidgetId) {
-          return null;
-        }
+        if (isDived && widget.id !== diveState.divedWidgetId) return null;
+        
+        // Check if widget is part of any active group
+        const isInActiveGroup = activeGroups.some(g => g.widgetIds.includes(widget.id));
         
         return (
           <Widget
             key={widget.id}
             widget={widget}
-            isFocused={isWidgetFocused(widget.id)}
+            isFocused={isWidgetFocused(widget.id) || isInActiveGroup}
             isRelated={isWidgetRelated(widget.id)}
-            isBlurred={!isDived && isWidgetBlurred(widget.id)}
+            isBlurred={!isDived && isWidgetBlurred(widget.id) && !isInActiveGroup}
             isDived={widget.id === diveState.divedWidgetId}
             onHover={handleWidgetHover}
             onSelect={handleWidgetSelect}
@@ -136,7 +116,7 @@ const SceneContent: React.FC<{
         );
       })}
 
-      {/* Sub-widgets layer (only visible when diving) */}
+      {/* Sub-widgets layer */}
       {isDived && divedWidget && diveState.subWidgets.map((subWidget, index) => (
         <SubWidget
           key={subWidget.id}
@@ -149,17 +129,11 @@ const SceneContent: React.FC<{
         />
       ))}
 
-      {/* Dive mode overlay with back button */}
+      {/* Dive overlay */}
       {isDived && divedWidget && (
-        <DiveOverlay
-          widgetTitle={divedWidget.title}
-          onSurface={handleSurface}
-        />
+        <DiveOverlay widgetTitle={divedWidget.title} onSurface={handleSurface} />
       )}
 
-      {/* UI Overlays */}
-
-      {/* Camera controls - disable rotation when diving */}
       <OrbitControls
         enablePan={!isDived}
         enableZoom={!isDived}
@@ -187,34 +161,31 @@ export const LeninCore: React.FC = () => {
 
   return (
     <div className="w-full h-screen bg-transparent relative overflow-hidden font-sans text-foreground">
-      {/* Dynamic ambient background layer */}
-      <div className="absolute inset-0 bg-background/20 backdrop-blur-[100px] -z-10 mix-blend-overlay"></div>
+      <div className="absolute inset-0 bg-background/20 backdrop-blur-[100px] -z-10 mix-blend-overlay" />
       
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-10 p-6 pt-10">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-[1.25rem] flex items-center justify-center text-2xl glass-liquid relative overflow-hidden group cursor-pointer transition-transform duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               🧠
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>Ядро Ленин</h1>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Ядро Ленин</h1>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-80">Синхронизировано</p>
             </div>
           </div>
           
           <div className="glass-capsule px-5 py-2.5 rounded-full flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
             <span className="text-sm font-medium text-foreground">Система активна</span>
           </div>
         </div>
       </header>
 
-      {/* Chat Input Widget */}
       <ChatInputWidget />
 
-      {/* 3D Canvas */}
       <Canvas
         camera={{ position: [0, 0, 10], fov: 50 }}
         gl={{ antialias: true, alpha: true }}
@@ -230,7 +201,6 @@ export const LeninCore: React.FC = () => {
         </Suspense>
       </Canvas>
 
-      {/* Accessibility: Screen reader announcements */}
       <div className="sr-only" role="status" aria-live="polite">
         Текущий уровень глубины: {currentDepth}
       </div>
