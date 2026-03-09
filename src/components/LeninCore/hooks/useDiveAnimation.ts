@@ -1,8 +1,10 @@
-// Dive Animation Hook - Zoom-in transition to detail level
+// Dive Animation Hook - Zoom-in with morph transition
 import { useState, useCallback, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { WidgetData, DepthLevel } from '../types';
+
+export type MorphPhase = 'idle' | 'expanding' | 'expanded' | 'collapsing';
 
 export interface DiveState {
   isDiving: boolean;
@@ -10,9 +12,10 @@ export interface DiveState {
   targetPosition: THREE.Vector3;
   zoomLevel: number;
   subWidgets: WidgetData[];
+  morphPhase: MorphPhase;
+  morphProgress: number; // 0-1
 }
 
-// Generate sub-widgets for a parent widget when diving
 const generateSubWidgets = (parent: WidgetData): WidgetData[] => {
   const subWidgetTemplates: Record<string, Array<{ icon: string; title: string; subtitle: string }>> = {
     'lmm-core': [
@@ -44,7 +47,6 @@ const generateSubWidgets = (parent: WidgetData): WidgetData[] => {
     { icon: '📊', title: 'Аналитика', subtitle: 'Статистика' },
   ];
 
-  // Position sub-widgets in a circle around the parent
   const angleStep = (Math.PI * 2) / templates.length;
   const radius = 150;
 
@@ -80,45 +82,67 @@ export const useDiveAnimation = (
     targetPosition: new THREE.Vector3(0, 0, 0),
     zoomLevel: 1,
     subWidgets: [],
+    morphPhase: 'idle',
+    morphProgress: 0,
   });
 
   const animationRef = useRef<number | null>(null);
+  const morphRef = useRef<number | null>(null);
   const { camera } = useThree();
 
-  // Handle double-click to dive into widget
   const handleDoubleTap = useCallback((widgetId: string) => {
     const widget = widgets.find(w => w.id === widgetId);
     if (!widget) return;
 
-    // If already diving into this widget, surface back
     if (diveState.divedWidgetId === widgetId) {
       handleSurface();
       return;
     }
 
-    // Calculate target position for zoom
     const targetPos = new THREE.Vector3(
       widget.position.x / 100,
       -widget.position.y / 100,
       widget.position.z / 50
     );
 
-    // Generate sub-widgets for this widget
     const subWidgets = generateSubWidgets(widget);
 
-    // Start dive animation
+    // Phase 1: Start morph expansion
     setDiveState({
       isDiving: true,
       divedWidgetId: widgetId,
       targetPosition: targetPos,
       zoomLevel: 2.5,
       subWidgets,
+      morphPhase: 'expanding',
+      morphProgress: 0,
     });
 
-    // Change depth level
     onDepthChange('detail');
 
-    // Animate camera zoom
+    // Animate morph progress 0 → 1
+    const morphStart = performance.now();
+    const morphDuration = 600;
+
+    const animateMorph = (now: number) => {
+      const elapsed = now - morphStart;
+      const t = Math.min(elapsed / morphDuration, 1);
+      // Spring-like easing
+      const eased = 1 - Math.pow(1 - t, 3) * Math.cos(t * Math.PI * 0.5);
+
+      setDiveState(prev => ({ ...prev, morphProgress: eased }));
+
+      if (t < 1) {
+        morphRef.current = requestAnimationFrame(animateMorph);
+      } else {
+        setDiveState(prev => ({ ...prev, morphPhase: 'expanded', morphProgress: 1 }));
+      }
+    };
+
+    if (morphRef.current) cancelAnimationFrame(morphRef.current);
+    morphRef.current = requestAnimationFrame(animateMorph);
+
+    // Camera zoom
     const startPos = camera.position.clone();
     const endPos = targetPos.clone().add(new THREE.Vector3(0, 0, 4));
     const startTime = performance.now();
@@ -127,26 +151,41 @@ export const useDiveAnimation = (
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
-      // Easing function (ease-out cubic)
       const eased = 1 - Math.pow(1 - progress, 3);
-
       camera.position.lerpVectors(startPos, endPos, eased);
       camera.lookAt(targetPos);
-
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
       }
     };
 
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
     animationRef.current = requestAnimationFrame(animate);
   }, [widgets, diveState.divedWidgetId, camera, onDepthChange]);
 
-  // Surface back to main view
   const handleSurface = useCallback(() => {
+    // Phase: collapsing
+    setDiveState(prev => ({ ...prev, morphPhase: 'collapsing', morphProgress: 1 }));
+
+    const morphStart = performance.now();
+    const morphDuration = 400;
+
+    const animateMorph = (now: number) => {
+      const elapsed = now - morphStart;
+      const t = Math.min(elapsed / morphDuration, 1);
+      const eased = 1 - t;
+
+      setDiveState(prev => ({ ...prev, morphProgress: eased }));
+
+      if (t < 1) {
+        morphRef.current = requestAnimationFrame(animateMorph);
+      }
+    };
+
+    if (morphRef.current) cancelAnimationFrame(morphRef.current);
+    morphRef.current = requestAnimationFrame(animateMorph);
+
+    // Camera zoom out
     const startPos = camera.position.clone();
     const endPos = new THREE.Vector3(0, 0, 10);
     const startTime = performance.now();
@@ -155,13 +194,9 @@ export const useDiveAnimation = (
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
-      // Easing function (ease-out cubic)
       const eased = 1 - Math.pow(1 - progress, 3);
-
       camera.position.lerpVectors(startPos, endPos, eased);
       camera.lookAt(new THREE.Vector3(0, 0, 0));
-
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
       } else {
@@ -171,14 +206,14 @@ export const useDiveAnimation = (
           targetPosition: new THREE.Vector3(0, 0, 0),
           zoomLevel: 1,
           subWidgets: [],
+          morphPhase: 'idle',
+          morphProgress: 0,
         });
         onDepthChange('active');
       }
     };
 
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
     animationRef.current = requestAnimationFrame(animate);
   }, [camera, onDepthChange]);
 
