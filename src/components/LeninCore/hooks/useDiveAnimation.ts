@@ -57,6 +57,7 @@ const generateSubWidgets = (parent: WidgetData): WidgetData[] => {
       subtitle: template.subtitle,
       priority: 'medium' as const,
       category: parent.category,
+      size: 'small' as const,
       infoLoad: Math.floor(Math.random() * 60) + 20,
       connects: [parent.id],
       miniWidgets: [],

@@ -1,5 +1,5 @@
 // Ядро Ленин - Full Apple Ecosystem Widget & Connection Data
-import { WidgetData, ConnectionData, MiniWidgetData } from './types';
+import { WidgetData, ConnectionData, MiniWidgetData, WidgetSize } from './types';
 
 let miniCounter = 0;
 const createMiniWidgets = (items: { icon: string; label: string }[]): MiniWidgetData[] =>
@@ -9,49 +9,78 @@ const createMiniWidgets = (items: { icon: string; label: string }[]): MiniWidget
 const pos = (x: number, y: number, z = 5) => ({ x, y, z });
 
 export const INITIAL_WIDGETS: WidgetData[] = [
-  // ═══ SYSTEM / AI CORE ═══
-  { id: 'lmm-core', icon: '🧠', title: 'Apple Intelligence', subtitle: 'Центральный ИИ', priority: 'critical', category: 'system', infoLoad: 92, connects: ['siri', 'neural-engine', 'memory-bank', 'processing-queue'], miniWidgets: createMiniWidgets([{ icon: '⚡', label: 'Активация' }, { icon: '🔄', label: 'Синхронизация' }, { icon: '📊', label: 'Метрики' }]), position: pos(0, 0, 20) },
-  { id: 'siri', icon: '🎙️', title: 'Siri', subtitle: 'Голосовой ассистент', priority: 'critical', category: 'system', infoLoad: 88, connects: ['lmm-core', 'shortcuts', 'homekit'], miniWidgets: createMiniWidgets([{ icon: '🗣️', label: 'Голос' }, { icon: '🌐', label: 'Язык' }]), position: pos(120, -150, 18) },
-  { id: 'neural-engine', icon: '🔮', title: 'Neural Engine', subtitle: 'Нейронный процессор', priority: 'high', category: 'system', infoLoad: 95, connects: ['lmm-core', 'photos', 'camera'], miniWidgets: createMiniWidgets([{ icon: '🌐', label: 'Сеть' }, { icon: '📈', label: 'ML' }]), position: pos(-130, 170, 22) },
-  { id: 'memory-bank', icon: '💾', title: 'iCloud', subtitle: 'Облачное хранилище', priority: 'high', category: 'system', infoLoad: 78, connects: ['lmm-core', 'notes', 'photos', 'files'], miniWidgets: createMiniWidgets([{ icon: '☁️', label: 'Облако' }, { icon: '🔍', label: 'Поиск' }]), position: pos(-250, -80, 15) },
-  { id: 'processing-queue', icon: '⚙️', title: 'Settings', subtitle: 'Настройки системы', priority: 'high', category: 'system', infoLoad: 30, connects: ['lmm-core'], miniWidgets: createMiniWidgets([{ icon: '🔧', label: 'Общие' }, { icon: '🔒', label: 'Приватность' }]), position: pos(260, 90, 12) },
+  // ═══ SYSTEM / AI CORE ═══ (Large widgets for core services)
+  { id: 'lmm-core', icon: '🧠', title: 'Apple Intelligence', subtitle: 'Центральный ИИ', priority: 'critical', category: 'system', size: 'large', infoLoad: 92, connects: ['siri', 'neural-engine', 'memory-bank', 'processing-queue'], miniWidgets: createMiniWidgets([{ icon: '⚡', label: 'Активация' }, { icon: '🔄', label: 'Синхронизация' }, { icon: '📊', label: 'Метрики' }]), position: pos(0, 0, 20), widgetData: { items: [{ icon: '🤖', label: 'ML Models', value: '12 активных' }, { icon: '📝', label: 'Контекст', value: '8.2K токенов' }, { icon: '⚡', label: 'Задержка', value: '45ms' }] } },
+  
+  { id: 'siri', icon: '🎙️', title: 'Siri', subtitle: 'Голосовой ассистент', priority: 'critical', category: 'system', size: 'medium', infoLoad: 88, connects: ['lmm-core', 'shortcuts', 'homekit'], miniWidgets: createMiniWidgets([{ icon: '🗣️', label: 'Голос' }, { icon: '🌐', label: 'Язык' }]), position: pos(200, -200, 18) },
+  
+  { id: 'neural-engine', icon: '🔮', title: 'Neural Engine', subtitle: 'Нейронный процессор', priority: 'high', category: 'system', size: 'medium', infoLoad: 95, connects: ['lmm-core', 'photos', 'camera'], miniWidgets: createMiniWidgets([{ icon: '🌐', label: 'Сеть' }, { icon: '📈', label: 'ML' }]), position: pos(-200, 220, 22) },
+  
+  { id: 'memory-bank', icon: '💾', title: 'iCloud', subtitle: 'Облачное хранилище', priority: 'high', category: 'system', size: 'medium', infoLoad: 78, connects: ['lmm-core', 'notes', 'photos', 'files'], miniWidgets: createMiniWidgets([{ icon: '☁️', label: 'Облако' }, { icon: '🔍', label: 'Поиск' }]), position: pos(-350, -100, 15), widgetData: { items: [{ icon: '📦', label: 'Использовано', value: '128 ГБ' }, { icon: '🔄', label: 'Синхронизация', value: 'Активна' }] } },
+  
+  { id: 'processing-queue', icon: '⚙️', title: 'Settings', subtitle: 'Настройки системы', priority: 'high', category: 'system', size: 'small', infoLoad: 30, connects: ['lmm-core'], miniWidgets: createMiniWidgets([{ icon: '🔧', label: 'Общие' }, { icon: '🔒', label: 'Приватность' }]), position: pos(360, 120, 12) },
 
-  // ═══ PRODUCTIVITY ═══
-  { id: 'calendar', icon: '📅', title: 'Calendar', subtitle: 'Расписание', priority: 'medium', category: 'productivity', infoLoad: 45, connects: ['tasks', 'reminders', 'mail'], miniWidgets: createMiniWidgets([{ icon: '➕', label: 'Событие' }, { icon: '🔔', label: 'Уведомление' }]), position: pos(-320, 200, 8) },
-  { id: 'tasks', icon: '✅', title: 'Reminders', subtitle: 'Задачи и списки', priority: 'medium', category: 'productivity', infoLoad: 55, connects: ['calendar', 'siri'], miniWidgets: createMiniWidgets([{ icon: '➕', label: 'Добавить' }, { icon: '📋', label: 'Списки' }]), position: pos(350, -50, 7) },
-  { id: 'notes', icon: '📝', title: 'Notes', subtitle: 'Заметки', priority: 'medium', category: 'productivity', infoLoad: 40, connects: ['memory-bank', 'files'], miniWidgets: createMiniWidgets([{ icon: '✏️', label: 'Новая' }, { icon: '📤', label: 'Экспорт' }]), position: pos(-380, -200, 6) },
-  { id: 'reminders', icon: '🔔', title: 'Clock', subtitle: 'Часы и таймеры', priority: 'low', category: 'productivity', infoLoad: 20, connects: ['calendar'], miniWidgets: createMiniWidgets([{ icon: '⏰', label: 'Будильник' }]), position: pos(-180, 320, 4) },
-  { id: 'files', icon: '📁', title: 'Files', subtitle: 'Файловый менеджер', priority: 'medium', category: 'productivity', infoLoad: 35, connects: ['memory-bank', 'notes'], miniWidgets: createMiniWidgets([{ icon: '📂', label: 'Папки' }, { icon: '☁️', label: 'iCloud' }]), position: pos(180, 280, 5) },
-  { id: 'shortcuts', icon: '⚡', title: 'Shortcuts', subtitle: 'Автоматизации', priority: 'medium', category: 'productivity', infoLoad: 50, connects: ['siri', 'homekit'], miniWidgets: createMiniWidgets([{ icon: '🔄', label: 'Сценарий' }, { icon: '▶️', label: 'Запуск' }]), position: pos(420, 180, 6) },
-  { id: 'freeform', icon: '🎨', title: 'Freeform', subtitle: 'Доска идей', priority: 'low', category: 'productivity', infoLoad: 25, connects: ['notes'], miniWidgets: createMiniWidgets([{ icon: '✏️', label: 'Рисование' }]), position: pos(-450, 80, 3) },
+  // ═══ PRODUCTIVITY ═══ (Mixed sizes)
+  { id: 'calendar', icon: '📅', title: 'Calendar', subtitle: 'Расписание', priority: 'medium', category: 'productivity', size: 'large', infoLoad: 45, connects: ['tasks', 'reminders', 'mail'], miniWidgets: createMiniWidgets([{ icon: '➕', label: 'Событие' }, { icon: '🔔', label: 'Уведомление' }]), position: pos(-420, 280, 8), widgetData: { events: [{ time: '10:00', title: 'Встреча с командой', color: '#FF3B30' }, { time: '14:00', title: 'Code Review', color: '#007AFF' }, { time: '16:00', title: 'Спринт', color: '#34C759' }] } },
+  
+  { id: 'tasks', icon: '✅', title: 'Reminders', subtitle: 'Задачи и списки', priority: 'medium', category: 'productivity', size: 'medium', infoLoad: 55, connects: ['calendar', 'siri'], miniWidgets: createMiniWidgets([{ icon: '➕', label: 'Добавить' }, { icon: '📋', label: 'Списки' }]), position: pos(450, -80, 7), widgetData: { items: [{ icon: '○', label: 'Купить продукты', value: '' }, { icon: '○', label: 'Позвонить маме', value: '' }, { icon: '○', label: 'Отправить отчёт', value: '' }] } },
+  
+  { id: 'notes', icon: '📝', title: 'Notes', subtitle: 'Заметки', priority: 'medium', category: 'productivity', size: 'small', infoLoad: 40, connects: ['memory-bank', 'files'], miniWidgets: createMiniWidgets([{ icon: '✏️', label: 'Новая' }, { icon: '📤', label: 'Экспорт' }]), position: pos(-480, -260, 6) },
+  
+  { id: 'reminders', icon: '⏰', title: 'Clock', subtitle: 'Часы и таймеры', priority: 'low', category: 'productivity', size: 'small', infoLoad: 20, connects: ['calendar'], miniWidgets: createMiniWidgets([{ icon: '⏰', label: 'Будильник' }]), position: pos(-240, 420, 4) },
+  
+  { id: 'files', icon: '📁', title: 'Files', subtitle: 'Файловый менеджер', priority: 'medium', category: 'productivity', size: 'small', infoLoad: 35, connects: ['memory-bank', 'notes'], miniWidgets: createMiniWidgets([{ icon: '📂', label: 'Папки' }, { icon: '☁️', label: 'iCloud' }]), position: pos(240, 360, 5) },
+  
+  { id: 'shortcuts', icon: '⚡', title: 'Shortcuts', subtitle: 'Автоматизации', priority: 'medium', category: 'productivity', size: 'medium', infoLoad: 50, connects: ['siri', 'homekit'], miniWidgets: createMiniWidgets([{ icon: '🔄', label: 'Сценарий' }, { icon: '▶️', label: 'Запуск' }]), position: pos(520, 240, 6), widgetData: { items: [{ icon: '🏠', label: 'Дом', value: '' }, { icon: '🚗', label: 'В путь', value: '' }, { icon: '📊', label: 'Отчёт', value: '' }] } },
+  
+  { id: 'freeform', icon: '🎨', title: 'Freeform', subtitle: 'Доска идей', priority: 'low', category: 'productivity', size: 'small', infoLoad: 25, connects: ['notes'], miniWidgets: createMiniWidgets([{ icon: '✏️', label: 'Рисование' }]), position: pos(-560, 100, 3) },
 
   // ═══ COMMUNICATION ═══
-  { id: 'messages', icon: '💬', title: 'Messages', subtitle: 'iMessage', priority: 'high', category: 'communication', infoLoad: 65, connects: ['lmm-core', 'facetime', 'contacts'], miniWidgets: createMiniWidgets([{ icon: '✉️', label: 'Новое' }, { icon: '📎', label: 'Медиа' }]), position: pos(300, 250, 10) },
-  { id: 'mail', icon: '📧', title: 'Mail', subtitle: 'Почта', priority: 'medium', category: 'communication', infoLoad: 58, connects: ['messages', 'calendar', 'contacts'], miniWidgets: createMiniWidgets([{ icon: '📨', label: 'Входящие' }, { icon: '📤', label: 'Отправить' }]), position: pos(430, -180, 8) },
-  { id: 'facetime', icon: '📹', title: 'FaceTime', subtitle: 'Видеозвонки', priority: 'medium', category: 'communication', infoLoad: 30, connects: ['messages', 'contacts'], miniWidgets: createMiniWidgets([{ icon: '📞', label: 'Вызов' }, { icon: '👥', label: 'Группа' }]), position: pos(150, 350, 9) },
-  { id: 'phone', icon: '📱', title: 'Phone', subtitle: 'Телефон', priority: 'high', category: 'communication', infoLoad: 42, connects: ['contacts', 'facetime'], miniWidgets: createMiniWidgets([{ icon: '📞', label: 'Вызов' }]), position: pos(-100, -320, 7) },
-  { id: 'contacts', icon: '👤', title: 'Contacts', subtitle: 'Контакты', priority: 'low', category: 'communication', infoLoad: 22, connects: ['messages', 'mail', 'phone'], miniWidgets: createMiniWidgets([{ icon: '➕', label: 'Добавить' }]), position: pos(50, -260, 5) },
+  { id: 'messages', icon: '💬', title: 'Messages', subtitle: 'iMessage', priority: 'high', category: 'communication', size: 'medium', infoLoad: 65, connects: ['lmm-core', 'facetime', 'contacts'], miniWidgets: createMiniWidgets([{ icon: '✉️', label: 'Новое' }, { icon: '📎', label: 'Медиа' }]), position: pos(380, 320, 10), widgetData: { unread: 3 } },
+  
+  { id: 'mail', icon: '📧', title: 'Mail', subtitle: 'Почта', priority: 'medium', category: 'communication', size: 'medium', infoLoad: 58, connects: ['messages', 'calendar', 'contacts'], miniWidgets: createMiniWidgets([{ icon: '📨', label: 'Входящие' }, { icon: '📤', label: 'Отправить' }]), position: pos(540, -220, 8), widgetData: { unread: 12, items: [{ icon: '📩', label: 'Ivan', value: 'Привет! Как...' }, { icon: '📩', label: 'Team', value: 'Meeting tomorrow...' }] } },
+  
+  { id: 'facetime', icon: '📹', title: 'FaceTime', subtitle: 'Видеозвонки', priority: 'medium', category: 'communication', size: 'small', infoLoad: 30, connects: ['messages', 'contacts'], miniWidgets: createMiniWidgets([{ icon: '📞', label: 'Вызов' }, { icon: '👥', label: 'Группа' }]), position: pos(200, 450, 9) },
+  
+  { id: 'phone', icon: '📱', title: 'Phone', subtitle: 'Телефон', priority: 'high', category: 'communication', size: 'small', infoLoad: 42, connects: ['contacts', 'facetime'], miniWidgets: createMiniWidgets([{ icon: '📞', label: 'Вызов' }]), position: pos(-120, -420, 7) },
+  
+  { id: 'contacts', icon: '👤', title: 'Contacts', subtitle: 'Контакты', priority: 'low', category: 'communication', size: 'small', infoLoad: 22, connects: ['messages', 'mail', 'phone'], miniWidgets: createMiniWidgets([{ icon: '➕', label: 'Добавить' }]), position: pos(80, -340, 5) },
 
   // ═══ MEDIA & ENTERTAINMENT ═══
-  { id: 'photos', icon: '📷', title: 'Photos', subtitle: 'Фотографии', priority: 'medium', category: 'media', infoLoad: 75, connects: ['memory-bank', 'neural-engine', 'camera'], miniWidgets: createMiniWidgets([{ icon: '🖼️', label: 'Галерея' }, { icon: '🤖', label: 'AI ретушь' }]), position: pos(-420, -100, 6) },
-  { id: 'camera', icon: '📸', title: 'Camera', subtitle: 'Камера', priority: 'medium', category: 'media', infoLoad: 60, connects: ['photos', 'neural-engine'], miniWidgets: createMiniWidgets([{ icon: '🎞️', label: 'Видео' }, { icon: '🌃', label: 'Ночь' }]), position: pos(-300, -300, 8) },
-  { id: 'music', icon: '🎵', title: 'Apple Music', subtitle: 'Музыка', priority: 'medium', category: 'media', infoLoad: 70, connects: ['siri'], miniWidgets: createMiniWidgets([{ icon: '▶️', label: 'Плей' }, { icon: '📻', label: 'Радио' }]), position: pos(480, 50, 5) },
-  { id: 'podcasts', icon: '🎙️', title: 'Podcasts', subtitle: 'Подкасты', priority: 'low', category: 'media', infoLoad: 35, connects: ['music'], miniWidgets: createMiniWidgets([{ icon: '🎧', label: 'Слушать' }]), position: pos(380, 320, 4) },
-  { id: 'tv', icon: '📺', title: 'Apple TV+', subtitle: 'Видео и фильмы', priority: 'low', category: 'media', infoLoad: 45, connects: ['music'], miniWidgets: createMiniWidgets([{ icon: '🎬', label: 'Каталог' }]), position: pos(-480, 250, 3) },
-  { id: 'books', icon: '📚', title: 'Books', subtitle: 'Книги', priority: 'low', category: 'media', infoLoad: 28, connects: ['notes'], miniWidgets: createMiniWidgets([{ icon: '📖', label: 'Читать' }]), position: pos(-350, 350, 3) },
-  { id: 'news', icon: '📰', title: 'News', subtitle: 'Новости', priority: 'low', category: 'media', infoLoad: 50, connects: ['siri'], miniWidgets: createMiniWidgets([{ icon: '📋', label: 'Лента' }]), position: pos(250, -300, 4) },
+  { id: 'photos', icon: '📷', title: 'Photos', subtitle: 'Фотографии', priority: 'medium', category: 'media', size: 'large', infoLoad: 75, connects: ['memory-bank', 'neural-engine', 'camera'], miniWidgets: createMiniWidgets([{ icon: '🖼️', label: 'Галерея' }, { icon: '🤖', label: 'AI ретушь' }]), position: pos(-520, -140, 6) },
+  
+  { id: 'camera', icon: '📸', title: 'Camera', subtitle: 'Камера', priority: 'medium', category: 'media', size: 'small', infoLoad: 60, connects: ['photos', 'neural-engine'], miniWidgets: createMiniWidgets([{ icon: '🎞️', label: 'Видео' }, { icon: '🌃', label: 'Ночь' }]), position: pos(-380, -380, 8) },
+  
+  { id: 'music', icon: '🎵', title: 'Apple Music', subtitle: 'Музыка', priority: 'medium', category: 'media', size: 'medium', infoLoad: 70, connects: ['siri'], miniWidgets: createMiniWidgets([{ icon: '▶️', label: 'Плей' }, { icon: '📻', label: 'Радио' }]), position: pos(580, 80, 5), widgetData: { items: [{ icon: '🎵', label: 'Сейчас', value: 'Bohemian Rhapsody' }, { icon: '👤', label: 'Исполнитель', value: 'Queen' }] } },
+  
+  { id: 'podcasts', icon: '🎙️', title: 'Podcasts', subtitle: 'Подкасты', priority: 'low', category: 'media', size: 'small', infoLoad: 35, connects: ['music'], miniWidgets: createMiniWidgets([{ icon: '🎧', label: 'Слушать' }]), position: pos(480, 400, 4) },
+  
+  { id: 'tv', icon: '📺', title: 'Apple TV+', subtitle: 'Видео и фильмы', priority: 'low', category: 'media', size: 'small', infoLoad: 45, connects: ['music'], miniWidgets: createMiniWidgets([{ icon: '🎬', label: 'Каталог' }]), position: pos(-580, 320, 3) },
+  
+  { id: 'books', icon: '📚', title: 'Books', subtitle: 'Книги', priority: 'low', category: 'media', size: 'small', infoLoad: 28, connects: ['notes'], miniWidgets: createMiniWidgets([{ icon: '📖', label: 'Читать' }]), position: pos(-440, 450, 3) },
+  
+  { id: 'news', icon: '📰', title: 'News', subtitle: 'Новости', priority: 'low', category: 'media', size: 'medium', infoLoad: 50, connects: ['siri'], miniWidgets: createMiniWidgets([{ icon: '📋', label: 'Лента' }]), position: pos(320, -380, 4), widgetData: { items: [{ icon: '📰', label: 'Top', value: 'Apple представила...' }] } },
 
   // ═══ UTILITIES & SERVICES ═══
-  { id: 'weather', icon: '🌤️', title: 'Weather', subtitle: 'Погода', priority: 'medium', category: 'utilities', infoLoad: 40, connects: ['calendar', 'siri'], miniWidgets: createMiniWidgets([{ icon: '📍', label: 'Локация' }, { icon: '🌡️', label: 'Прогноз' }]), position: pos(100, -380, 5) },
-  { id: 'maps', icon: '🗺️', title: 'Maps', subtitle: 'Карты Apple', priority: 'medium', category: 'utilities', infoLoad: 55, connects: ['weather', 'siri'], miniWidgets: createMiniWidgets([{ icon: '🧭', label: 'Навигация' }, { icon: '📍', label: 'Места' }]), position: pos(-50, 400, 6) },
-  { id: 'wallet', icon: '💳', title: 'Wallet', subtitle: 'Apple Pay', priority: 'medium', category: 'utilities', infoLoad: 38, connects: ['safari'], miniWidgets: createMiniWidgets([{ icon: '💵', label: 'Оплата' }, { icon: '🎫', label: 'Билеты' }]), position: pos(500, -80, 4) },
-  { id: 'health', icon: '❤️', title: 'Health', subtitle: 'Здоровье', priority: 'medium', category: 'utilities', infoLoad: 65, connects: ['fitness', 'siri'], miniWidgets: createMiniWidgets([{ icon: '💓', label: 'Пульс' }, { icon: '🏃', label: 'Шаги' }]), position: pos(-200, -400, 7) },
-  { id: 'fitness', icon: '🏋️', title: 'Fitness', subtitle: 'Apple Fitness+', priority: 'low', category: 'utilities', infoLoad: 48, connects: ['health'], miniWidgets: createMiniWidgets([{ icon: '🎯', label: 'Цели' }]), position: pos(-400, -350, 4) },
-  { id: 'safari', icon: '🧭', title: 'Safari', subtitle: 'Веб-браузер', priority: 'high', category: 'utilities', infoLoad: 72, connects: ['lmm-core', 'wallet'], miniWidgets: createMiniWidgets([{ icon: '🔍', label: 'Поиск' }, { icon: '📑', label: 'Вкладки' }]), position: pos(-500, 0, 8) },
-  { id: 'appstore', icon: '🛍️', title: 'App Store', subtitle: 'Магазин приложений', priority: 'medium', category: 'utilities', infoLoad: 42, connects: [], miniWidgets: createMiniWidgets([{ icon: '⬇️', label: 'Загрузить' }]), position: pos(450, -280, 3) },
-  { id: 'homekit', icon: '🏠', title: 'Home', subtitle: 'Умный дом', priority: 'medium', category: 'utilities', infoLoad: 33, connects: ['siri', 'shortcuts'], miniWidgets: createMiniWidgets([{ icon: '💡', label: 'Свет' }, { icon: '🌡️', label: 'Климат' }]), position: pos(320, 400, 5) },
-  { id: 'findmy', icon: '📍', title: 'Find My', subtitle: 'Локатор', priority: 'low', category: 'utilities', infoLoad: 25, connects: ['maps'], miniWidgets: createMiniWidgets([{ icon: '📡', label: 'AirTag' }]), position: pos(-480, -200, 3) },
-  { id: 'translate', icon: '🌐', title: 'Translate', subtitle: 'Переводчик', priority: 'low', category: 'utilities', infoLoad: 30, connects: ['siri', 'safari'], miniWidgets: createMiniWidgets([{ icon: '🗣️', label: 'Голос' }]), position: pos(0, 450, 4) },
+  { id: 'weather', icon: '🌤️', title: 'Weather', subtitle: 'Погода', priority: 'medium', category: 'utilities', size: 'large', infoLoad: 40, connects: ['calendar', 'siri'], miniWidgets: createMiniWidgets([{ icon: '📍', label: 'Локация' }, { icon: '🌡️', label: 'Прогноз' }]), position: pos(140, -480, 5), widgetData: { temperature: 22, condition: 'Солнечно', items: [{ icon: '💧', label: 'Влажность', value: '45%' }, { icon: '💨', label: 'Ветер', value: '3 м/с' }] } },
+  
+  { id: 'maps', icon: '🗺️', title: 'Maps', subtitle: 'Карты Apple', priority: 'medium', category: 'utilities', size: 'medium', infoLoad: 55, connects: ['weather', 'siri'], miniWidgets: createMiniWidgets([{ icon: '🧭', label: 'Навигация' }, { icon: '📍', label: 'Места' }]), position: pos(-60, 500, 6) },
+  
+  { id: 'wallet', icon: '💳', title: 'Wallet', subtitle: 'Apple Pay', priority: 'medium', category: 'utilities', size: 'small', infoLoad: 38, connects: ['safari'], miniWidgets: createMiniWidgets([{ icon: '💵', label: 'Оплата' }, { icon: '🎫', label: 'Билеты' }]), position: pos(620, -100, 4) },
+  
+  { id: 'health', icon: '❤️', title: 'Health', subtitle: 'Здоровье', priority: 'medium', category: 'utilities', size: 'large', infoLoad: 65, connects: ['fitness', 'siri'], miniWidgets: createMiniWidgets([{ icon: '💓', label: 'Пульс' }, { icon: '🏃', label: 'Шаги' }]), position: pos(-260, -500, 7), widgetData: { steps: 8432, calories: 542, progress: 84, items: [{ icon: '❤️', label: 'Пульс', value: '72 уд/мин' }, { icon: '😴', label: 'Сон', value: '7.5 ч' }] } },
+  
+  { id: 'fitness', icon: '🏋️', title: 'Fitness', subtitle: 'Apple Fitness+', priority: 'low', category: 'utilities', size: 'medium', infoLoad: 48, connects: ['health'], miniWidgets: createMiniWidgets([{ icon: '🎯', label: 'Цели' }]), position: pos(-500, -440, 4), widgetData: { calories: 542, progress: 54 } },
+  
+  { id: 'safari', icon: '🧭', title: 'Safari', subtitle: 'Веб-браузер', priority: 'high', category: 'utilities', size: 'medium', infoLoad: 72, connects: ['lmm-core', 'wallet'], miniWidgets: createMiniWidgets([{ icon: '🔍', label: 'Поиск' }, { icon: '📑', label: 'Вкладки' }]), position: pos(-620, 0, 8) },
+  
+  { id: 'appstore', icon: '🛍️', title: 'App Store', subtitle: 'Магазин приложений', priority: 'medium', category: 'utilities', size: 'small', infoLoad: 42, connects: [], miniWidgets: createMiniWidgets([{ icon: '⬇️', label: 'Загрузить' }]), position: pos(560, -360, 3) },
+  
+  { id: 'homekit', icon: '🏠', title: 'Home', subtitle: 'Умный дом', priority: 'medium', category: 'utilities', size: 'medium', infoLoad: 33, connects: ['siri', 'shortcuts'], miniWidgets: createMiniWidgets([{ icon: '💡', label: 'Свет' }, { icon: '🌡️', label: 'Климат' }]), position: pos(400, 480, 5), widgetData: { items: [{ icon: '💡', label: 'Гостиная', value: 'Вкл' }, { icon: '🌡️', label: 'Температура', value: '22°C' }] } },
+  
+  { id: 'findmy', icon: '📍', title: 'Find My', subtitle: 'Локатор', priority: 'low', category: 'utilities', size: 'small', infoLoad: 25, connects: ['maps'], miniWidgets: createMiniWidgets([{ icon: '📡', label: 'AirTag' }]), position: pos(-600, -260, 3) },
+  
+  { id: 'translate', icon: '🌐', title: 'Translate', subtitle: 'Переводчик', priority: 'low', category: 'utilities', size: 'small', infoLoad: 30, connects: ['siri', 'safari'], miniWidgets: createMiniWidgets([{ icon: '🗣️', label: 'Голос' }]), position: pos(0, 560, 4) },
 ];
 
 // Connection data — Apple ecosystem relationships
