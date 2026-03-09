@@ -236,31 +236,24 @@ export const Connection: React.FC<ConnectionProps> = ({
   isFocusActive,
 }) => {
   const [hovered, setHovered] = useState(false);
-  const fadeRef = useRef(0); // animated opacity multiplier 0→1
+  const fadeRef = useRef(0);
   const prevHighlighted = useRef(isHighlighted);
+  const animatedOpacity = useRef(0);
+  const animatedLineWidth = useRef(0.4);
+
   const { from, to, type, strength = 0.5 } = connection;
   const style = CONNECTION_STYLES[type];
 
   const startWidget = widgets.find((w) => w.id === from);
   const endWidget = widgets.find((w) => w.id === to);
-  if (!startWidget || !endWidget) return null;
 
-  // Detect highlight change to retrigger fade
-  if (isHighlighted && !prevHighlighted.current) {
-    fadeRef.current = Math.min(fadeRef.current, 0.3); // soft re-entrance
-  }
-  prevHighlighted.current = isHighlighted;
-
-  const startPos = new THREE.Vector3(
-    startWidget.position.x / 100,
-    -startWidget.position.y / 100,
-    startWidget.position.z / 50
-  );
-  const endPos = new THREE.Vector3(
-    endWidget.position.x / 100,
-    -endWidget.position.y / 100,
-    endWidget.position.z / 50
-  );
+  // Calculate positions (or fallback to zero if widgets not found)
+  const startPos = startWidget
+    ? new THREE.Vector3(startWidget.position.x / 100, -startWidget.position.y / 100, startWidget.position.z / 50)
+    : new THREE.Vector3();
+  const endPos = endWidget
+    ? new THREE.Vector3(endWidget.position.x / 100, -endWidget.position.y / 100, endWidget.position.z / 50)
+    : new THREE.Vector3();
 
   const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
   const distance = startPos.distanceTo(endPos);
@@ -279,23 +272,25 @@ export const Connection: React.FC<ConnectionProps> = ({
     ? 1.8 + strength * 0.5
     : 0.8;
 
-  const color = style.color;
+  // Retrigger fade on highlight change
+  if (isHighlighted && !prevHighlighted.current) {
+    fadeRef.current = Math.min(fadeRef.current, 0.3);
+  }
+  prevHighlighted.current = isHighlighted;
 
-  // Animated fade — smoothly interpolate opacity and line width
-  const animatedOpacity = useRef(0);
-  const animatedLineWidth = useRef(0.4);
-
+  // Animate opacity/lineWidth smoothly
   useFrame((_, delta) => {
-    // Fade in on mount, and smoothly transition on state changes
-    const speed = 3.5; // ~0.3s to reach target
-    fadeRef.current = Math.min(fadeRef.current + delta * 1.2, 1); // initial mount fade 0→1
+    const speed = 3.5;
+    fadeRef.current = Math.min(fadeRef.current + delta * 1.2, 1);
     const fadeMul = fadeRef.current;
-
     animatedOpacity.current += (targetOpacity * fadeMul - animatedOpacity.current) * Math.min(delta * speed, 1);
     animatedLineWidth.current += (targetLineWidth - animatedLineWidth.current) * Math.min(delta * speed, 1);
   });
 
-  // Use refs for rendering — they update every frame
+  // Early return AFTER all hooks
+  if (!startWidget || !endWidget) return null;
+
+  const color = style.color;
   const baseOpacity = animatedOpacity.current;
   const lineWidth = animatedLineWidth.current;
 
