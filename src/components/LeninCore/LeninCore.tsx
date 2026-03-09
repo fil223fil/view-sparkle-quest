@@ -47,12 +47,6 @@ const SceneContent: React.FC<{
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  useFrame(() => {
-    if (!isPaused) {
-      setWidgets((prev) => calculateForces({ widgets: prev, connections }));
-    }
-  });
-
   const {
     focusState,
     handleWidgetHover,
@@ -69,6 +63,27 @@ const SceneContent: React.FC<{
     handleSurface,
     isDived,
   } = useDiveAnimation(widgets, onDepthChange);
+
+  useFrame(() => {
+    if (!isPaused && !isDived) {
+      setWidgets((prev) => calculateForces({ widgets: prev, connections }));
+    }
+  });
+
+  // Handle Esc key to exit focus or surface
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isDived) {
+          handleSurface();
+        } else if (focusState.focusedWidgetId) {
+          handleWidgetSelect(focusState.focusedWidgetId); // toggles focus off
+        }
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isDived, focusState.focusedWidgetId, handleSurface, handleWidgetSelect]);
 
   const isFocusActive = focusState.focusedWidgetId !== null;
   const divedWidget = diveState.divedWidgetId 
