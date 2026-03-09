@@ -14,6 +14,7 @@ import { SubWidget } from './components/SubWidget';
 import { DiveOverlay } from './components/DiveOverlay';
 import { DepthNavigation } from './components/DepthNavigation';
 import { Background } from './components/Background';
+import { ChatInputWidget } from './components/ChatInputWidget';
 import { DEPTH_LEVELS } from './types';
 import {
   Breadcrumb,
@@ -234,26 +235,8 @@ export const LeninCore: React.FC = () => {
         </div>
       </header>
 
-      {/* Instructions */}
-      <div className="absolute bottom-6 left-6 z-10">
-        <div
-          className="px-4 py-3 rounded-xl text-sm"
-          style={{
-            background: 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
-          }}
-        >
-          <p className="text-slate-600">
-            <span className="font-medium text-slate-800">Наведите</span> для фокусировки •{' '}
-            <span className="font-medium text-slate-800">2× клик</span> для погружения
-          </p>
-          <p className="text-slate-500 text-xs mt-1">
-            Прокрутка для масштабирования • Перетаскивание для поворота
-          </p>
-        </div>
-      </div>
+      {/* Chat Input Widget */}
+      <ChatInputWidget />
 
       {/* 3D Canvas */}
       <Canvas
