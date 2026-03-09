@@ -30,33 +30,9 @@ export const Background: React.FC = () => {
 
   return (
     <group>
-      {/* Gradient background plane */}
-      <mesh position={[0, 0, -5]}>
-        <planeGeometry args={[50, 50]} />
-        <shaderMaterial
-          transparent
-          uniforms={{
-            uColor1: { value: new THREE.Color('#F0F4F8') },
-            uColor2: { value: new THREE.Color('#E8EEF4') },
-          }}
-          vertexShader={`
-            varying vec2 vUv;
-            void main() {
-              vUv = uv;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `}
-          fragmentShader={`
-            uniform vec3 uColor1;
-            uniform vec3 uColor2;
-            varying vec2 vUv;
-            void main() {
-              vec3 color = mix(uColor1, uColor2, vUv.y);
-              gl_FragColor = vec4(color, 1.0);
-            }
-          `}
-        />
-      </mesh>
+      {/* Gradient background plane - removed to allow HTML glassmorphism background to show through */}
+      
+
 
       {/* Dot grid */}
       <points ref={gridRef}>
