@@ -281,6 +281,24 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const color = style.color;
 
+  // Animated fade — smoothly interpolate opacity and line width
+  const animatedOpacity = useRef(0);
+  const animatedLineWidth = useRef(0.4);
+
+  useFrame((_, delta) => {
+    // Fade in on mount, and smoothly transition on state changes
+    const speed = 3.5; // ~0.3s to reach target
+    fadeRef.current = Math.min(fadeRef.current + delta * 1.2, 1); // initial mount fade 0→1
+    const fadeMul = fadeRef.current;
+
+    animatedOpacity.current += (targetOpacity * fadeMul - animatedOpacity.current) * Math.min(delta * speed, 1);
+    animatedLineWidth.current += (targetLineWidth - animatedLineWidth.current) * Math.min(delta * speed, 1);
+  });
+
+  // Use refs for rendering — they update every frame
+  const baseOpacity = animatedOpacity.current;
+  const lineWidth = animatedLineWidth.current;
+
   let dashSize, gapSize;
   if (style.dashArray) {
     const parts = style.dashArray.split(',');
@@ -290,7 +308,7 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const showAnimation = style.animated && (isActive || !isFocusActive);
 
-  // Tooltip position — slightly above midpoint of curve
+  // Tooltip position
   const tooltipPos = new THREE.Vector3(
     0.75 * midPoint.x + 0.25 * controlPoint.x,
     0.75 * midPoint.y + 0.25 * controlPoint.y + 0.15,
@@ -299,7 +317,6 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   return (
     <group>
-      {/* Invisible hit area for hover detection */}
       <HitArea
         start={startPos}
         end={endPos}
@@ -322,7 +339,7 @@ export const Connection: React.FC<ConnectionProps> = ({
         gapSize={gapSize}
       />
 
-      {/* Soft ambient glow — highlighted or hovered */}
+      {/* Soft ambient glow */}
       {isActive && (
         <QuadraticBezierLine
           start={startPos}
@@ -371,7 +388,7 @@ export const Connection: React.FC<ConnectionProps> = ({
         />
       )}
 
-      {/* Endpoint dots on hover/highlight */}
+      {/* Endpoint dots */}
       {isActive && (
         <>
           <mesh position={startPos}>
@@ -385,7 +402,7 @@ export const Connection: React.FC<ConnectionProps> = ({
         </>
       )}
 
-      {/* Tooltip on hover */}
+      {/* Tooltip */}
       {hovered && (
         <ConnectionTooltip
           position={tooltipPos}
