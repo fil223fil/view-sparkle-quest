@@ -204,33 +204,6 @@ export const LeninCore: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-800 mb-1">Ядро Ленин</h1>
-            <Breadcrumb>
-              <BreadcrumbList>
-                {DEPTH_LEVELS.slice(0, DEPTH_LEVELS.findIndex((l) => l.id === currentDepth) + 1).map((level, idx, arr) => (
-                  <React.Fragment key={level.id}>
-                    <BreadcrumbItem>
-                      {idx === arr.length - 1 ? (
-                        <BreadcrumbPage className="font-medium text-sky-600 flex items-center gap-1">
-                          <span>{level.icon}</span> <span>{level.label}</span>
-                        </BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink 
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleDepthChange(level.id);
-                          }}
-                          className="text-slate-500 hover:text-sky-600 flex items-center gap-1"
-                        >
-                          <span>{level.icon}</span> <span>{level.label}</span>
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                    {idx < arr.length - 1 && <BreadcrumbSeparator />}
-                  </React.Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
           </div>
         </div>
       </header>
