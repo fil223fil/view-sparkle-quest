@@ -38,7 +38,7 @@ export const ChatView: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-full flex-col bg-transparent">
       {/* Header */}
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
