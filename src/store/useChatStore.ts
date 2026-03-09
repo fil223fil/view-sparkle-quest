@@ -41,7 +41,7 @@ const QUERY_WIDGET_MAP: Record<string, string[]> = {
   трениров: ['fitness', 'health', 'music', 'lmm-core'],
   // Utilities
   оплат: ['wallet', 'safari', 'lmm-core'],
-  apple pay: ['wallet', 'safari', 'lmm-core'],
+  'apple pay': ['wallet', 'safari', 'lmm-core'],
   дом: ['homekit', 'siri', 'shortcuts', 'lmm-core'],
   умный: ['homekit', 'siri', 'shortcuts', 'lmm-core'],
   браузер: ['safari', 'lmm-core', 'translate'],
