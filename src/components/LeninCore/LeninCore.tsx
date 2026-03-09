@@ -157,8 +157,7 @@ const SceneContent: React.FC<{
         />
       )}
 
-      {/* UI Overlays - hide connection legend when diving */}
-      {!isDived && <ConnectionLegend />}
+      {/* UI Overlays */}
       <DepthNavigation currentLevel={currentDepth} onLevelChange={onDepthChange} />
 
       {/* Camera controls - disable rotation when diving */}
