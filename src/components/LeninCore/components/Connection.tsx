@@ -11,121 +11,89 @@ interface ConnectionProps {
   isFocusActive: boolean;
 }
 
-// Animated particles for data flow connections
-const DataFlowParticles: React.FC<{
+// Minimal elegant particle — single soft dot traveling along the curve
+const SoftTravelingDot: React.FC<{
   start: THREE.Vector3;
   end: THREE.Vector3;
   control: THREE.Vector3;
   color: string;
-  strength: number;
-}> = ({ start, end, control, color, strength }) => {
-  const particlesRef = useRef<THREE.Points>(null);
-  const particleCount = Math.max(8, Math.ceil(20 * strength));
-  
-  const particles = useMemo(() => {
-    const positions = new Float32Array(particleCount * 3);
-    const offsets = new Float32Array(particleCount);
-    
-    for (let i = 0; i < particleCount; i++) {
-      offsets[i] = i / particleCount;
-    }
-    
-    return { positions, offsets };
-  }, [particleCount]);
+  speed: number;
+  delay: number;
+}> = ({ start, end, control, color, speed, delay }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
-    if (!particlesRef.current) return;
+    if (!meshRef.current) return;
+    const raw = clock.elapsedTime * speed - delay;
+    if (raw < 0) { meshRef.current.visible = false; return; }
+    meshRef.current.visible = true;
     
-    const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-    const t = clock.elapsedTime;
+    const t = (raw % 3) / 3; // gentle 3-second loop
+    const mt = 1 - t;
     
-    for (let i = 0; i < particleCount; i++) {
-      const offset = (particles.offsets[i] + t * 0.4) % 1;
-      
-      const mt = 1 - offset;
-      const x = mt * mt * start.x + 2 * mt * offset * control.x + offset * offset * end.x;
-      const y = mt * mt * start.y + 2 * mt * offset * control.y + offset * offset * end.y;
-      const z = mt * mt * start.z + 2 * mt * offset * control.z + offset * offset * end.z;
-      
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
-    }
+    meshRef.current.position.set(
+      mt * mt * start.x + 2 * mt * t * control.x + t * t * end.x,
+      mt * mt * start.y + 2 * mt * t * control.y + t * t * end.y,
+      mt * mt * start.z + 2 * mt * t * control.z + t * t * end.z,
+    );
     
-    particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    // Soft fade in/out at endpoints
+    const fade = Math.sin(t * Math.PI);
+    const mat = meshRef.current.material as THREE.MeshBasicMaterial;
+    mat.opacity = fade * 0.7;
+    meshRef.current.scale.setScalar(0.6 + fade * 0.4);
   });
 
   return (
-    <points ref={particlesRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={particleCount}
-          array={particles.positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.12}
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[0.04, 16, 16]} />
+      <meshBasicMaterial
         color={color}
         transparent
-        opacity={0.9}
-        sizeAttenuation
+        opacity={0.7}
         blending={THREE.AdditiveBlending}
       />
-    </points>
+    </mesh>
   );
 };
 
-// Animated arrow for logic chain connections
-const AnimatedLogicArrow: React.FC<{
+// Subtle direction indicator — small chevron at midpoint
+const DirectionChevron: React.FC<{
   start: THREE.Vector3;
   end: THREE.Vector3;
   control: THREE.Vector3;
   color: string;
-}> = ({ start, end, control, color }) => {
+  opacity: number;
+}> = ({ start, end, control, color, opacity }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  
-  useFrame(({ clock }) => {
+
+  useFrame(() => {
     if (!meshRef.current) return;
-    const t = (clock.elapsedTime * 0.3) % 1;
-    
+    const t = 0.55; // slightly past midpoint
     const mt = 1 - t;
-    const x = mt * mt * start.x + 2 * mt * t * control.x + t * t * end.x;
-    const y = mt * mt * start.y + 2 * mt * t * control.y + t * t * end.y;
-    const z = mt * mt * start.z + 2 * mt * t * control.z + t * t * end.z;
-    meshRef.current.position.set(x, y, z);
+    
+    meshRef.current.position.set(
+      mt * mt * start.x + 2 * mt * t * control.x + t * t * end.x,
+      mt * mt * start.y + 2 * mt * t * control.y + t * t * end.y,
+      mt * mt * start.z + 2 * mt * t * control.z + t * t * end.z,
+    );
     
     const dx = 2 * mt * (control.x - start.x) + 2 * t * (end.x - control.x);
     const dy = 2 * mt * (control.y - start.y) + 2 * t * (end.y - control.y);
     const dz = 2 * mt * (control.z - start.z) + 2 * t * (end.z - control.z);
     
-    const direction = new THREE.Vector3(dx, dy, dz).normalize();
-    const quaternion = new THREE.Quaternion();
-    quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
-    meshRef.current.quaternion.copy(quaternion);
+    const dir = new THREE.Vector3(dx, dy, dz).normalize();
+    const q = new THREE.Quaternion();
+    q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    meshRef.current.quaternion.copy(q);
   });
 
   return (
     <mesh ref={meshRef}>
-      <coneGeometry args={[0.08, 0.2, 8]} />
-      <meshBasicMaterial color={color} transparent opacity={0.9} />
+      <coneGeometry args={[0.04, 0.1, 6]} />
+      <meshBasicMaterial color={color} transparent opacity={opacity * 0.6} />
     </mesh>
   );
-};
-
-// Golden thread animation for Context Link
-const GoldenThreadLine: React.FC<any> = (props) => {
-  const lineRef = useRef<any>(null);
-  const baseOpacity = props.opacity || 0.5;
-  
-  useFrame(({ clock }) => {
-    if (lineRef.current?.material) {
-      lineRef.current.material.opacity = baseOpacity * (0.5 + Math.sin(clock.elapsedTime * 3) * 0.5);
-    }
-  });
-
-  return <QuadraticBezierLine ref={lineRef} {...props} />;
 };
 
 export const Connection: React.FC<ConnectionProps> = ({
@@ -139,7 +107,6 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const startWidget = widgets.find((w) => w.id === from);
   const endWidget = widgets.find((w) => w.id === to);
-
   if (!startWidget || !endWidget) return null;
 
   const startPos = new THREE.Vector3(
@@ -156,87 +123,110 @@ export const Connection: React.FC<ConnectionProps> = ({
   const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
   const distance = startPos.distanceTo(endPos);
   
-  // Visual spring effect based on physical tension
-  const idealDistance = 2.0; // 200px / 100 scale
-  const tension = Math.abs(distance - idealDistance);
-  const time = performance.now() * 0.015;
-  const springWobble = Math.sin(time) * tension * 0.15;
-  
-  const controlOffset = distance * 0.3 + springWobble;
-  
+  // Very gentle curve — Apple prefers clean, low-arc connections
+  const controlOffset = distance * 0.15;
   const direction = new THREE.Vector3().subVectors(endPos, startPos).normalize();
-  const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0.2);
+  const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0.05);
   const controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(controlOffset));
 
-  const opacity = isFocusActive
-    ? isHighlighted
-      ? style.opacity
-      : 0.15
-    : style.opacity * 0.7;
+  // Elegant opacity — connections should be felt, not shouted
+  const baseOpacity = isFocusActive
+    ? isHighlighted ? style.opacity : 0.08
+    : style.opacity * 0.5;
 
-  const lineWidth = isHighlighted ? (type === 'dataFlow' ? 2 + strength * 2 : 2) : 1;
+  const lineWidth = isHighlighted 
+    ? 1.5 + strength * 0.5 
+    : 0.8;
+
   const color = style.color;
-  
-  // Parse dash array if exists
+
   let dashSize, gapSize;
   if (style.dashArray) {
     const parts = style.dashArray.split(',');
-    dashSize = parseFloat(parts[0]) * 0.05;
-    gapSize = parseFloat(parts[1]) * 0.05;
+    dashSize = parseFloat(parts[0]) * 0.04;
+    gapSize = parseFloat(parts[1]) * 0.04;
   }
 
-  const LineComponent = type === 'contextLink' ? GoldenThreadLine : QuadraticBezierLine;
+  const showAnimation = style.animated && (isHighlighted || !isFocusActive);
 
   return (
     <group>
-      {/* Main line */}
-      <LineComponent
+      {/* Primary line — thin, clean */}
+      <QuadraticBezierLine
         start={startPos}
         end={endPos}
         mid={controlPoint}
         color={color}
         lineWidth={lineWidth}
         transparent
-        opacity={opacity}
+        opacity={baseOpacity}
         dashed={!!style.dashArray}
         dashScale={1}
         dashSize={dashSize}
         gapSize={gapSize}
       />
 
-      {/* Data flow particles */}
-      {type === 'dataFlow' && (isHighlighted || !isFocusActive) && (
-        <DataFlowParticles
-          start={startPos}
-          end={endPos}
-          control={controlPoint}
-          color={style.particleColor || color}
-          strength={strength}
-        />
-      )}
-
-      {/* Logic chain arrow */}
-      {type === 'logicChain' && (
-        <AnimatedLogicArrow
-          start={startPos}
-          end={endPos}
-          control={controlPoint}
-          color={color}
-        />
-      )}
-
-      {/* Glow effect for highlighted connections */}
+      {/* Soft ambient glow — only when highlighted */}
       {isHighlighted && (
         <QuadraticBezierLine
           start={startPos}
           end={endPos}
           mid={controlPoint}
-          color={color}
-          lineWidth={lineWidth + 4}
+          color={style.secondaryColor || color}
+          lineWidth={lineWidth + 6}
           transparent
-          opacity={opacity * 0.3}
+          opacity={baseOpacity * 0.12}
           blending={THREE.AdditiveBlending}
         />
+      )}
+
+      {/* Single traveling dot for animated connections */}
+      {showAnimation && (
+        <>
+          <SoftTravelingDot
+            start={startPos}
+            end={endPos}
+            control={controlPoint}
+            color={style.particleColor || style.secondaryColor || color}
+            speed={0.35}
+            delay={0}
+          />
+          {isHighlighted && (
+            <SoftTravelingDot
+              start={startPos}
+              end={endPos}
+              control={controlPoint}
+              color={style.particleColor || style.secondaryColor || color}
+              speed={0.35}
+              delay={1.5}
+            />
+          )}
+        </>
+      )}
+
+      {/* Direction chevron for logic/causal connections */}
+      {(type === 'logicChain' || type === 'causal') && (
+        <DirectionChevron
+          start={startPos}
+          end={endPos}
+          control={controlPoint}
+          color={color}
+          opacity={baseOpacity}
+        />
+      )}
+
+      {/* Endpoint soft dots */}
+      {isHighlighted && (
+        <>
+          <mesh position={startPos}>
+            <sphereGeometry args={[0.035, 16, 16]} />
+            <meshBasicMaterial color={color} transparent opacity={baseOpacity * 0.8} />
+          </mesh>
+          <mesh position={endPos}>
+            <sphereGeometry args={[0.035, 16, 16]} />
+            <meshBasicMaterial color={color} transparent opacity={baseOpacity * 0.8} />
+          </mesh>
+        </>
       )}
     </group>
   );
