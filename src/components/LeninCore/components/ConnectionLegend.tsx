@@ -1,62 +1,80 @@
-// Connection Types Legend - iOS 26 Liquid Glass
+// Connection Types Legend — Apple-minimal floating pill
 import React from 'react';
 import { Html } from '@react-three/drei';
 import { ConnectionType, CONNECTION_STYLES } from '../types';
+import { useTheme } from 'next-themes';
 
-const CONNECTION_LABELS: Record<ConnectionType, { label: string; description: string }> = {
-  dataFlow: { label: 'Data Flow', description: 'Активный поток данных' },
-  dependency: { label: 'Dependency', description: 'Структурная зависимость' },
-  contextLink: { label: 'Context', description: 'Общий контекст' },
-  logicChain: { label: 'Logic', description: 'Логическая цепь' },
-  causal: { label: 'Causal', description: 'Причинно-следственная' },
-  temporal: { label: 'Temporal', description: 'Временная последовательность' },
-  semantic: { label: 'Semantic', description: 'Смысловая связь' },
-  metacognitive: { label: 'Meta', description: 'Метакогниция' },
+const CONNECTION_LABELS: Record<ConnectionType, string> = {
+  dataFlow: 'Поток данных',
+  dependency: 'Зависимость',
+  contextLink: 'Контекст',
+  logicChain: 'Логика',
+  causal: 'Причинность',
+  temporal: 'Время',
+  semantic: 'Семантика',
+  metacognitive: 'Метакогниция',
 };
 
 export const ConnectionLegend: React.FC = () => {
   const types = Object.keys(CONNECTION_STYLES) as ConnectionType[];
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const containerStyle: React.CSSProperties = {
+    background: isDark
+      ? 'rgba(28, 28, 30, 0.6)'
+      : 'rgba(255, 255, 255, 0.5)',
+    backdropFilter: 'blur(40px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+    border: isDark
+      ? '0.5px solid rgba(255, 255, 255, 0.08)'
+      : '0.5px solid rgba(0, 0, 0, 0.06)',
+    borderRadius: 16,
+    padding: '10px 14px',
+    minWidth: 140,
+    fontFamily: '-apple-system, SF Pro Text, SF Pro Display, system-ui, sans-serif',
+  };
 
   return (
     <Html position={[-5.5, 3, 0]} distanceFactor={10} zIndexRange={[200, 100]}>
-      <div className="glass-liquid p-4 rounded-2xl min-w-[180px]">
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-          Типы связей
-        </h4>
+      <div style={containerStyle}>
+        <div style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase' as const,
+          color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+          marginBottom: 8,
+        }}>
+          Связи
+        </div>
         
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
           {types.map((type) => {
             const style = CONNECTION_STYLES[type];
-            const info = CONNECTION_LABELS[type];
+            const label = CONNECTION_LABELS[type];
             
             return (
-              <div key={type} className="flex items-center gap-2 group">
-                <div className="relative w-8 h-4 flex items-center">
-                  <div
-                    className="w-full h-0.5"
-                    style={{
-                      background: style.color,
-                      opacity: style.opacity,
-                      borderStyle: style.dashArray ? 'dashed' : 'solid',
-                      borderWidth: style.dashArray ? '1px 0 0 0' : 0,
-                      borderColor: style.dashArray ? style.color : 'transparent',
-                    }}
-                  />
-                  {type === 'logicChain' && (
-                    <div className="absolute right-0 w-0 h-0" style={{ borderLeft: `4px solid ${style.color}`, borderTop: '2px solid transparent', borderBottom: '2px solid transparent' }} />
-                  )}
-                  {type === 'dataFlow' && (
-                    <div className="absolute right-1 w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: style.particleColor }} />
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <span className="text-xs font-medium text-foreground">{info.label}</span>
-                </div>
-                
-                <div className="hidden group-hover:block absolute left-full ml-2 px-2 py-1 rounded-lg text-xs glass-capsule text-foreground whitespace-nowrap z-10">
-                  {info.description}
-                </div>
+              <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 20,
+                  height: 2,
+                  borderRadius: 1,
+                  background: style.color,
+                  opacity: 0.7,
+                  ...(style.dashArray ? {
+                    backgroundImage: `repeating-linear-gradient(90deg, ${style.color} 0px, ${style.color} 3px, transparent 3px, transparent 5px)`,
+                    background: 'none',
+                  } : {}),
+                }} />
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 400,
+                  color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)',
+                  letterSpacing: '-0.01em',
+                }}>
+                  {label}
+                </span>
               </div>
             );
           })}

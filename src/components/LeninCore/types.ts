@@ -11,14 +11,14 @@ export type WidgetCategory =
   | 'utilities';
 
 export type ConnectionType = 
-  | 'dataFlow'      // Solid gradient line with moving particles
-  | 'dependency'    // Dashed blue line
-  | 'contextLink'   // Semi-transparent golden thread
-  | 'logicChain'    // Animated arrows
-  | 'causal'        // Cause-effect relationships
-  | 'temporal'      // Time sequence
-  | 'semantic'      // Meaning/conceptual connections
-  | 'metacognitive'; // Reflection over thought processes
+  | 'dataFlow'
+  | 'dependency'
+  | 'contextLink'
+  | 'logicChain'
+  | 'causal'
+  | 'temporal'
+  | 'semantic'
+  | 'metacognitive';
 
 export type DepthLevel = 'dock' | 'active' | 'target' | 'detail' | 'infinite';
 
@@ -35,7 +35,7 @@ export interface WidgetData {
   subtitle: string;
   priority: WidgetPriority;
   category: WidgetCategory;
-  infoLoad: number; // 0-100
+  infoLoad: number;
   connects: string[];
   miniWidgets: MiniWidgetData[];
   position: { x: number; y: number; z: number };
@@ -47,7 +47,7 @@ export interface ConnectionData {
   from: string;
   to: string;
   type: ConnectionType;
-  strength?: number; // 0-1, affects line thickness for dataFlow
+  strength?: number;
 }
 
 export interface DepthLevelData {
@@ -57,7 +57,6 @@ export interface DepthLevelData {
   description: string;
 }
 
-// Priority to size mapping (1.0 = base size)
 export const PRIORITY_SCALE: Record<WidgetPriority, number> = {
   critical: 1.5,
   high: 1.25,
@@ -65,61 +64,69 @@ export const PRIORITY_SCALE: Record<WidgetPriority, number> = {
   low: 0.85,
 };
 
-// Connection visual configurations
+// Apple-refined connection styles — subtle, elegant, SF-inspired palette
 export const CONNECTION_STYLES: Record<ConnectionType, {
   color: string;
+  secondaryColor?: string;
   dashArray?: string;
   particleColor?: string;
   animated: boolean;
   opacity: number;
 }> = {
   dataFlow: {
-    color: '#00D4AA',
-    particleColor: '#00FFD4',
+    color: '#34C759',        // Apple Green
+    secondaryColor: '#30D158',
+    particleColor: '#32D74B',
     animated: true,
-    opacity: 0.9,
+    opacity: 0.45,
   },
   dependency: {
-    color: '#007AFF',
-    dashArray: '8,4',
+    color: '#007AFF',        // Apple Blue
+    secondaryColor: '#0A84FF',
+    dashArray: '12,6',
     animated: false,
-    opacity: 0.7,
+    opacity: 0.35,
   },
   contextLink: {
-    color: '#FFD700',
+    color: '#FF9F0A',        // Apple Orange
+    secondaryColor: '#FFD60A',
     animated: true,
-    opacity: 0.5,
+    opacity: 0.3,
   },
   logicChain: {
-    color: '#FF6B9D',
+    color: '#BF5AF2',        // Apple Purple
+    secondaryColor: '#DA8FFF',
     animated: true,
-    opacity: 0.85,
+    opacity: 0.4,
   },
   causal: {
-    color: '#FF4500',
+    color: '#FF453A',        // Apple Red
+    secondaryColor: '#FF6961',
     animated: true,
-    opacity: 0.8,
+    opacity: 0.35,
   },
   temporal: {
-    color: '#9B59B6',
-    dashArray: '4,2',
+    color: '#5E5CE6',        // Apple Indigo
+    secondaryColor: '#7D7AFF',
+    dashArray: '6,4',
     animated: false,
-    opacity: 0.6,
+    opacity: 0.3,
   },
   semantic: {
-    color: '#3498DB',
+    color: '#64D2FF',        // Apple Cyan
+    secondaryColor: '#70D7FF',
     animated: false,
-    opacity: 0.5,
+    opacity: 0.25,
   },
   metacognitive: {
-    color: '#E74C3C',
-    dashArray: '2,2',
+    color: '#AC8E68',        // Apple Gold/Warm
+    secondaryColor: '#C4A882',
+    dashArray: '3,3',
     animated: true,
-    opacity: 0.7,
+    opacity: 0.3,
   },
 };
 
-// Depth navigation levels
 export const DEPTH_LEVELS: DepthLevelData[] = [
   { id: 'dock', icon: '🦆', label: 'Док', description: 'Общая постановка задачи' },
   { id: 'active', icon: '✨', label: 'Активность', description: 'ИИ начал работу' },
@@ -128,7 +135,6 @@ export const DEPTH_LEVELS: DepthLevelData[] = [
   { id: 'infinite', icon: '∞', label: 'Бесконечность', description: 'Непрерывный анализ' },
 ];
 
-// Category colors for widget backgrounds
 export const CATEGORY_COLORS: Record<WidgetCategory, { 
   gradient: string; 
   glow: string;
@@ -161,7 +167,6 @@ export const CATEGORY_COLORS: Record<WidgetCategory, {
   },
 };
 
-// Physics constants for force-directed layout
 export const PHYSICS_CONFIG = {
   damping: 0.85,
   repulsion: 400,

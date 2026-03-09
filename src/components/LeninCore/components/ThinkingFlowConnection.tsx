@@ -1,4 +1,4 @@
-// ThinkingFlowConnection - Animated connections showing AI thinking path between grouped widgets
+// ThinkingFlowConnection — Apple-style elegant thinking path
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { QuadraticBezierLine } from '@react-three/drei';
@@ -11,8 +11,8 @@ interface ThinkingFlowProps {
   widgets: WidgetData[];
 }
 
-// Animated thinking particle that travels the path
-const ThinkingParticle: React.FC<{
+// Soft traveling pulse along the thinking path
+const ThinkingPulse: React.FC<{
   start: THREE.Vector3;
   end: THREE.Vector3;
   control: THREE.Vector3;
@@ -23,10 +23,10 @@ const ThinkingParticle: React.FC<{
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
-    const raw = (clock.elapsedTime - delay) * 0.5;
+    const raw = (clock.elapsedTime - delay) * 0.3;
     if (raw < 0) { meshRef.current.visible = false; return; }
     meshRef.current.visible = true;
-    const t = (raw % 2) / 2; // loop every 2 seconds
+    const t = (raw % 2.5) / 2.5;
     
     const mt = 1 - t;
     meshRef.current.position.set(
@@ -34,20 +34,23 @@ const ThinkingParticle: React.FC<{
       mt * mt * start.y + 2 * mt * t * control.y + t * t * end.y,
       mt * mt * start.z + 2 * mt * t * control.z + t * t * end.z,
     );
-    // Pulse size
-    meshRef.current.scale.setScalar(0.8 + Math.sin(raw * 4) * 0.3);
+    
+    const fade = Math.sin(t * Math.PI);
+    const mat = meshRef.current.material as THREE.MeshBasicMaterial;
+    mat.opacity = fade * 0.6;
+    meshRef.current.scale.setScalar(0.7 + fade * 0.5);
   });
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[0.06, 12, 12]} />
-      <meshBasicMaterial color={color} transparent opacity={0.9} blending={THREE.AdditiveBlending} />
+      <sphereGeometry args={[0.05, 16, 16]} />
+      <meshBasicMaterial color={color} transparent opacity={0.6} blending={THREE.AdditiveBlending} />
     </mesh>
   );
 };
 
-// Pulsing glow ring around activated widgets
-const ActivationRing: React.FC<{
+// Subtle ring — soft breath animation
+const SoftRing: React.FC<{
   position: THREE.Vector3;
   color: string;
   index: number;
@@ -56,52 +59,52 @@ const ActivationRing: React.FC<{
 
   useFrame(({ clock }) => {
     if (!ringRef.current) return;
-    const t = clock.elapsedTime + index * 0.5;
-    ringRef.current.scale.setScalar(1 + Math.sin(t * 2) * 0.15);
-    (ringRef.current.material as THREE.MeshBasicMaterial).opacity = 0.3 + Math.sin(t * 2) * 0.15;
+    const t = clock.elapsedTime + index * 0.7;
+    const breathe = Math.sin(t * 1.5) * 0.08;
+    ringRef.current.scale.setScalar(1 + breathe);
+    (ringRef.current.material as THREE.MeshBasicMaterial).opacity = 0.15 + Math.sin(t * 1.5) * 0.08;
   });
 
   return (
     <mesh ref={ringRef} position={position}>
-      <ringGeometry args={[0.8, 0.85, 32]} />
-      <meshBasicMaterial color={color} transparent opacity={0.3} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+      <ringGeometry args={[0.75, 0.78, 48]} />
+      <meshBasicMaterial color={color} transparent opacity={0.15} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
     </mesh>
   );
 };
 
-// Step number label
-const StepLabel: React.FC<{
+// Step number as a small sprite
+const StepBadge: React.FC<{
   position: THREE.Vector3;
   step: number;
-}> = ({ position, step }) => {
-  const ref = useRef<THREE.Sprite>(null);
-  
+  color: string;
+}> = ({ position, step, color }) => {
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = 48;
+    canvas.height = 48;
     const ctx = canvas.getContext('2d')!;
-    // Circle background
+    
+    // Soft filled circle
     ctx.beginPath();
-    ctx.arc(32, 32, 28, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(88, 196, 221, 0.8)';
+    ctx.arc(24, 24, 20, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.6;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    
     // Number
+    ctx.globalAlpha = 1;
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 28px -apple-system, sans-serif';
+    ctx.font = '600 18px -apple-system, SF Pro Display, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(step), 32, 33);
+    ctx.fillText(String(step), 24, 25);
     
-    const tex = new THREE.CanvasTexture(canvas);
-    return tex;
-  }, [step]);
+    return new THREE.CanvasTexture(canvas);
+  }, [step, color]);
 
   return (
-    <sprite ref={ref} position={[position.x, position.y + 0.6, position.z + 0.1]} scale={[0.4, 0.4, 1]}>
+    <sprite position={[position.x, position.y + 0.55, position.z + 0.1]} scale={[0.3, 0.3, 1]}>
       <spriteMaterial map={texture} transparent />
     </sprite>
   );
@@ -110,7 +113,6 @@ const StepLabel: React.FC<{
 export const ThinkingFlowConnection: React.FC<ThinkingFlowProps> = ({ group, widgets }) => {
   const { thinkingOrder } = group;
   
-  // Get positions of widgets in thinking order
   const orderedWidgets = useMemo(() => {
     return thinkingOrder
       .map(id => widgets.find(w => w.id === id))
@@ -119,23 +121,24 @@ export const ThinkingFlowConnection: React.FC<ThinkingFlowProps> = ({ group, wid
 
   if (orderedWidgets.length < 2) return null;
 
-  // Colors for the thinking flow
-  const flowColors = ['#58C4DD', '#00D4AA', '#FF9F0A', '#FF6B9D', '#9B59B6'];
+  // Apple system palette
+  const palette = ['#007AFF', '#34C759', '#FF9F0A', '#BF5AF2', '#FF453A'];
 
   return (
     <group>
-      {/* Activation rings around each grouped widget */}
+      {/* Soft activation rings */}
       {orderedWidgets.map((w, i) => {
         const pos = new THREE.Vector3(w.position.x / 100, -w.position.y / 100, w.position.z / 50);
+        const color = palette[i % palette.length];
         return (
           <group key={`ring-${w.id}`}>
-            <ActivationRing position={pos} color={flowColors[i % flowColors.length]} index={i} />
-            <StepLabel position={pos} step={i + 1} />
+            <SoftRing position={pos} color={color} index={i} />
+            <StepBadge position={pos} step={i + 1} color={color} />
           </group>
         );
       })}
 
-      {/* Connections between sequential widgets in thinking order */}
+      {/* Clean connections between steps */}
       {orderedWidgets.slice(0, -1).map((w, i) => {
         const next = orderedWidgets[i + 1];
         const startPos = new THREE.Vector3(w.position.x / 100, -w.position.y / 100, w.position.z / 50);
@@ -143,42 +146,42 @@ export const ThinkingFlowConnection: React.FC<ThinkingFlowProps> = ({ group, wid
         
         const mid = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
         const dir = new THREE.Vector3().subVectors(endPos, startPos).normalize();
-        const perp = new THREE.Vector3(-dir.y, dir.x, 0.15);
+        const perp = new THREE.Vector3(-dir.y, dir.x, 0.05);
         const dist = startPos.distanceTo(endPos);
-        const control = mid.clone().add(perp.multiplyScalar(dist * 0.25));
+        const control = mid.clone().add(perp.multiplyScalar(dist * 0.12));
         
-        const color = flowColors[i % flowColors.length];
+        const color = palette[i % palette.length];
 
         return (
           <group key={`flow-${w.id}-${next.id}`}>
-            {/* Glowing flow line */}
+            {/* Primary thin line */}
             <QuadraticBezierLine
               start={startPos}
               end={endPos}
               mid={control}
               color={color}
-              lineWidth={3}
+              lineWidth={1.5}
               transparent
-              opacity={0.7}
+              opacity={0.4}
             />
-            {/* Outer glow */}
+            {/* Soft glow */}
             <QuadraticBezierLine
               start={startPos}
               end={endPos}
               mid={control}
               color={color}
-              lineWidth={8}
+              lineWidth={6}
               transparent
-              opacity={0.15}
+              opacity={0.06}
               blending={THREE.AdditiveBlending}
             />
-            {/* Traveling particle */}
-            <ThinkingParticle
+            {/* Traveling pulse */}
+            <ThinkingPulse
               start={startPos}
               end={endPos}
               control={control}
               color={color}
-              delay={i * 0.4}
+              delay={i * 0.6}
             />
           </group>
         );
