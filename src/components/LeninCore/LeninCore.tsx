@@ -186,23 +186,27 @@ export const LeninCore: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+    <div className="w-full h-screen bg-transparent relative overflow-hidden font-sans">
+      {/* Dynamic ambient background layer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-blue-50/20 to-purple-50/30 dark:from-slate-900 dark:via-blue-900/20 dark:to-purple-900/30 -z-10 mix-blend-overlay"></div>
+      
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-10 p-6">
-        <div className="flex items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-            style={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 4px 24px rgba(88, 196, 221, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-            }}
-          >
-            🧠
+      <header className="absolute top-0 left-0 right-0 z-10 p-6 pt-10">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-[1.25rem] flex items-center justify-center text-2xl glass-liquid relative overflow-hidden group cursor-pointer transition-transform duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              🧠
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>Ядро Ленин</h1>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider opacity-80">Синхронизировано</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800 mb-1">Ядро Ленин</h1>
+          
+          <div className="glass-capsule px-5 py-2.5 rounded-full flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.6)]"></div>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Система активна</span>
           </div>
         </div>
       </header>
