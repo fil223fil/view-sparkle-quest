@@ -1,7 +1,7 @@
-import { LeninCore } from '@/components/LeninCore';
+import { ChatView } from '@/components/Chat/ChatView';
 
 const Index = () => {
-  return <LeninCore />;
+  return <ChatView />;
 };
 
 export default Index;
