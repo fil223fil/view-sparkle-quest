@@ -1,12 +1,13 @@
 // Ядро Ленин - Main Component
 // iOS 26 Widget Ecosystem Visualization
-import React, { useState, useCallback, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useState, useCallback, Suspense, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { WidgetData, ConnectionData, DepthLevel } from './types';
 import { INITIAL_WIDGETS, INITIAL_CONNECTIONS } from './data';
 import { useFocusMode } from './hooks/useFocusMode';
 import { useDiveAnimation } from './hooks/useDiveAnimation';
+import { usePhysicsSimulation } from './hooks/usePhysicsSimulation';
 import { Widget } from './components/Widget';
 import { Connection } from './components/Connection';
 import { SubWidget } from './components/SubWidget';
@@ -29,7 +30,23 @@ const SceneContent: React.FC<{
   connections: ConnectionData[];
   currentDepth: DepthLevel;
   onDepthChange: (level: DepthLevel) => void;
-}> = ({ widgets, connections, currentDepth, onDepthChange }) => {
+}> = ({ widgets: initialWidgets, connections, currentDepth, onDepthChange }) => {
+  const [widgets, setWidgets] = useState<WidgetData[]>(initialWidgets);
+  const { calculateForces } = usePhysicsSimulation();
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsPaused(p => !p);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const {
     focusState,
     handleWidgetHover,
@@ -46,6 +63,27 @@ const SceneContent: React.FC<{
     handleSurface,
     isDived,
   } = useDiveAnimation(widgets, onDepthChange);
+
+  useFrame(() => {
+    if (!isPaused && !isDived) {
+      setWidgets((prev) => calculateForces({ widgets: prev, connections }));
+    }
+  });
+
+  // Handle Esc key to exit focus or surface
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isDived) {
+          handleSurface();
+        } else if (focusState.focusedWidgetId) {
+          handleWidgetSelect(focusState.focusedWidgetId); // toggles focus off
+        }
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isDived, focusState.focusedWidgetId, handleSurface, handleWidgetSelect]);
 
   const isFocusActive = focusState.focusedWidgetId !== null;
   const divedWidget = diveState.divedWidgetId 
