@@ -3,6 +3,8 @@
 import React, { useState, useCallback, Suspense, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from 'lucide-react';
 import { WidgetData, ConnectionData, DepthLevel } from './types';
 import { INITIAL_WIDGETS, INITIAL_CONNECTIONS } from './data';
 import { useFocusMode } from './hooks/useFocusMode';
