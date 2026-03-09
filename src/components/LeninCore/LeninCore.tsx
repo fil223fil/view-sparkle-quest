@@ -1,12 +1,13 @@
 // Ядро Ленин - Main Component
 // iOS 26 Widget Ecosystem Visualization
-import React, { useState, useCallback, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useState, useCallback, Suspense, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { WidgetData, ConnectionData, DepthLevel } from './types';
 import { INITIAL_WIDGETS, INITIAL_CONNECTIONS } from './data';
 import { useFocusMode } from './hooks/useFocusMode';
 import { useDiveAnimation } from './hooks/useDiveAnimation';
+import { usePhysicsSimulation } from './hooks/usePhysicsSimulation';
 import { Widget } from './components/Widget';
 import { Connection } from './components/Connection';
 import { SubWidget } from './components/SubWidget';
