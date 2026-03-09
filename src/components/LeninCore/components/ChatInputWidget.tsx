@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mic, Brain } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useChatStore } from '@/store/useChatStore';
 import { simulateAIResponse } from '@/services/glmChatService';
 import type { ChatMessage } from '@/types/chat';
@@ -8,8 +9,9 @@ import type { ChatMessage } from '@/types/chat';
 export const ChatInputWidget: React.FC = () => {
   const { messages, isProcessing, addMessage, setProcessing } = useChatStore();
   const [inputText, setInputText] = useState('');
-
   const activateQueryGroup = useChatStore((s) => s.activateQueryGroup);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const sendMessage = async () => {
     const text = inputText.trim();
@@ -19,8 +21,6 @@ export const ChatInputWidget: React.FC = () => {
     addMessage(userMsg);
     setInputText('');
     setProcessing(true);
-
-    // Activate widget grouping based on query
     activateQueryGroup(text);
 
     const aiResponse = await simulateAIResponse(text);
@@ -35,54 +35,36 @@ export const ChatInputWidget: React.FC = () => {
     }
   };
 
-  const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant');
+  // Glass styles
+  const glassInput: React.CSSProperties = {
+    background: isDark
+      ? 'linear-gradient(135deg, rgba(30, 30, 40, 0.7) 0%, rgba(15, 15, 20, 0.4) 100%)'
+      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 100%)',
+    backdropFilter: 'blur(40px) saturate(200%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.5)',
+    boxShadow: isDark
+      ? '0 12px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.06)'
+      : '0 12px 40px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.6)',
+  };
+
+  const glassPill: React.CSSProperties = {
+    background: isDark
+      ? 'linear-gradient(180deg, rgba(40, 40, 50, 0.6) 0%, rgba(20, 20, 25, 0.4) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%)',
+    backdropFilter: 'blur(30px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.5)',
+    boxShadow: isDark
+      ? '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.06)'
+      : '0 8px 32px rgba(0,0,0,0.08), inset 0 2px 4px rgba(255,255,255,0.6)',
+  };
+
+  const textColor = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.85)';
+  const mutedColor = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
 
   return (
     <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 w-full max-w-2xl px-4">
-      {/* Last AI response floating above input */}
-      <AnimatePresence>
-        {lastAssistantMsg && (
-          <motion.div
-            key={lastAssistantMsg.id}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="mb-3 rounded-2xl px-5 py-4 text-sm"
-            style={{
-              background: 'rgba(15, 15, 25, 0.75)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(88, 196, 221, 0.08)',
-              color: 'rgba(255, 255, 255, 0.9)',
-            }}
-          >
-            {lastAssistantMsg.hasProcessData && lastAssistantMsg.processSteps && (
-              <div className="mb-2 flex items-center gap-2">
-                <Brain className="h-3.5 w-3.5 text-purple-400" />
-                <div className="flex gap-1">
-                  {lastAssistantMsg.processSteps.map((step, i) => (
-                    <motion.div
-                      key={step.id}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{
-                        background: step.status === 'complete' ? '#00D4AA' : step.status === 'active' ? '#FF9F0A' : '#666',
-                      }}
-                    />
-                  ))}
-                </div>
-                <span className="text-[10px] text-white/40">
-                  {lastAssistantMsg.processSteps.length} шагов • {lastAssistantMsg.usedFunctions?.length ?? 0} функций
-                </span>
-              </div>
-            )}
-            <p className="whitespace-pre-wrap leading-relaxed">{lastAssistantMsg.content}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Processing indicator */}
       <AnimatePresence>
         {isProcessing && (
@@ -90,19 +72,21 @@ export const ChatInputWidget: React.FC = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mb-4 flex items-center gap-3 glass-capsule rounded-full px-5 py-3 mx-auto w-fit"
+            className="mb-4 flex items-center gap-3 rounded-full px-5 py-3 mx-auto w-fit"
+            style={glassPill}
           >
             <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="h-2 w-2 rounded-full bg-primary"
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: '#007AFF' }}
                   animate={{ y: [0, -6, 0], scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
                 />
               ))}
             </div>
-            <span className="text-sm font-medium text-foreground tracking-wide">Анализирую...</span>
+            <span className="text-sm font-semibold tracking-wide" style={{ color: textColor }}>Анализирую...</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -114,7 +98,11 @@ export const ChatInputWidget: React.FC = () => {
             <button
               key={q}
               onClick={() => setInputText(q)}
-              className="glass-capsule rounded-full px-5 py-2.5 text-sm font-medium transition-all hover:scale-105 active:scale-95 text-foreground hover:text-primary"
+              className="rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95"
+              style={{
+                ...glassPill,
+                color: textColor,
+              }}
             >
               {q}
             </button>
@@ -123,10 +111,8 @@ export const ChatInputWidget: React.FC = () => {
       )}
 
       {/* Input bar */}
-      <div className="glass-liquid flex items-center gap-3 rounded-[2rem] px-5 py-3.5 w-full mx-auto shadow-2xl transition-all duration-300 focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_40px_hsla(var(--primary),0.3)]">
-        <button
-          className="rounded-full p-2.5 transition-colors text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
-        >
+      <div className="flex items-center gap-3 rounded-[2rem] px-5 py-3.5 w-full mx-auto transition-all duration-300" style={glassInput}>
+        <button className="rounded-full p-2.5 transition-all hover:scale-110 active:scale-95" style={{ color: mutedColor }}>
           <Mic className="h-5 w-5" />
         </button>
         <input
@@ -135,15 +121,16 @@ export const ChatInputWidget: React.FC = () => {
           onKeyDown={handleKeyDown}
           placeholder="Спроси что-нибудь..."
           disabled={isProcessing}
-          className="flex-1 bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+          className="flex-1 bg-transparent text-base font-medium focus:outline-none"
+          style={{ color: textColor, caretColor: '#007AFF' }}
         />
         <button
           onClick={sendMessage}
           disabled={!inputText.trim() || isProcessing}
-          className="rounded-full p-3 transition-all disabled:opacity-30 disabled:scale-100 active:scale-95 hover:shadow-lg"
+          className="rounded-full p-3 transition-all disabled:opacity-30 active:scale-95 hover:shadow-lg"
           style={{
-            background: inputText.trim() ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-            color: inputText.trim() ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
+            background: inputText.trim() ? '#007AFF' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'),
+            color: inputText.trim() ? '#FFFFFF' : mutedColor,
           }}
         >
           <Send className="h-5 w-5 ml-0.5" />
