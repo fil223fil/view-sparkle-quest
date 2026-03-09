@@ -186,9 +186,9 @@ export const LeninCore: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-screen bg-transparent relative overflow-hidden font-sans">
+    <div className="w-full h-screen bg-transparent relative overflow-hidden font-sans text-foreground">
       {/* Dynamic ambient background layer */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-blue-50/20 to-purple-50/30 dark:from-slate-900 dark:via-blue-900/20 dark:to-purple-900/30 -z-10 mix-blend-overlay"></div>
+      <div className="absolute inset-0 bg-background/20 backdrop-blur-[100px] -z-10 mix-blend-overlay"></div>
       
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-10 p-6 pt-10">
@@ -199,14 +199,14 @@ export const LeninCore: React.FC = () => {
               🧠
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>Ядро Ленин</h1>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider opacity-80">Синхронизировано</p>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>Ядро Ленин</h1>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-80">Синхронизировано</p>
             </div>
           </div>
           
           <div className="glass-capsule px-5 py-2.5 rounded-full flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.6)]"></div>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Система активна</span>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+            <span className="text-sm font-medium text-foreground">Система активна</span>
           </div>
         </div>
       </header>
