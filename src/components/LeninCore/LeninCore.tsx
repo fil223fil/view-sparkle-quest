@@ -111,6 +111,8 @@ const SceneContent: React.FC<{
             isRelated={isWidgetRelated(widget.id)}
             isBlurred={!isDived && isWidgetBlurred(widget.id) && !isInActiveGroup}
             isDived={widget.id === diveState.divedWidgetId}
+            morphProgress={widget.id === diveState.divedWidgetId ? diveState.morphProgress : 0}
+            morphPhase={widget.id === diveState.divedWidgetId ? diveState.morphPhase : 'idle'}
             onHover={handleWidgetHover}
             onSelect={handleWidgetSelect}
             onDoubleTap={handleDoubleTap}
