@@ -196,10 +196,10 @@ export const CATEGORY_COLORS: Record<WidgetCategory, {
 };
 
 export const PHYSICS_CONFIG = {
-  damping: 0.85,
-  repulsion: 400,
-  attraction: 0.015,
-  springStrength: 0.08,
+  damping: 0.82,
+  repulsion: 650,
+  attraction: 0.012,
+  springStrength: 0.06,
   magneticSnapDistance: 20,
   maxVelocity: 8,
 };

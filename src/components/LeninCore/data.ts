@@ -5,7 +5,7 @@ let miniCounter = 0;
 const createMiniWidgets = (items: { icon: string; label: string }[]): MiniWidgetData[] =>
   items.map((item) => ({ id: `mini-${++miniCounter}`, icon: item.icon, label: item.label }));
 
-const pos = (x: number, y: number, z = 5) => ({ x, y, z });
+const pos = (x: number, y: number, z = 5) => ({ x: x * 1.5, y: y * 1.5, z });
 
 export const INITIAL_WIDGETS: WidgetData[] = [
   // ═══ SYSTEM / AI CORE ═══
