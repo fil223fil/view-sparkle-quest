@@ -10,6 +10,7 @@ import {
   MiniWidgetData,
   WidgetSize 
 } from '../types';
+import type { MorphPhase } from '../hooks/useDiveAnimation';
 
 interface WidgetProps {
   widget: WidgetData;
@@ -17,6 +18,8 @@ interface WidgetProps {
   isRelated: boolean;
   isBlurred: boolean;
   isDived?: boolean;
+  morphProgress?: number;
+  morphPhase?: MorphPhase;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
   onDoubleTap?: (id: string) => void;
