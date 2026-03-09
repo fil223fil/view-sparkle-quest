@@ -163,10 +163,10 @@ export const CATEGORY_COLORS: Record<WidgetCategory, {
 
 // Physics constants for force-directed layout
 export const PHYSICS_CONFIG = {
-  damping: 0.8,
-  repulsion: 150,
-  attraction: 0.01,
-  springStrength: 0.05,
+  damping: 0.85,
+  repulsion: 400,
+  attraction: 0.015,
+  springStrength: 0.08,
   magneticSnapDistance: 20,
-  maxVelocity: 5,
+  maxVelocity: 8,
 };

@@ -155,7 +155,14 @@ export const Connection: React.FC<ConnectionProps> = ({
 
   const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
   const distance = startPos.distanceTo(endPos);
-  const controlOffset = distance * 0.3;
+  
+  // Visual spring effect based on physical tension
+  const idealDistance = 2.0; // 200px / 100 scale
+  const tension = Math.abs(distance - idealDistance);
+  const time = performance.now() * 0.015;
+  const springWobble = Math.sin(time) * tension * 0.15;
+  
+  const controlOffset = distance * 0.3 + springWobble;
   
   const direction = new THREE.Vector3().subVectors(endPos, startPos).normalize();
   const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0.2);
