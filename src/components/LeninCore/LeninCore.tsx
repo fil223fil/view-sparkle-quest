@@ -15,6 +15,15 @@ import { DiveOverlay } from './components/DiveOverlay';
 import { DepthNavigation } from './components/DepthNavigation';
 import { ConnectionLegend } from './components/ConnectionLegend';
 import { Background } from './components/Background';
+import { DEPTH_LEVELS } from './types';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 // Loading fallback
 const LoadingFallback = () => (
